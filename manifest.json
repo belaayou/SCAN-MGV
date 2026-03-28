@@ -1,1 +1,16 @@
+{
+  "name": "MGV SCAN Stellantis",
+  "short_name": "MGV SCAN",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#eaea00",
+  "icons": [
+    {
+      "src": "IMG_20260327_222846.jpg",
+      "sizes": "554x496",
+      "type": "image/jpeg"
+    }
+  ]
+}
 

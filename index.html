@@ -1,221 +1,47 @@
-< !DOCTYPE html>
-<html class= »dark » lang= »fr »>
+<!DOCTYPE html>
+<html lang="fr">
 <head>
-    <meta charset= »utf-8 »/>
-    <meta content= »width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover » name= »viewport »/>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>MGV SCAN | Stellantis</title>
-    
-    <link rel= »manifest » href= »manifest.json »>
-    <meta name= »mobile-web-app-capable » content= »yes »>
-    <meta name= »apple-mobile-web-app-capable » content= »yes »>
-    <meta name= »apple-mobile-web-app-status-bar-style » content= »black-translucent »>
-    <meta name= »apple-mobile-web-app-title » content= »MGV SCAN »>
-    <link rel= »apple-touch-icon » href= »IMG_20260327_222846.jpg »>
-    <meta name= »theme-color » content= »#000000 »>
-
-    <script src= »https://cdn.tailwindcss.com »></script>
-    <script src= »https://unpkg.com/html5-qrcode »></script>
-    <link href= »https://fonts.googleapis.com/css2 ?family=JetBrains+Mono :wght@500 ;800&family=Inter :wght@400 ;900&display=swap » rel= »stylesheet »/>
-    
-    <script id= »tailwind-config »>
-      Tailwind.config = {
-        Theme : {
-          Extend : { 
-            Colors : { « primary » : « #eaea00 », « dark-bg » : « #000000 » },
-            fontFamily : { mono : [‘ »JetBrains Mono »’, ‘monospace’], sans : [‘Inter’, ‘sans-serif’] }
-          },
-        },
-      }
-    </script>
-    
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        Body { background : #000000 ; color : #ffffff ; font-family : ‘Inter’, sans-serif ; height : 100svh ; overflow : hidden ; display : flex ; flex-direction : column ; }
-        .scan-overlay {
-            Position : absolute ; top : 50% ; left : 50% ; transform : translate(-50%, -50%) ;
-            Width : 320px ; height : 150px ; border : 1px solid rgba(234, 234, 0, 0.3) ;
-            z-index : 20 ; pointer-events : none ;
-        }
-        .corner { position : absolute ; width : 25px ; height : 25px ; border : 4px solid #eaea00 ; }
-        .top-l { top : -2px ; left : -2px ; border-right : 0 ; border-bottom : 0 ; }
-        .top-r { top : -2px ; right : -2px ; border-left : 0 ; border-bottom : 0 ; }
-        .bot-l { bottom : -2px ; left : -2px ; border-right : 0 ; border-top : 0 ; }
-        .bot-r { bottom : -2px ; right : -2px ; border-left : 0 ; border-top : 0 ; }
-        .scan-line {
-            Position : absolute ; width : 100% ; height : 2px ; background : #eaea00 ;
-            Box-shadow : 0 0 15px #eaea00 ; top : 0 ; animation : scan 2s linear infinite ;
-        }
-        @keyframes scan { 0% { top : 0 ; } 100% { top : 100% ; } }
-        .editable-cell { border-bottom : 1px dashed #444 ; min-width : 50px ; padding : 6px ; font-size : 16px ; }
-        .active-nav { color : #eaea00 !important ; border-top : 3px solid #eaea00 ; }
+        body { background: #000; color: #fff; font-family: sans-serif; }
+        .primary-btn { background: #eaea00; color: #000; font-weight: 900; }
     </style>
 </head>
-<body onload= »initApp() »>
+<body class="bg-black text-white flex flex-col min-h-screen">
+    <header class="p-5 border-b border-zinc-800 text-center">
+        <h1 class="text-[#eaea00] text-2xl font-black italic">MGV SCAN CORE</h1>
+    </header>
 
-<div id= »identity-screen » class= »fixed inset-0 bg-black z-[200] flex flex-col p-8 items-center justify-center »>
-    <div class= »w-full max-sm :max-w-xs text-center »>
-        <div class= »mb-6 inline-block p-4 border-2 border-primary rounded-2xl »>
-            <svg class= »w-12 h-12 text-primary » fill= »none » stroke= »currentColor » viewBox= »0 0 24 24 »><path stroke-linecap= »round » stroke-linejoin= »round » stroke-width= »2 » d= »M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z »></path></svg>
+    <main class="flex-1 p-4 flex flex-col gap-4">
+        <div id="reader" class="w-full bg-zinc-900 rounded-xl overflow-hidden" style="min-height: 300px;"></div>
+        
+        <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
+            <input type="text" placeholder="OPÉRATEUR" class="w-full bg-black border border-zinc-700 p-3 mb-2 rounded">
+            <input type="number" placeholder="ID CODE" class="w-full bg-black border border-zinc-700 p-3 mb-4 rounded">
+            <button class="w-full primary-btn py-4 rounded-xl uppercase tracking-widest">Activer Scanner</button>
         </div>
-        <h1 class= »text-primary font-[900] text-3xl tracking-tighter mb-6 uppercase italic »>MGV SCAN CORE</h1>
-        <div class= »space-y-4 »>
-            <input type= »text » id= »reg-name » class= »w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus :border-primary text-white font-bold uppercase » placeholder= »OPÉRATEUR »>
-            <input type= »number » id= »reg-id » class= »w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus :border-primary text-primary font-mono text-2xl text-center » placeholder= »ID CODE »>
+    </main>
+
+    <nav class="h-20 bg-zinc-950 border-t border-zinc-800 flex justify-around items-center">
+        <div class="text-[#eaea00] flex flex-col items-center">
+            <span class="text-[10px] font-bold">SCANNER</span>
         </div>
-        <button onclick= »saveIdentity() » class= »w-full mt-8 bg-primary text-black font-[900] uppercase py-5 rounded-xl tracking-widest text-lg active :scale-95 transition-transform »>Activer Terminal</button>
-    </div>
-</div>
-
-<header class= »h-20 flex justify-between items-center px-6 shrink-0 bg-black border-b border-zinc-900 z-50 »>
-    <div class= »flex flex-col »>
-        <span id= »display-name » class= »text-[10px] font-[900] tracking-widest text-primary uppercase »>---</span>
-        <span id= »display-id » class= »text-lg font-mono text-white/80 font-bold »>ID : ---</span>
-    </div>
-    <div class= »flex items-center gap-4 »>
-        <button onclick= »toggleView(‘scanner’) » class= »text-primary p-2 »><svg class= »w-8 h-8 » fill= »none » stroke= »currentColor » viewBox= »0 0 24 24 »><path stroke-linecap= »round » stroke-linejoin= »round » stroke-width= »2 » d= »M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z »></path></svg></button>
-        <button onclick= »logoutIdentity() » class= »text-red-600 p-2 »><svg class= »w-6 h-6 » fill= »none » stroke= »currentColor » viewBox= »0 0 24 24 »><path stroke-linecap= »round » stroke-linejoin= »round » stroke-width= »2 » d= »M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1 »></path></svg></button>
-    </div>
-</header>
-
-<main class= »flex-1 flex flex-col overflow-hidden relative »>
-    <section id= »view-scanner » class= »view-section flex-1 flex flex-col »>
-        <div class= »relative flex-1 bg-zinc-950 overflow-hidden »>
-            <div id= »reader » class= »h-full »></div>
-            <div class= »scan-overlay »>
-                <div class= »scan-line »></div>
-                <div class= »corner top-l »></div><div class= »corner top-r »></div>
-                <div class= »corner bot-l »></div><div class= »corner bot-r »></div>
-            </div>
+        <div class="text-zinc-600 flex flex-col items-center">
+            <span class="text-[10px] font-bold">LOGS</span>
         </div>
-    </section>
+    </nav>
 
-    <section id= »view-history » class= »view-section hidden flex-1 p-2 overflow-y-auto »>
-        <div class= »flex justify-between items-center mb-4 px-2 »>
-            <h3 id= »flux-title » class= »text-primary font-[900] text-xs uppercase tracking-widest »>Flux (0)</h3>
-            <div class= »flex gap-2 »>
-                <button onclick= »clearAllLogs() » class= »bg-red-900/20 text-red-500 px-3 py-1 rounded text-xs font-bold uppercase »>Purger</button>
-                <button onclick= »exportCSV() » class= »bg-zinc-800 px-3 py-1 rounded text-xs font-bold uppercase text-white »>Export CSV</button>
-            </div>
-        </div>
-        <div class= »bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800 »>
-            <table class= »w-full text-left border-collapse »>
-                <thead class= »bg-zinc-800 text-[10px] text-white/40 uppercase »>
-                    <tr><th class= »p-3 »>OP</th><th class= »p-3 »>Code</th><th class= »p-3 »>Zone</th><th class= »p-3 »>Heure</th></tr>
-                </thead>
-                <tbody id= »history-body » class= »font-mono text-sm »></tbody>
-            </table>
-        </div>
-    </section>
-
-    <div class= »px-6 py-4 bg-black border-t border-zinc-900 »>
-        <div class= »w-full bg-zinc-900/50 border border-zinc-800 py-4 flex items-center justify-center gap-3 rounded-xl »>
-            <div class= »w-2 h-2 bg-primary rounded-full animate-pulse »></div>
-            <span class= »font-[900] uppercase tracking-widest text-xs text-white/60 »>MGV SCAN SYSTEM</span>
-        </div>
-    </div>
-</main>
-
-<nav class= »h-20 bg-black border-t border-zinc-800 flex justify-around items-center pb-2 shrink-0 »>
-    <button onclick= »toggleView(‘scanner’) » id= »nav-scanner » class= »active-nav flex flex-col items-center p-2 w-1/2 »>
-        <svg class= »w-6 h-6 mb-1 » fill= »none » stroke= »currentColor » viewBox= »0 0 24 24 »><path stroke-linecap= »round » stroke-linejoin= »round » stroke-width= »2 » d= »M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z »></path></svg>
-        <span class= »text-[10px] font-bold uppercase »>Scanner</span>
-    </button>
-    <button onclick= »toggleView(‘history’) » id= »nav-history » class= »text-white/20 flex flex-col items-center p-2 w-1/2 »>
-        <svg class= »w-6 h-6 mb-1 » fill= »none » stroke= »currentColor » viewBox= »0 0 24 24 »><path stroke-linecap= »round » stroke-linejoin= »round » stroke-width= »2 » d= »M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z »></path></svg>
-        <span class= »text-[10px] font-bold uppercase »>Mémoire</span>
-    </button>
-</nav>
-
-<script>
-    // تسجيل الخدمة للعمل كتطبيق
-    If (‘serviceWorker’ in navigator) {
-        Navigator.serviceWorker.register(‘sw.js’).then(reg => console.log(‘SW active’)) ;
-    }
-
-    Let html5QrCode ;
-    Let isProcessing = false ;
-    Let logs = JSON.parse(localStorage.getItem(‘mgv_logs’)) || [] ;
-
-    Function initApp() {
-        Const user = JSON.parse(localStorage.getItem(‘mgv_user’)) ;
-        If (user) {
-            Document.getElementById(‘identity-screen’).classList.add(‘hidden’) ;
-            Document.getElementById(‘display-name’).innerText = user.name ;
-            Document.getElementById(‘display-id’).innerText = `ID : ${user.id}` ;
-            renderTable() ; startScanner() ;
+    <script>
+        function onScanSuccess(decodedText) {
+            alert("Code: " + decodedText);
         }
-    }
-
-    Function saveIdentity() {
-        Const name = document.getElementById(‘reg-name’).value ;
-        Const id = document.getElementById(‘reg-id’).value ;
-        If (name && id) { 
-            localStorage.setItem(‘mgv_user’, JSON.stringify({name, id})) ; 
-            location.reload() ; 
-        }
-    }
-
-    Function startScanner() {
-        Html5QrCode = new Html5Qrcode(« reader ») ;
-        Html5QrCode.start({ facingMode : « environment » }, { fps : 20, qrbox : { width : 250, height : 150 } }, (text) => {
-            If (isProcessing) return ;
-            isProcessing = true ;
-            if(navigator.vibrate) navigator.vibrate(50) ;
-            addLogEntry(text) ;
-        }).catch(err => console.error(err)) ;
-    }
-
-    Function addLogEntry(code) {
-        Const user = JSON.parse(localStorage.getItem(‘mgv_user’)) ;
-        Const now = new Date() ;
-        Const timeStr = now.toLocaleTimeString(‘fr-FR’, {hour :’2-digit’, minute :’2-digit’, second :’2-digit’}) ;
-        Logs.unshift({ id : Date.now(), op : user.id, code : code, zone : ‘---‘, time : timeStr }) ;
-        localStorage.setItem(‘mgv_logs’, JSON.stringify(logs)) ;
-        renderTable() ;
-        toggleView(‘history’) ;
-        setTimeout(() => isProcessing = false, 1000) ;
-    }
-
-    Function renderTable() {
-        Document.getElementById(‘flux-title’).innerText = `Flux (${logs.length})` ;
-        Document.getElementById(‘history-body’).innerHTML = logs.map(log => `
-            <tr class= »border-b border-zinc-800/50 »>
-                <td class= »p-3 text-white/40 »>${log.op}</td>
-                <td class= »p-3 text-primary font-bold »>${log.code}</td>
-                <td class= »p-3 »><div class= »editable-cell » contenteditable= »true » onblur= »updateZone(${log.id}, this.innerText) »>${log.zone}</div></td>
-                <td class= »p-3 text-[10px] »>${log.time}</td>
-            </tr>
-        `).join(‘’) ;
-    }
-
-    Function updateZone(id, val) {
-        Const i = logs.findIndex(l => l.id === id) ;
-        If (i !== -1) { logs[i].zone = val ; localStorage.setItem(‘mgv_logs’, JSON.stringify(logs)) ; }
-    }
-
-    Function clearAllLogs() { if(confirm(« Effacer tout ? »)) { logs = [] ; localStorage.removeItem(‘mgv_logs’) ; renderTable() ; } }
-
-    Function toggleView(v) {
-        Document.querySelectorAll(‘.view-section’).forEach(s => s.classList.add(‘hidden’)) ;
-        Document.querySelectorAll(‘nav button’).forEach(b => { b.classList.add(‘text-white/20’) ; b.classList.remove(‘active-nav’) ; }) ;
-        Document.getElementById(`view-${v}`).classList.remove(‘hidden’) ;
-        Document.getElementById(`nav-${v}`).classList.add(‘active-nav’) ;
-    }
-
-    Function exportCSV() {
-        Let csv = « OP ;CODE ;ZONE ;TIME\n » ;
-        Logs.forEach(l => csv += `${l.op} ;${l.code} ;${l.zone} ;${l.time}\n`) ;
-        Const blob = new Blob([csv], { type : ‘text/csv’ }) ;
-        Const url = window.URL.createObjectURL(blob) ;
-        Const a = document.createElement(‘a’) ;
-        a.href = url ; a.download = ‘MGV_LOGS.csv’ ; a.click() ;
-    }
-
-    Function logoutIdentity() { if(confirm(« Déconnexion ? »)) { localStorage.clear() ; location.reload() ; } }
-</script>
+        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
 </body>
 </html>
-
-
-
-
-                                                                                                                                                             

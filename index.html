@@ -8,40 +8,28 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; }
-        .primary-btn { background: #eaea00; color: #000; font-weight: 900; }
+        body { background: #000; color: #fff; font-family: sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
     </style>
 </head>
-<body class="bg-black text-white flex flex-col min-h-screen">
-    <header class="p-5 border-b border-zinc-800 text-center">
+<body class="flex flex-col h-screen" onload="initApp()">
+    <header class="p-5 border-b border-zinc-800 flex justify-between items-center bg-black">
         <h1 class="text-[#eaea00] text-2xl font-black italic">MGV SCAN CORE</h1>
     </header>
 
-    <main class="flex-1 p-4 flex flex-col gap-4">
-        <div id="reader" class="w-full bg-zinc-900 rounded-xl overflow-hidden" style="min-height: 300px;"></div>
+    <main class="flex-1 relative bg-zinc-950 p-4">
+        <div id="reader" class="w-full bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden" style="min-height: 250px;"></div>
         
-        <div class="bg-zinc-900 p-4 rounded-xl border border-zinc-800">
-            <input type="text" placeholder="OPÉRATEUR" class="w-full bg-black border border-zinc-700 p-3 mb-2 rounded">
-            <input type="number" placeholder="ID CODE" class="w-full bg-black border border-zinc-700 p-3 mb-4 rounded">
-            <button class="w-full primary-btn py-4 rounded-xl uppercase tracking-widest">Activer Scanner</button>
+        <div class="mt-4 bg-zinc-900 p-5 rounded-2xl border border-zinc-800">
+            <input type="text" placeholder="OPÉRATEUR" class="w-full bg-black border border-zinc-700 p-4 mb-3 rounded-xl">
+            <input type="number" placeholder="ID CODE" class="w-full bg-black border border-zinc-700 p-4 mb-5 rounded-xl font-mono text-xl text-center">
+            <button class="w-full bg-[#eaea00] text-black font-black py-5 rounded-xl uppercase tracking-widest text-lg">Commencer Scan</button>
         </div>
     </main>
-
-    <nav class="h-20 bg-zinc-950 border-t border-zinc-800 flex justify-around items-center">
-        <div class="text-[#eaea00] flex flex-col items-center">
-            <span class="text-[10px] font-bold">SCANNER</span>
-        </div>
-        <div class="text-zinc-600 flex flex-col items-center">
-            <span class="text-[10px] font-bold">LOGS</span>
-        </div>
-    </nav>
-
     <script>
-        function onScanSuccess(decodedText) {
-            alert("Code: " + decodedText);
+        // تسجيل الـ Service Worker لتمكين التثبيت كتطبيق
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').then(() => console.log("SW Registered"));
         }
-        let html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>

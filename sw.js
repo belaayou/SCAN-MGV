@@ -4,7 +4,7 @@ const CACHE_NAME = 'mgv-scan-cache-v1';
 // الملفات التي سيتم تخزينها للعمل بدون إنترنت
 const urlsToCache = [
   './index.html',
-  './IMG_20260327_222846.jpg',
+  './IMG_20260328_193404.png.jpg',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/html5-qrcode'
 ];

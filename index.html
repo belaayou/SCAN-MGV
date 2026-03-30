@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>
-    <title>SCAN_INDUSTRIAL | v7.2</title>
+    <title>SCAN_INDUSTRIAL | v7.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
@@ -18,7 +18,6 @@
       }
     </script>
     <style>
-        /* الأساسيات وتثبيت الشاشة */
         body {
             height: 100svh; 
             margin: 0;
@@ -35,12 +34,10 @@
             body { height: 100vh; }
         }
 
-        /* تثبيت الهيدر والنابار لمنع التداخل */
         header, nav, .footer-lock {
             flex-shrink: 0;
         }
 
-        /* حاوية الكاميرا */
         #view-scanner {
             flex: 1;
             position: relative;
@@ -53,7 +50,11 @@
         #reader { height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; height: 100% !important; width: 100% !important; }
 
-        /* غطاء المسح الضوئي */
+        /* Hides default library UI elements */
+        #reader__status_span, #reader__dashboard, #reader img, #reader__camera_selection {
+            display: none !important;
+        }
+
         .scan-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80%; max-width: 400px; height: 150px; border: 1px solid rgba(234, 234, 0, 0.3);
@@ -74,6 +75,11 @@
         .editable-cell { border-bottom: 1px dashed #444; min-width: 50px; padding: 4px; transition: all 0.2s; }
         .editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.1); }
         .active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; background: rgba(234,234,0,0.05); }
+
+        /* Force hide override for Specificity conflict */
+        .view-section.hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body onload="initApp()">
@@ -148,7 +154,6 @@
 </nav>
 
 <script>
-    // تعديل الحجم تلقائياً عند تغيير أبعاد المتصفح
     window.addEventListener('resize', () => {
         document.body.style.height = window.innerHeight + 'px';
     });
@@ -239,4 +244,5 @@
     function logoutIdentity() { if(confirm("Quitter la session ?")) { localStorage.removeItem('lumen_user'); location.reload(); } }
 </script>
 </body>
-</html>
+    </html>
+    

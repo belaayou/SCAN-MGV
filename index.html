@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>
-    <title>SCAN_INDUSTRIAL | v7.3</title>
+    <title>SCAN_INDUSTRIAL | v7.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
@@ -50,21 +50,27 @@
         #reader { height: 100% !important; border: none !important; }
         #reader video { object-fit: cover !important; height: 100% !important; width: 100% !important; }
 
-        /* Hides default library UI elements */
         #reader__status_span, #reader__dashboard, #reader img, #reader__camera_selection {
             display: none !important;
         }
 
         .scan-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80%; max-width: 400px; height: 150px; border: 1px solid rgba(234, 234, 0, 0.3);
+            width: 80%; max-width: 400px; height: 150px; border: 1px solid rgba(234, 234, 0, 0.2);
             z-index: 20; pointer-events: none;
         }
-        .corner { position: absolute; width: 25px; height: 25px; border: 4px solid #eaea00; }
-        .top-l { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
-        .top-r { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
-        .bot-l { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
-        .bot-r { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+        
+        .corner { 
+            position: absolute; 
+            width: 45px; 
+            height: 45px; 
+            border: 5px solid #eaea00; 
+        }
+        
+        .top-l { top: -3px; left: -3px; border-right: 0; border-bottom: 0; border-top-left-radius: 14px; }
+        .top-r { top: -3px; right: -3px; border-left: 0; border-bottom: 0; border-top-right-radius: 14px; }
+        .bot-l { bottom: -3px; left: -3px; border-right: 0; border-top: 0; border-bottom-left-radius: 14px; }
+        .bot-r { bottom: -3px; right: -3px; border-left: 0; border-top: 0; border-bottom-right-radius: 14px; }
         
         .scan-line {
             position: absolute; width: 100%; height: 2px; background: #eaea00;
@@ -76,7 +82,6 @@
         .editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.1); }
         .active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; background: rgba(234,234,0,0.05); }
 
-        /* Force hide override for Specificity conflict */
         .view-section.hidden {
             display: none !important;
         }
@@ -181,7 +186,7 @@
 
     function startScanner() {
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 300, height: 150 } }, (text) => {
+        html5QrCode.start({ facingMode: "environment" }, { fps: 20 }, (text) => {
             if (isProcessing) return;
             isProcessing = true;
             if(navigator.vibrate) navigator.vibrate(50);

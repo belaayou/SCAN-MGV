@@ -18,7 +18,29 @@
       }
     </script>
     <style>
-        body { background: #000000; color: #ffffff; font-family: 'Inter', sans-serif; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
+     body {
+    height: 100svh; 
+    margin: 0;
+    padding: 0;
+    overflow: hidden; 
+    display: flex;
+    flex-direction: column;
+    background: #000000;
+}
+
+@supports not (height: 100svh) {
+    body {
+        height: 100vh;
+    }
+}
+
+#view-scanner {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+        { background: #000000; color: #ffffff; font-family: 'Inter', sans-serif; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
         .scan-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 400px; height: 180px; border: 1px solid rgba(234, 234, 0, 0.4);
@@ -125,6 +147,12 @@
 </nav>
 
 <script>
+    window.addEventListener('resize', () => {
+    document.body.style.height = window.innerHeight + 'px';
+});
+
+/* ... Your other functions (initApp, startScanner, etc.) ... */
+    
     let html5QrCode;
     let isProcessing = false;
     let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];

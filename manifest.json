@@ -13,3 +13,30 @@
     }
   ]
 }
+{
+  "short_name": "ScanIndus",
+  "name": "Scan Industrial Terminal",
+  "description": "Système de scan industriel hors-ligne",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/253/253308.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/253/253308.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F172A",
+  "theme_color": "#EAB308",
+  "scope": "./",
+  "lang": "fr-FR"
+}
+

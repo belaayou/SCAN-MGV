@@ -256,16 +256,14 @@
     }
 
     function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('lumen_user'); location.reload(); } }
-                               
+
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js')
-      .then(() => {
-          console.log("Service Worker: Application prête pour le mode hors-ligne !");
-      })
-      .catch((err) => {
-          console.error("Service Worker: Échec de l'activation :", err);
-      });
-        }
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => console.log('SW Registered!', reg))
+        .catch(err => console.error('SW Registration Failed!', err));
+    });
+     }
     
     </script>
     

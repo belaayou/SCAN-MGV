@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#EAB308">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/253/253308.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -115,8 +116,8 @@
         <div class="flex justify-between items-center mb-4 px-2">
             <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
             <div class="flex gap-2">
-                <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[20px] uppercase italic">Purger</button>
-                <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[20px] uppercase text-white italic">CSV</button>
+                <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[18px] uppercase italic">Purger</button>
+                <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
             </div>
         </div>
         <div class="bg-zinc-900 rounded-xl overflow-x-auto border-2 border-zinc-800">
@@ -143,11 +144,11 @@
 <nav class="h-20 bg-black border-t-2 border-zinc-900 flex justify-around items-center z-[100] pb-2 shrink-0">
     <button onclick="toggleView('scanner')" id="nav-scanner" class="active-nav flex flex-col items-center p-2 w-1/2">
         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="text-[20px] font-black uppercase tracking-widest">Scanner</span>
+        <span class="text-[18px] font-black uppercase tracking-widest">Scanner</span>
     </button>
     <button onclick="toggleView('history')" id="nav-history" class="text-white/20 flex flex-col items-center p-2 w-1/2">
         <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"></path></svg>
-        <span class="text-[20px] font-black uppercase tracking-widest">Mémoire</span>
+        <span class="text-[18px] font-black uppercase tracking-widest">Mémoire</span>
     </button>
 </nav>
 
@@ -218,10 +219,10 @@
         document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
         document.getElementById('history-body').innerHTML = logs.map(log => `
             <tr class="border-b border-zinc-800">
-                <td class="p-3 text-white/30 text-[20px]">${log.op}</td>
+                <td class="p-3 text-white/30 text-[18px]">${log.op}</td>
                 <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
                 <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
-                <td class="p-3 text-[20px] font-black leading-none">${log.time}<br><span class="text-[20px] text-white/20">${log.date}</span></td>
+                <td class="p-3 text-[18px] font-black leading-none">${log.time}<br><span class="text-[18px] text-white/20">${log.date}</span></td>
                 <td class="p-1"><button onclick="deleteEntry(${log.id})" class="text-red-900 font-bold text-xl px-2">×</button></td>
             </tr>
         `).join('');
@@ -258,9 +259,14 @@
                                
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./service-worker.js')
-      .then(() => console.log("تطبيقك جاهز للعمل بدون إنترنت!"))
-      .catch((err) => console.log("خطأ في التفعيل:", err));
-  }
+      .then(() => {
+          console.log("Service Worker: Application prête pour le mode hors-ligne !");
+      })
+      .catch((err) => {
+          console.error("Service Worker: Échec de l'activation :", err);
+      });
+        }
+    
     </script>
     
 </body>

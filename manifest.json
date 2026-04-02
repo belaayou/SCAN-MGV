@@ -1,27 +1,17 @@
 {
   "name": "MGV SCAN Stellantis",
   "short_name": "MGV SCAN",
+  "description": "Système de scan industriel Stellantis hors-ligne",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#000000",
-  "theme_color": "#eaea00",
+  "theme_color": "#EAEA00",
   "icons": [
     {
       "src": "IMG_20260328_193404.png",
       "sizes": "554x496",
-      "type": "image/png"
-    }
-  ]
-}
-{
-  "short_name": "ScanIndus",
-  "name": "Scan Industrial Terminal",
-  "description": "Système de scan industriel hors-ligne",
-  "icons": [
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/253/253308.png",
       "type": "image/png",
-      "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
@@ -31,12 +21,6 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0F172A",
-  "theme_color": "#EAB308",
   "scope": "./",
   "lang": "fr-FR"
 }
-

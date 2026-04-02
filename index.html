@@ -250,6 +250,13 @@
     }
 
     function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('lumen_user'); location.reload(); } }
-</script>
+                               
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then(() => console.log("تطبيقك جاهز للعمل بدون إنترنت!"))
+      .catch((err) => console.log("خطأ في التفعيل:", err));
+  }
+    </script>
+    
 </body>
 </html>

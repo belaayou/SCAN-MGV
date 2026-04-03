@@ -3,7 +3,7 @@ const urlsToCache = [
   './',
   './index.html',
   './manifest.json',
-  './IMG_20260328_193404.png.jpg',
+  './IMG_20260328_193404.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/html5-qrcode'
 ];

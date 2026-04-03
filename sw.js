@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mgv-scan-cache-v1';
+const CACHE_NAME = 'mgv-scan-cache-v2';
 const urlsToCache = [
   './',
   './index.html',

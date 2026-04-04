@@ -205,18 +205,85 @@
     }
 
     function addLogEntry(codeValue) {
-        const user = JSON.parse(localStorage.getItem('lumen_user'));
-        const now = new Date();
-        const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
-        const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-        logs.unshift({ id: Date.now(), op: user.id, code: codeValue, zone: '  ', date: dateStr, time: timeStr });
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        renderTable(); toggleView('history');
-        setTimeout(() => { 
-            const cells = document.querySelectorAll('.editable-cell');
-            if(cells[1]) { cells[1].focus(); document.execCommand('selectAll', false, null); }
-        }, 400);
+        // Configuration de l'URL Google Apps Script
+const GOOGLE_SCRIPT_URL = "VOTRE_URL_APP_SCRIPT_ICI"; // <--- REMPLACEZ PAR VOTRE LIEN
+
+/**
+ * Ajoute une nouvelle entrée de scan et gère la synchronisation
+ */
+async function addLogEntry(codeValue) {
+    const user = JSON.parse(localStorage.getItem('lumen_user'));
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    
+    // Création de l'objet entrée
+    const entry = { 
+        id: Date.now(), 
+        op: user.id, 
+        code: codeValue, 
+        zone: '  ', 
+        date: dateStr, 
+        time: timeStr,
+        synced: false 
+    };
+
+    // 1. Sauvegarde locale immédiate (Mode Hors-ligne)
+    logs.unshift(entry);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    
+    // 2. Mise à jour de l'interface
+    renderTable(); 
+    toggleView('history');
+
+    // 3. Auto-focus sur la cellule "Zone" (votre ancienne fonctionnalité)
+    setTimeout(() => { 
+        const cells = document.querySelectorAll('.editable-cell');
+        if(cells[1]) { 
+            cells[1].focus(); 
+            document.execCommand('selectAll', false, null); 
+        }
+    }, 400);
+
+    // 4. Tentative d'envoi vers Google Sheets
+    if (navigator.onLine) {
+        sendToGoogle(entry);
     }
+}
+
+/**
+ * Envoie les données vers Google Sheets
+ */
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) return;
+
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(entry)
+        });
+        
+        // Marquer comme synchronisé
+        entry.synced = true;
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        renderTable(); // Rafraîchir pour afficher le statut ✅
+        
+        console.log("Système : Données synchronisées ✅");
+    } catch (e) {
+        console.warn("Système : Échec de synchro, en attente de réseau... ⏳");
+    }
+}
+
+/**
+ * Surveillance de la connexion : Synchronise tout dès que le réseau revient
+ */
+window.addEventListener('online', () => {
+    console.log("Système : Réseau rétabli. Synchronisation en cours...");
+    logs.forEach(entry => {
+        if (!entry.synced) sendToGoogle(entry);
+    });
+});
+        
 
     function renderTable() {
         document.getElementById('flux-title').innerText = `Flux (${logs.length})`;

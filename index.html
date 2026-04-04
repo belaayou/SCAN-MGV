@@ -188,12 +188,40 @@
             renderTable(); startScanner();
         }
     }
-
-    function saveIdentity() {
-        const name = document.getElementById('reg-name').value;
-        const id = document.getElementById('reg-id').value;
-        if (name && id) { localStorage.setItem('lumen_user', JSON.stringify({name, id})); location.reload(); }
+        /**
+ * Active le terminal et enregistre l'identité de l'opérateur
+ * (Exécution instantanée en une seule pression)
+ */
+function saveIdentity() {
+    const nameInput = document.getElementById('reg-name');
+    const idInput = document.getElementById('reg-id');
+    
+    const name = nameInput.value.trim();
+    const id = idInput.value.trim();
+    
+    if (name && id) {
+        // 1. Sauvegarde immédiate des données dans le stockage local (LocalStorage)
+        const userData = { name: name, id: id };
+        localStorage.setItem('lumen_user', JSON.stringify(userData));
+        
+        // 2. Mise à jour de l'interface sans rechargement (Rapidité d'ouverture)
+        document.getElementById('display-name').innerText = name;
+        document.getElementById('display-id').innerText = "ID: " + id;
+        
+        // 3. Masquage instantané de l'écran d'enregistrement
+        document.getElementById('identity-screen').style.display = 'none';
+        
+        // 4. Activation immédiate de la caméra et de la table de flux
+        renderTable();
+        startScanner();
+        
+        console.log("Système : Accès autorisé. Terminal activé avec succès.");
+    } else {
+        // Alerte visuelle si les champs sont vides
+        nameInput.style.borderColor = name ? '#27272a' : '#eaea00';
+        idInput.style.borderColor = id ? '#27272a' : '#eaea00';
     }
+}
 
     function startScanner() {
         html5QrCode = new Html5Qrcode("reader");

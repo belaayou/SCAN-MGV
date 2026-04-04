@@ -1,32 +1,34 @@
 /**
  * Configuration du Service Worker - MGV SCAN Stellantis
- * Ce fichier permet au terminal de fonctionner sans connexion internet (Offline).
+ * Version : 7.1 (Optimisée pour le mode Hors-ligne)
  */
 
-const CACHE_NAME = 'mgv-scan-stellantis-v2';
+const CACHE_NAME = 'mgv-scan-v7.1';
 
-// Liste des fichiers à mettre en cache pour le mode hors-ligne
+// Liste des ressources critiques
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './IMG_20260328_193404.png',
+  'https://cdn.tailwindcss.com',
   'https://unpkg.com/html5-qrcode',
-  'https://cdn.tailwindcss.com'
+  'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap'
 ];
 
-// Étape 1 : Installation et mise en cache des fichiers
+// 1. Installation : On force la mise en cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Système : Mise en cache des ressources terminée');
-      return cache.addAll(ASSETS_TO_CACHE);
+      console.log('SW: Cache des ressources...');
+      // On utilise Promise.allSettled pour ne بر لا يتوقف التثبيت إذا فشل ملف واحد
+      return Promise.allSettled(ASSETS_TO_CACHE.map(url => cache.add(url)));
     })
   );
   self.skipWaiting();
 });
 
-// Étape 2 : Activation et nettoyage des anciens caches
+// 2. Activation : On nettoie les anciens caches (v1, v2...)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -35,23 +37,23 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
-  console.log('Système : Service Worker activé et prêt');
+  self.clients.claim();
 });
 
-// Étape 3 : Stratégie de récupération des fichiers (Cache First)
+// 3. Stratégie Fetch : Priorité au Cache pour la rapidité (Mode Excelled)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      // Retourne le fichier depuis le cache s'il existe, sinon utilise le réseau
       if (cachedResponse) {
-        return cachedResponse; 
+        return cachedResponse; // Retourne le fichier stocké immédiatement
       }
-      return fetch(event.request); 
+      return fetch(event.request); // Sinon, va le chercher sur internet
     }).catch(() => {
-      // Si hors-ligne et fichier non trouvé, charger la page d'accueil par défaut
+      // Si panne internet totale et fichier non caché
       if (event.request.mode === 'navigate') {
         return caches.match('./index.html');
       }
     })
   );
 });
+                                                    

@@ -260,14 +260,20 @@
 
     function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('lumen_user'); location.reload(); } }
 
-  if ('serviceWorker' in navigator) {
+// Configuration du Service Worker - MGV SCAN Stellantis
+if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js')
-        .then(reg => console.log('SW Registered!', reg))
-        .catch(err => console.error('SW Registration Failed!', err));
+        // Enregistrement du fichier service-worker.js
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => {
+                console.log('Système : Service Worker prêt (Mode Hors-ligne activé)');
+            })
+            .catch(err => {
+                console.error('Système : Échec de l’enregistrement du SW :', err);
+            });
     });
-     }
-    
+            }
+        
     </script>
     
 </body>

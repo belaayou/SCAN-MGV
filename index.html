@@ -230,41 +230,37 @@
 
     // --- LOGIQUE DE DONNÉES ET SYNCHRO ---
     async function addLogEntry(codeValue) {
-        const user = JSON.parse(localStorage.getItem('lumen_user'));
-        const now = new Date();
-        const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
-        const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-        
-        const entry = { 
-            id: Date.now(), 
-            op: user.id, 
-            code: codeValue, 
-            zone: '  ', 
-            date: dateStr, 
-            time: timeStr,
-            synced: false 
-        };
+    const user = JSON.parse(localStorage.getItem('lumen_user'));
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    
+    const entry = { 
+        id: Date.now(), 
+        op: user.id, 
+        code: codeValue, 
+        zone: '', // Initialisé vide pour attendre la saisie
+        date: dateStr, 
+        time: timeStr,
+        synced: false 
+    };
 
-        logs.unshift(entry);
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        
-        renderTable(); 
-        toggleView('history');
+    logs.unshift(entry);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    
+    renderTable(); 
+    toggleView('history');
 
-        // Focus automatique sur la zone éditable
-        setTimeout(() => { 
-            const cells = document.querySelectorAll('.editable-cell');
-            if(cells[1]) { 
-                cells[1].focus(); 
-                document.execCommand('selectAll', false, null); 
-            }
-        }, 400);
-
-        if (navigator.onLine) {
-            sendToGoogle(entry);
+    // Focus automatique pour corriger ou remplir la zone immédiatement
+    setTimeout(() => { 
+        const cells = document.querySelectorAll('.editable-cell');
+        if(cells[1]) { 
+            cells[1].focus(); 
+            document.execCommand('selectAll', false, null);
         }
-    }
-
+    }, 400);
+                }
+    
     async function sendToGoogle(entry) {
         if (!GOOGLE_SCRIPT_URL) return;
         try {
@@ -300,12 +296,19 @@
         `).join('');
     }
 
-    function updateEntry(id, field, val) {
-        const i = logs.findIndex(l => l.id === id);
-        if (i !== -1) { 
-            logs[i][field] = val.trim() || '---'; 
-            localStorage.setItem('lumen_logs', JSON.stringify(logs)); 
+    async function updateEntry(id, field, val) {
+    const i = logs.findIndex(l => l.id === id);
+    if (i !== -1) {
+        logs[i][field] = val.trim();
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        
+        // Déclenche l'envoi uniquement si la ZONE est remplie et non synchronisée
+        if (field === 'zone' && logs[i].zone !== '' && !logs[i].synced) {
+            if (navigator.onLine) {
+                sendToGoogle(logs[i]);
+            }
         }
+    }
     }
 
     function deleteEntry(id) { 

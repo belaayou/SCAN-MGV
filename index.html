@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="IMG_20260328_193404.png">
-    <meta name="theme-color" content="#EAB308">    
+    <meta name="theme-color" content="#EAB308">
+    
+
+    
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-capable" content="yes">
     
@@ -152,60 +155,192 @@
     </button>
 </nav>
 
-                <td class="p-3 text-[18px] font-black leading-none">
-                    ${log.time}<br>
-                    <span class="text-[12px] ${log.synced ? 'text-green-500' : 'text-white/20'}">
-                        ${log.synced ? 'SYNCHRONISÉ ✅' : log.date}
-                    </span>
-                </td>
+<script>
+    window.addEventListener('resize', () => {
+    document.body.style.height = window.innerHeight + 'px';
+});
+
+/* ... Your other functions (initApp, startScanner, etc.) ... */
+    
+    let html5QrCode;
+    let isProcessing = false;
+    let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+    let audioCtx = null;
+
+    function playScanSound(type = 'success') {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        if(type === 'success') { oscillator.type = 'square'; oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); }
+        else { oscillator.type = 'sawtooth'; oscillator.frequency.setValueAtTime(110, audioCtx.currentTime); }
+        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
+        oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function initApp() {
+        const user = JSON.parse(localStorage.getItem('lumen_user'));
+        if (user) {
+            document.getElementById('identity-screen').classList.add('hidden');
+            document.getElementById('display-name').innerText = user.name;
+            document.getElementById('display-id').innerText = `ID: ${user.id}`;
+            renderTable(); startScanner();
+        }
+    }
+        /**
+ * Active le terminal et enregistre l'identité de l'opérateur
+ * (Exécution instantanée en une seule pression)
+ */
+function saveIdentity() {
+    const nameInput = document.getElementById('reg-name');
+    const idInput = document.getElementById('reg-id');
+    
+    const name = nameInput.value.trim();
+    const id = idInput.value.trim();
+    
+    if (name && id) {
+        // 1. Sauvegarde immédiate des données dans le stockage local (LocalStorage)
+        const userData = { name: name, id: id };
+        localStorage.setItem('lumen_user', JSON.stringify(userData));
+        
+        // 2. Mise à jour de l'interface sans rechargement (Rapidité d'ouverture)
+        document.getElementById('display-name').innerText = name;
+        document.getElementById('display-id').innerText = "ID: " + id;
+        
+        // 3. Masquage instantané de l'écran d'enregistrement
+        document.getElementById('identity-screen').style.display = 'none';
+        
+        // 4. Activation immédiate de la caméra et de la table de flux
+        renderTable();
+        startScanner();
+        
+        console.log("Système : Accès autorisé. Terminal activé avec succès.");
+    } else {
+        // Alerte visuelle si les champs sont vides
+        nameInput.style.borderColor = name ? '#27272a' : '#eaea00';
+        idInput.style.borderColor = id ? '#27272a' : '#eaea00';
+    }
+}
+
+    function startScanner() {
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 400, height: 130 } }, (decodedText) => {
+            if (isProcessing) return;
+            isProcessing = true; playScanSound('success');
+            html5QrCode.pause(true); addLogEntry(decodedText);
+        }).catch(err => console.log(err));
+    }
+
+    function addLogEntry(codeValue) {
+        // Configuration de l'URL Google Apps Script
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxH9sh-fmBAx2FjyF6hS97F1IxwB7PGU4HHV9y7z2cBgQw_L2Qe_Yhu-t5kvNP0hEmO/exec"; // <--- REMPLACEZ PAR VOTRE LIEN
+
+/**
+ * Ajoute une nouvelle entrée de scan et gère la synchronisation
+ */
+async function addLogEntry(codeValue) {
+    const user = JSON.parse(localStorage.getItem('lumen_user'));
+    const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    
+    // Création de l'objet entrée
+    const entry = { 
+        id: Date.now(), 
+        op: user.id, 
+        code: codeValue, 
+        zone: '  ', 
+        date: dateStr, 
+        time: timeStr,
+        synced: false 
+    };
+
+    // 1. Sauvegarde locale immédiate (Mode Hors-ligne)
+    logs.unshift(entry);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    
+    // 2. Mise à jour de l'interface
+    renderTable(); 
+    toggleView('history');
+
+    // 3. Auto-focus sur la cellule "Zone" (votre ancienne fonctionnalité)
+    setTimeout(() => { 
+        const cells = document.querySelectorAll('.editable-cell');
+        if(cells[1]) { 
+            cells[1].focus(); 
+            document.execCommand('selectAll', false, null); 
+        }
+    }, 400);
+
+    // 4. Tentative d'envoi vers Google Sheets
+    if (navigator.onLine) {
+        sendToGoogle(entry);
+    }
+}
+
+/**
+ * Envoie les données vers Google Sheets
+ */
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("VOTRE_URL")) return;
+
+    try {
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(entry)
+        });
+        
+        // Marquer comme synchronisé
+        entry.synced = true;
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        renderTable(); // Rafraîchir pour afficher le statut ✅
+        
+        console.log("Système : Données synchronisées ✅");
+    } catch (e) {
+        console.warn("Système : Échec de synchro, en attente de réseau... ⏳");
+    }
+}
+
+/**
+ * Surveillance de la connexion : Synchronise tout dès que le réseau revient
+ */
+window.addEventListener('online', () => {
+    console.log("Système : Réseau rétabli. Synchronisation en cours...");
+    logs.forEach(entry => {
+        if (!entry.synced) sendToGoogle(entry);
+    });
+});
+        
+
+    function renderTable() {
+        document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
+        document.getElementById('history-body').innerHTML = logs.map(log => `
+            <tr class="border-b border-zinc-800">
+                <td class="p-3 text-white/30 text-[18px]">${log.op}</td>
+                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
+                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
+                <td class="p-3 text-[18px] font-black leading-none">${log.time}<br><span class="text-[18px] text-white/20">${log.date}</span></td>
                 <td class="p-1"><button onclick="deleteEntry(${log.id})" class="text-red-900 font-bold text-xl px-2">×</button></td>
             </tr>
         `).join('');
     }
 
-    async function updateEntry(id, field, val) {
-    const i = logs.findIndex(l => l.id === id);
-    if (i !== -1) {
-        logs[i][field] = val.trim();
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        
-        // Déclenche l'envoi uniquement si la ZONE est remplie et non synchronisée
-        if (field === 'zone' && logs[i].zone !== '' && !logs[i].synced) {
-            if (navigator.onLine) {
-                sendToGoogle(logs[i]);
-            }
-        }
-    }
+    function updateEntry(id, field, val) {
+        const i = logs.findIndex(l => l.id === id);
+        if (i !== -1) { logs[i][field] = val.trim() || '---'; localStorage.setItem('lumen_logs', JSON.stringify(logs)); }
     }
 
-    function deleteEntry(id) { 
-        if(confirm("Supprimer cette ligne ?")) { 
-            logs = logs.filter(l => l.id !== id); 
-            localStorage.setItem('lumen_logs', JSON.stringify(logs)); 
-            renderTable(); 
-        } 
-    }
+    function deleteEntry(id) { if(confirm("Supprimer ?")) { logs = logs.filter(l => l.id !== id); localStorage.setItem('lumen_logs', JSON.stringify(logs)); renderTable(); } }
 
-    function clearAllLogs() { 
-        if(confirm("⚠️ PURGER TOUTE LA MÉMOIRE ?")) { 
-            logs = []; 
-            localStorage.removeItem('lumen_logs'); 
-            renderTable(); 
-        } 
-    }
+    function clearAllLogs() { if(confirm("⚠️ PURGE ?")) { logs = []; localStorage.removeItem('lumen_logs'); renderTable(); } }
 
     function toggleView(v) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-        document.querySelectorAll('nav button').forEach(b => { 
-            b.classList.add('text-white/20'); 
-            b.classList.remove('active-nav'); 
-        });
+        document.querySelectorAll('nav button').forEach(b => { b.classList.add('text-white/20'); b.classList.remove('active-nav'); });
         document.getElementById(`view-${v}`).classList.remove('hidden');
         document.getElementById(`nav-${v}`).classList.add('active-nav');
-        if (v === 'scanner' && html5QrCode) { 
-            isProcessing = false; 
-            html5QrCode.resume(); 
-        }
+        if (v === 'scanner' && html5QrCode) { isProcessing = false; html5QrCode.resume(); }
     }
 
     function exportCSV() {
@@ -215,22 +350,26 @@
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `LUMEN_EXPORT.csv`; 
-        link.click();
+        link.download = `LUMEN_EXPORT.csv`; link.click();
     }
 
-    // --- SERVICE WORKER ET ONLINE CHECK ---
-    window.addEventListener('online', () => {
-        logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
+    function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('lumen_user'); location.reload(); } }
+
+// Configuration du Service Worker - MGV SCAN Stellantis
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        // Enregistrement du fichier service-worker.js
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => {
+                console.log('Système : Service Worker prêt (Mode Hors-ligne activé)');
+            })
+            .catch(err => {
+                console.error('Système : Échec de l’enregistrement du SW :', err);
+            });
     });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('SW Ready'))
-                .catch(err => console.error('SW Error', err));
-        });
-    }
-</script>
+            }
+        
+    </script>
+    
 </body>
     </html>

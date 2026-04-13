@@ -210,14 +210,38 @@
     }
 
     function startScanner() {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 20, qrbox: { width: 400, height: 130 } }, (decodedText) => {
+    html5QrCode = new Html5Qrcode("reader");
+    
+    const config = { 
+        fps: 20, 
+        qrbox: { width: 400, height: 130 } 
+    };
+
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        (decodedText) => {
             if (isProcessing) return;
-            isProcessing = true; playScanSound('success');
-            html5QrCode.pause(true); 
-            addLogEntry(decodedText);
-        }).catch(err => console.log(err));
-    }
+
+            // Nettoyage de la chaîne (enlève les espaces/retours à la ligne)
+            const cleanText = decodedText.trim().toUpperCase();
+
+            // Filtre VIS Stellantis (1 lettre + 7 chiffres)
+            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+                isProcessing = true;
+                playScanSound('success'); // Utilise le nom correct de votre fonction
+                html5QrCode.pause(true);
+                addLogEntry(cleanText);
+            } else {
+                // Optionnel : un retour visuel ou sonore si le code ne respecte pas le format
+                console.log("Format invalide : " + cleanText);
+            }
+        }
+    ).catch(err => {
+        console.error("Erreur de démarrage du scanner:", err);
+    });
+                    }
+    
 
     async function addLogEntry(codeValue) {
     const user = JSON.parse(localStorage.getItem('lumen_user'));

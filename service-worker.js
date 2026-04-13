@@ -10,7 +10,7 @@ const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './IMG_20260328_193404.png',
+  './IMG_20260413_130653.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/html5-qrcode',
   'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap'

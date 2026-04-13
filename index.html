@@ -50,11 +50,19 @@
     overflow: hidden;
 }
         { background: #000000; color: #ffffff; font-family: 'Inter', sans-serif; height: 100svh; overflow: hidden; display: flex; flex-direction: column; }
-        .scan-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 400px; height: 180px; border: 1px solid rgba(234, 234, 0, 0.4);
-            z-index: 20; pointer-events: none;
-        }
+        /* Style pour ton rectangle jaune personnalisé */
+.scan-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px; /* Doit être identique au qrbox du script */
+    height: 140px; /* Doit être identique au qrbox du script */
+    border: 1px solid rgba(234, 234, 0, 0.2);
+    z-index: 20;
+    pointer-events: none;
+}
+        
         .corner { position: absolute; width: 30px; height: 30px; border: 5px solid #eaea00; }
         .top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
         .top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
@@ -218,7 +226,7 @@
     
     const config = { 
         fps: 20, 
-        qrbox: { width: 400, height: 130 } 
+        qrbox: { width: 300, height: 140 } 
     };
 
     html5QrCode.start(

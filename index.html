@@ -173,12 +173,12 @@
         // Mode normal : Utilisateur connecté
         document.getElementById('identity-screen').classList.add('hidden');
         document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
-        document.getElementById('display-id').innerText = ID: ${user.id};
+        // CORRECTION ICI (Ajout des backticks) :
+        document.getElementById('display-id').innerText = `ID: ${user.id}`;
         renderTable(); 
         startScanner();
     } else if (!navigator.onLine) {
         // MODE SECOURS : Pas d'internet et pas de session
-        // On permet l'accès au scanner pour ne pas bloquer la production
         document.getElementById('identity-screen').classList.add('hidden');
         document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
         document.getElementById('display-id').innerText = "ID: TEMP";

@@ -48,7 +48,7 @@
         <p id="auth-title" class="text-zinc-500 font-bold text-xs tracking-widest mb-8 uppercase">Connexion Terminal</p>
 
         <div id="login-form" class="space-y-4">
-            <input type="text" id="login-id" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
+            <input type="text" id="login-id"autocapitalize="characters" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
             <input type="password" id="login-pass" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
             <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
             <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
@@ -178,19 +178,28 @@
     }
 
     async function login() {
-        const id = document.getElementById('login-id').value.trim().toUpperCase();
-        const pass = document.getElementById('login-pass').value;
-        if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
-        try {
-            const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
-            const data = await res.json();
-            if (data.status === 'active') {
-                localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
-                location.reload();
-            } else if (data.status === 'blocked') alert("🛑 ACCÈS REFUSÉ");
-            else alert("❌ Identifiants incorrects.");
-        } catch(e) { alert("⚠️ Erreur serveur."); }
+    const id = document.getElementById('login-id').value.trim().toUpperCase();
+    const pass = document.getElementById('login-pass').value;
+    
+    if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
+
+    // SI HORS LIGNE : On vérifie si l'utilisateur existe déjà en mémoire locale
+    if (!navigator.onLine) {
+        const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
+        if (savedUser && savedUser.id === id) {
+            alert("Mode hors-ligne activé");
+            location.reload(); // Le initApp() fera le reste
+            return;
+        } else {
+            alert("Première connexion requise avec Internet.");
+            return;
+        }
     }
+
+    // SI EN LIGNE : On fait la requête normale
+    try {
+        const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
+        // ... (le reste de ton code login actuel)
 
     async function register() {
         const n = document.getElementById('reg-nom').value.trim().toUpperCase();

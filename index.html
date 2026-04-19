@@ -178,31 +178,40 @@
     }
 
     async function login() {
-    const id = document.getElementById('login-id').value.trim().toUpperCase();
-    const pass = document.getElementById('login-pass').value;
-    
-    if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
+        const id = document.getElementById('login-id').value.trim().toUpperCase();
+        const pass = document.getElementById('login-pass').value;
+        
+        if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
 
-    // SI HORS LIGNE : On vérifie si l'utilisateur existe déjà en mémoire locale
-    if (!navigator.onLine) {
-        const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
-        if (savedUser && savedUser.id === id) {
-            alert("Mode hors-ligne activé");
-            location.reload(); // Le initApp() fera le reste
-            return;
-        } else {
-            alert("Première connexion requise avec Internet.");
+        // GESTION HORS LIGNE
+        if (!navigator.onLine) {
+            const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
+            if (savedUser && savedUser.id === id) {
+                alert("Mode hors-ligne activé");
+                initApp(); 
+                return;
+            } else {
+                alert("Première connexion requise avec Internet.");
+                return;
+            }
         }
-            return;
+
+        // GESTION EN LIGNE
+        try {
+            const res = await fetch(${GOOGLE_URL}?action=login&id=${id}&pass=${pass});
+            const data = await res.json();
+            if (data.status === 'active') {
+                localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
+                location.reload();
+            } else if (data.status === 'blocked') {
+                alert("🛑 ACCÈS REFUSÉ");
+            } else {
+                alert("❌ Identifiants incorrects.");
+            }
+        } catch(e) { 
+            alert("⚠️ Erreur serveur."); 
         }
-    }
-
-    // SI EN LIGNE : On fait la requête normale
-    try {
-        const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
-        // ... (le reste de ton code login actuel)
-
-    async function register() {
+    }    async function register() {
         const n = document.getElementById('reg-nom').value.trim().toUpperCase();
         const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
         const i = document.getElementById('reg-id').value.trim().toUpperCase();

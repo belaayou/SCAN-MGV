@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-v4'; // On passe en v4
+const CACHE_NAME = 'stellantis-v4'; // On passe en v3
 const ASSETS = [
   './',
   './index.html',

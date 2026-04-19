@@ -1,24 +1,40 @@
-const CACHE_NAME = 'stellantis-v2';
-// Liste des fichiers à mettre en cache
+const CACHE_NAME = 'stellantis-v3'; // On passe en v3
 const ASSETS = [
   './',
   './index.html',
-  './IMG_20260413_130653.png',
-  'https://cdn.tailwindcss.com',
-  'https://unpkg.com/html5-qrcode',
-  'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap'
+  './manifest.json',
+  './IMG_20260413_130653.png'
 ];
 
-// Installation : Mise en cache des fichiers
+// Installation : Mise en cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
+      console.log('Cache ouvert');
       return cache.addAll(ASSETS);
     })
   );
+  self.skipWaiting();
 });
 
-// Stratégie : Répondre avec le cache, sinon chercher sur le réseau
+// Nettoyage des vieux caches (important pour passer de v2 à v3)
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('Suppression ancien cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+// Stratégie : Répondre avec le cache, sinon réseau
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {

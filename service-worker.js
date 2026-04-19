@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-v1';
+const CACHE_NAME = 'stellantis-v2';
 // Liste des fichiers à mettre en cache
 const ASSETS = [
   './',

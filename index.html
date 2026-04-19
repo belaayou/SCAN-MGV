@@ -357,23 +357,46 @@
     }
 
     async function sendToGoogle(entry) {
-        try {
-            const params = new URLSearchParams({
-                action: 'saveScan',
-                op: entry.op,
-                code: entry.code,
-                zone: entry.zone,
-                date: entry.date,
-                time: entry.time
-            });
-            const res = await fetch(`${GOOGLE_URL}?${params.toString()}`);
-            const data = await res.json();
-            if (data.status === "success") {
-                entry.synced = true;
+    // 1. Vérifie si le téléphone a internet
+    if (!navigator.onLine) {
+        console.warn("Mode Hors-ligne : scan stocké localement.");
+        return;
+    }
+
+    // 2. Construction de l'URL avec les paramètres
+    // On utilise encodeURIComponent pour éviter les erreurs avec les espaces ou caractères spéciaux
+    const url = `${GOOGLE_SCRIPT_URL}?action=saveScan` +
+                `&op=${encodeURIComponent(entry.op)}` +
+                `&code=${encodeURIComponent(entry.code)}` +
+                `&zone=${encodeURIComponent(entry.zone)}` +
+                `&date=${encodeURIComponent(entry.date)}` +
+                `&time=${encodeURIComponent(entry.time)}`;
+
+    try {
+        // 3. Envoi de la requête
+        const response = await fetch(url, { 
+            method: 'GET',
+            mode: 'cors' // Permet de communiquer avec Google
+        });
+
+        if (response.ok) {
+            // 4. Si succès, on marque l'entrée comme synchronisée
+            entry.synced = true;
+            
+            // Mise à jour du stockage local (localStorage)
+            const logIndex = logs.findIndex(l => l.id === entry.id);
+            if (logIndex !== -1) {
+                logs[logIndex].synced = true;
                 localStorage.setItem('lumen_logs', JSON.stringify(logs));
-                renderTable();
             }
-        } catch (e) { console.error("Erreur Synchro:", e); }
+            
+            // Rafraîchir le tableau pour afficher le badge "SUCCESS ✅"
+            renderTable();
+            console.log("✅ Données envoyées à COMPTE-NAVETTE");
+        }
+    } catch (e) {
+        console.error("❌ Erreur lors de l'envoi vers Google Sheets :", e);
+    }
     }
 
     async function updateEntry(id, field, val) {

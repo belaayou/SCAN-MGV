@@ -4,20 +4,22 @@
   "description": "Système de scan industriel Stellantis hors-ligne",
   "start_url": "./index.html",
   "display": "standalone",
+  "display_override": ["standalone", "fullscreen"],
   "orientation": "portrait",
-  "background_color": "#0F172A",
-  "theme_color": "#EAB308",
+  "background_color": "#000000",
+  "theme_color": "#eaea00",
   "icons": [
     {
       "src": "IMG_20260413_130653.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/253/253308.png",
       "sizes": "512x512",
       "type": "image/png"
+      "purpose": "any maskable"
     }
   ],
   "lang": "fr-FR"

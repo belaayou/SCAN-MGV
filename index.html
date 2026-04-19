@@ -177,7 +177,7 @@
         }
     }
 
-    async function login() {
+   async function login() {
         const id = document.getElementById('login-id').value.trim().toUpperCase();
         const pass = document.getElementById('login-pass').value;
         
@@ -198,7 +198,8 @@
 
         // GESTION EN LIGNE
         try {
-            const res = await fetch(${GOOGLE_URL}?action=login&id=${id}&pass=${pass});
+            // AJOUT DES BACKTICKS ICI :
+            const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
             const data = await res.json();
             if (data.status === 'active') {
                 localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
@@ -211,7 +212,11 @@
         } catch(e) { 
             alert("⚠️ Erreur serveur."); 
         }
-    }    async function register() {
+    } 
+    // Fin de login
+    async function register() {
+        const n = document.getElementById('reg-nom').value.trim().toUpperCase();
+        // ... le reste de ton code register est correct    async function register() {
         const n = document.getElementById('reg-nom').value.trim().toUpperCase();
         const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
         const i = document.getElementById('reg-id').value.trim().toUpperCase();

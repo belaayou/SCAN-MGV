@@ -320,37 +320,49 @@
     });
 
     function addLogEntry(codeValue) {
-    const user = JSON.parse(localStorage.getItem('lumen_user')) || {id: "99"};
-    const now = new Date();
-    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
-    const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    // 1. Récupérer l'utilisateur qui s'est connecté sur CE téléphone
+    const userData = localStorage.getItem('lumen_user');
     
-    const entry = { 
-        id: Date.now(), 
-        op: user.id, 
-        code: codeValue, 
-        zone: '', 
-        date: dateStr, 
-        time: timeStr,
-        synced: false 
-    };
-
-    // 1. Ajouter en haut de la liste
-    logs.unshift(entry); 
-    
-    // 2. Sauvegarder dans la mémoire du téléphone
-    localStorage.setItem('lumen_logs', JSON.stringify(logs));
-    
-    // 3. Forcer la mise à jour visuelle du tableau
-    renderTable(); 
-    
-    // 4. Basculer sur la vue "Mémoire" pour voir le résultat
-    toggleView('history');
-
-    // 5. Autoriser un nouveau scan après un court délai
-    setTimeout(() => { isProcessing = false; }, 2000);
+    // 2. Vérification de sécurité
+    if (!userData) {
+        alert("Erreur : Aucun opérateur connecté. Veuillez vous reconnecter.");
+        location.reload(); // Force le retour à l'écran d'identité
+        return;
     }
 
+    const user = JSON.parse(userData);
+    const now = new Date();
+    
+    // Formatage de la date (ex: 19/4) et de l'heure (ex: 14:30)
+    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    
+    // 3. Création de l'entrée avec le BON ID (plus de "99")
+    const entry = { 
+        id: Date.now(), 
+        op: user.id,      // Utilise l'ID de la personne connectée (ex: 55 ou 14)
+        code: codeValue, 
+        zone: '',         // Reste vide jusqu'à la saisie manuelle
+        date: dateStr, 
+        time: timeStr,
+        synced: false     // Deviendra true après l'envoi Google Sheets
+    };
+
+    // 4. Mise à jour de la mémoire locale
+    logs.unshift(entry);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    
+    // 5. Mise à jour visuelle
+    renderTable(); 
+    toggleView('history');
+
+    // 6. Petit feedback sonore ou vibration
+    if (navigator.vibrate) navigator.vibrate(50); 
+    
+    // Réinitialisation du verrou de scan après 1.5 seconde
+    setTimeout(() => { isProcessing = false; }, 1500);
+    }
+    
     async function sendToGoogle(entry) {
     // 1. Vérifie si le téléphone a internet
     if (!navigator.onLine) {

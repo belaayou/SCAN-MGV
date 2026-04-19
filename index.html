@@ -214,43 +214,31 @@
     function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('StellantisUser'); location.reload(); } }
 
     function startScanner() {
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
-    }
-    
+    html5QrCode = new Html5Qrcode("reader");
+    const config = { fps: 20, qrbox: { width: 400, height: 160 } };
+
     html5QrCode.start(
         { facingMode: "environment" }, 
-        { fps: 20, qrbox: { width: 400, height: 160 } }, 
-        // C'EST ICI QUE SE TROUVE LA LOGIQUE "onScanSuccess"
+        config, 
         (decodedText) => {
             if (isProcessing) return;
+            
             const cleanText = decodedText.trim().toUpperCase();
             
-            // On vérifie le format (1 lettre + 7 chiffres)
+            // FILTRE : Vérifiez si votre code respecte bien ce format (1 lettre + 7 chiffres)
+            // Si vos codes sont différents, enlevez cette condition IF
             if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
                 isProcessing = true;
+                playScanSound('success');
                 
-                // 1. On joue le son
-                playScanSound();
+                // --- C'EST CETTE LIGNE QUI AJOUTE AU TABLEAU ---
+                addLogEntry(cleanText); 
                 
-                // 2. On ajoute l'entrée
-                addLogEntry(cleanText);
-                
-                // 3. On met en pause pour éviter les doubles scans
                 html5QrCode.pause(true);
-                
-                // 4. ON BASCULE SUR L'ONGLET MÉMOIRE
-                toggleView('history');
-                
-                // On réinitialise le verrou après 2 secondes si besoin
-                setTimeout(() => { isProcessing = false; }, 2000);
             }
         }
-    ).then(() => {
-        videoStream = html5QrCode.getRunningTrack();
-    }).catch(err => console.error("Erreur Camera:", err));
-}
-
+    );
+    }
 
     async function toggleTorch() {
     if (!html5QrCode || !html5QrCode.isScanning) {
@@ -332,7 +320,7 @@
     });
 
     function addLogEntry(codeValue) {
-    const user = JSON.parse(localStorage.getItem('lumen_user'));
+    const user = JSON.parse(localStorage.getItem('lumen_user')) || {id: "99"};
     const now = new Date();
     const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
     const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
@@ -341,19 +329,26 @@
         id: Date.now(), 
         op: user.id, 
         code: codeValue, 
-        zone: '', // Toujours vide ici
+        zone: '', 
         date: dateStr, 
         time: timeStr,
         synced: false 
     };
 
-    logs.unshift(entry);
+    // 1. Ajouter en haut de la liste
+    logs.unshift(entry); 
+    
+    // 2. Sauvegarder dans la mémoire du téléphone
     localStorage.setItem('lumen_logs', JSON.stringify(logs));
     
+    // 3. Forcer la mise à jour visuelle du tableau
     renderTable(); 
+    
+    // 4. Basculer sur la vue "Mémoire" pour voir le résultat
     toggleView('history');
 
-    // On ne lance PAS sendToGoogle ici
+    // 5. Autoriser un nouveau scan après un court délai
+    setTimeout(() => { isProcessing = false; }, 2000);
     }
 
     async function sendToGoogle(entry) {

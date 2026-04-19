@@ -498,11 +498,11 @@ function renderTable() {
     });
 
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('SW Ready'))
-                .catch(err => console.error('SW Error', err));
-        });
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('SW Ready'))
+            .catch(err => console.error('SW Error', err));
+    });
     }
 </script>
 </body>

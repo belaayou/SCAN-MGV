@@ -365,7 +365,7 @@ const dateStr = now.toLocaleDateString('fr-FR', {
     toggleView('history');
 
     // 6. Petit feedback sonore ou vibration
-    if (navigator.vibrate) navigator.vibrate(50); 
+    // if (navigator.vibrate) navigator.vibrate(50); 
     
     // Réinitialisation du verrou de scan après 1.5 seconde
     setTimeout(() => { isProcessing = false; }, 1500);

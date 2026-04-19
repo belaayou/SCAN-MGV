@@ -244,12 +244,38 @@
         document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
     }
 
-    function logoutIdentity() { if(confirm("Quitter ?")) { localStorage.removeItem('StellantisUser'); location.reload(); } }
+    function logoutIdentity() { 
+    if(confirm("Se déconnecter de la session ?")) { 
+        localStorage.removeItem('StellantisUser'); 
+        // Si on a internet, on recharge pour revenir au login
+        if (navigator.onLine) {
+            location.reload(); 
+        } else {
+            // Hors-ligne, on reste sur l'app mais en mode TEMP
+            alert("Déconnecté. L'app reste active en mode secours.");
+            initApp(); 
+        }
+    } 
+}
 
-    function startScanner() {
+  async function startScanner() {
+    // 1. Sécurité : On arrête toute instance existante pour libérer la caméra
+    if (html5QrCode) {
+        try {
+            await html5QrCode.stop();
+        } catch (err) {
+            console.log("Nettoyage scanner...");
+        }
+    }
+
     html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 20, qrbox: { width: 400, height: 160 } };
+    const config = { 
+        fps: 20, 
+        qrbox: { width: 400, height: 160 },
+        aspectRatio: 1.0 // Aide à stabiliser l'affichage sur certains téléphones
+    };
 
+    // 2. Lancement avec gestion d'erreur (Indispensable hors-ligne)
     html5QrCode.start(
         { facingMode: "environment" }, 
         config, 
@@ -258,20 +284,27 @@
             
             const cleanText = decodedText.trim().toUpperCase();
             
-            // FILTRE : Vérifiez si votre code respecte bien ce format (1 lettre + 7 chiffres)
-            // Si vos codes sont différents, enlevez cette condition IF
+            // FILTRE : 1 lettre + 7 chiffres (ex: T5071035)
             if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
                 isProcessing = true;
                 playScanSound('success');
                 
-                // --- C'EST CETTE LIGNE QUI AJOUTE AU TABLEAU ---
                 addLogEntry(cleanText); 
                 
+                // Pause visuelle avant le prochain scan
                 html5QrCode.pause(true);
+                setTimeout(() => {
+                    isProcessing = false;
+                    html5QrCode.resume();
+                }, 2000);
             }
         }
-    );
-    }
+    ).catch(err => {
+        // 3. Si la caméra ne s'allume pas (écran noir), on réessaie après 1 seconde
+        console.error("Erreur Caméra : ", err);
+        setTimeout(startScanner, 1000);
+    });
+}
 
     async function toggleTorch() {
     if (!html5QrCode || !html5QrCode.isScanning) {

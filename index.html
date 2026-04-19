@@ -402,19 +402,16 @@
     async function updateEntry(id, field, val) {
     const i = logs.findIndex(l => l.id === id);
     if (i !== -1) {
-        logs[i][field] = val.trim().toUpperCase(); // On met en majuscule pour la propreté
+        logs[i][field] = val.trim().toUpperCase();
         localStorage.setItem('lumen_logs', JSON.stringify(logs));
         
-        // CONDITION : On envoie à Google UNIQUEMENT si la ZONE vient d'être remplie
-        if (field === 'zone' && logs[i].zone !== '' && !logs[i].synced) {
-            if (navigator.onLine) {
-                sendToGoogle(logs[i]);
-            } else {
-                alert("Hors connexion : sera synchronisé plus tard.");
-            }
+        // SI on vient de modifier la 'zone' ET qu'elle n'est pas vide
+        if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) {
+            sendToGoogle(logs[i]);
         }
     }
     }
+    
 function renderTable() {
         document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
         document.getElementById('history-body').innerHTML = logs.map(log => `

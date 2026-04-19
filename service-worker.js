@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-v4'; // On passe en v3
+const CACHE_NAME = 'stellantis-mgv-v6'; // Change le chiffre à chaque modif
 const ASSETS = [
   './',
   './index.html',
@@ -6,39 +6,38 @@ const ASSETS = [
   './IMG_20260413_130653.png'
 ];
 
-// Installation : Mise en cache
+// Installation : On force la mise en cache
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Cache ouvert');
       return cache.addAll(ASSETS);
     })
   );
   self.skipWaiting();
 });
 
-// Nettoyage des vieux caches (important pour passer de v2 à v3)
+// Activation : On supprime les vieux caches pour éviter les bugs
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('Suppression ancien cache:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
+    caches.keys().then((keys) => {
+      return Promise.all(keys.map((key) => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }));
     })
   );
-  return self.clients.claim();
 });
 
-// Stratégie : Répondre avec le cache, sinon réseau
+// INTERCEPTION : C'est ici que la magie opère
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+      // On donne le cache si on l'a, sinon on va sur le réseau
+      return response || fetch(event.request).catch(() => {
+        // Si même le réseau échoue (hors ligne), on renvoie index.html par défaut
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
     })
   );
 });

@@ -334,7 +334,12 @@
     const now = new Date();
     
     // Formatage de la date (ex: 19/4) et de l'heure (ex: 14:30)
-    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    // Remplace l'ancienne ligne dateStr par celle-ci :
+const dateStr = now.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit'
+});
     const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
     
     // 3. Création de l'entrée avec le BON ID (plus de "99")

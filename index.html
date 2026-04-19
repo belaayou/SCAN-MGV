@@ -166,16 +166,27 @@
     let audioCtx = null;
     let videoStream = null;
 
-    function initApp() {
-        const user = JSON.parse(localStorage.getItem('StellantisUser'));
-        if (user) {
-            document.getElementById('identity-screen').classList.add('hidden');
-            document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            renderTable(); 
-            startScanner();
-        }
+   function initApp() {
+    const user = JSON.parse(localStorage.getItem('StellantisUser'));
+    
+    if (user) {
+        // Mode normal : Utilisateur connecté
+        document.getElementById('identity-screen').classList.add('hidden');
+        document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
+        document.getElementById('display-id').innerText = ID: ${user.id};
+        renderTable(); 
+        startScanner();
+    } else if (!navigator.onLine) {
+        // MODE SECOURS : Pas d'internet et pas de session
+        // On permet l'accès au scanner pour ne pas bloquer la production
+        document.getElementById('identity-screen').classList.add('hidden');
+        document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
+        document.getElementById('display-id').innerText = "ID: TEMP";
+        renderTable(); 
+        startScanner();
+        alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");
     }
+}
 
    async function login() {
         const id = document.getElementById('login-id').value.trim().toUpperCase();

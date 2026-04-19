@@ -372,7 +372,7 @@
 
     // 2. Construction de l'URL avec les paramètres
     // On utilise encodeURIComponent pour éviter les erreurs avec les espaces ou caractères spéciaux
-    const url = `${GOOGLE_SCRIPT_URL}?action=saveScan` +
+    const url = `${GOOGLE_URL}?action=saveScan` +
                 `&op=${encodeURIComponent(entry.op)}` +
                 `&code=${encodeURIComponent(entry.code)}` +
                 `&zone=${encodeURIComponent(entry.zone)}` +

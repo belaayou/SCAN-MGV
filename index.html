@@ -332,25 +332,29 @@
     });
 
     function addLogEntry(codeValue) {
-    const user = JSON.parse(localStorage.getItem('StellantisUser'));
+    const user = JSON.parse(localStorage.getItem('lumen_user'));
     const now = new Date();
+    const dateStr = `${now.getDate()}/${now.getMonth() + 1}`;
+    const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    
     const entry = { 
         id: Date.now(), 
-        op: user ? user.id : '55', // '55' par défaut si pas d'utilisateur
+        op: user.id, 
         code: codeValue, 
-        zone: '', 
-        date: `${now.getDate()}/${now.getMonth() + 1}`, 
-        time: now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}),
+        zone: '', // Toujours vide ici
+        date: dateStr, 
+        time: timeStr,
         synced: false 
     };
-    
+
     logs.unshift(entry);
     localStorage.setItem('lumen_logs', JSON.stringify(logs));
-    renderTable(); 
     
-    // ON LANCE LA SYNCHRO DIRECTEMENT ICI
-    sendToGoogle(entry);
-}
+    renderTable(); 
+    toggleView('history');
+
+    // On ne lance PAS sendToGoogle ici
+    }
 
     async function sendToGoogle(entry) {
         try {
@@ -372,15 +376,21 @@
         } catch (e) { console.error("Erreur Synchro:", e); }
     }
 
-    function updateEntry(id, field, val) {
-        const i = logs.findIndex(l => l.id === id);
-        if (i !== -1) {
-            logs[i][field] = val.trim().toUpperCase();
-            localStorage.setItem('lumen_logs', JSON.stringify(logs));
-            if (field === 'zone' && logs[i].zone !== '' && !logs[i].synced) {
+    async function updateEntry(id, field, val) {
+    const i = logs.findIndex(l => l.id === id);
+    if (i !== -1) {
+        logs[i][field] = val.trim().toUpperCase(); // On met en majuscule pour la propreté
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        
+        // CONDITION : On envoie à Google UNIQUEMENT si la ZONE vient d'être remplie
+        if (field === 'zone' && logs[i].zone !== '' && !logs[i].synced) {
+            if (navigator.onLine) {
                 sendToGoogle(logs[i]);
+            } else {
+                alert("Hors connexion : sera synchronisé plus tard.");
             }
         }
+    }
     }
 function renderTable() {
         document.getElementById('flux-title').innerText = `Flux (${logs.length})`;

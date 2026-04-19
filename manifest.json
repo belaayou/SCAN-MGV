@@ -13,14 +13,9 @@
       "src": "IMG_20260413_130653.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/253/253308.png",
-      "sizes": "512x512",
-      "type": "image/png"
-      "purpose": "any maskable"
+      "purpose": "any  maskable"
     }
+    
   ],
   "lang": "fr-FR"
 }

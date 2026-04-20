@@ -7,7 +7,7 @@ const ASSETS = [
   './manifest.json',
   './tailwind.js',    // Votre fichier local
   './qrcode.js',      // Votre fichier local
-  './logo.png'        // Votre icône
+  './IMG_20260413_130653.png'        
 ];
 
 // Installation : On télécharge les fichiers dans le cache

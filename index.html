@@ -267,7 +267,7 @@
         }
     }
 
-    html5QrCode = new Html5Qrcode("reader");
+    html5QrCode = new Html5QrCode("reader");
     const config = { 
         fps: 20, 
         qrbox: { width: 400, height: 160 },
@@ -407,7 +407,8 @@ const dateStr = now.toLocaleDateString('fr-FR', {
 });
     const timeStr = now.toLocaleTimeString('fr-FR', { 
     hour: '2-digit', 
-    minute: '2-digit' 
+    minute: '2-digit',
+    seconde: '2-digit'
 });
     
     // 3. Création de l'entrée avec le BON ID (plus de "99")

@@ -1,8 +1,8 @@
 {
   "name": "MGV SCAN Stellantis",
   "short_name": "MGV SCAN",
-  "description": "Système de scan industriel Stellantis hors-ligne",
-  "start_url": "index.html",
+  "description": "Système de scan industriel Stellantis opérationnel hors-ligne",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#000000",

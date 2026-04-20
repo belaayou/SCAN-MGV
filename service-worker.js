@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-mgv-v7.1';
+const CACHE_NAME = 'stellantis-mgv-v7.2';
 
 // Liste des fichiers à sauvegarder dans le téléphone
 const ASSETS = [
@@ -6,7 +6,7 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './tailwind.js',    // Votre fichier local
-  './qrcode.js',      // Votre fichier local
+  './html5-qrcode.min.js',      // Votre fichier local
   './IMG_20260413_130653.png'        
 ];
 

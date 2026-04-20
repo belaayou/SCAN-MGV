@@ -86,7 +86,7 @@
     </div>
 </header>
 
-<main class="flex-1 flex flex-col overflow-hidden relative">
+main class="flex-1 flex flex-col overflow-hidden relative">
     <section id="view-scanner" class="view-section flex-1 flex flex-col">
         <div class="relative flex-1 bg-zinc-950 overflow-hidden">
             <div id="reader" class="h-full"></div>
@@ -257,49 +257,28 @@
     } 
 }
  
-    async function startScanner() {
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop();
-        } catch (err) {
-            console.log("Nettoyage scanner...");
+    function startScanner() {
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
         }
-    }
-
-    // CORRECTION : Q majuscule, c minuscule
-    html5QrCode = new Html5Qrcode("reader"); 
-    
-    const config = { 
-        fps: 20, 
-        qrbox: { width: 400, height: 160 },
-        aspectRatio: 1.0 
-    };
-
-    html5QrCode.start(
-        { facingMode: "environment" }, // CORRECTION : Plus flexible
-        config, 
-        (decodedText) => {
-            if (isProcessing) return;
-            const cleanText = decodedText.trim().toUpperCase();
-            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                isProcessing = true;
-                playScanSound(); 
-                addLogEntry(cleanText); 
-                html5QrCode.pause(true);
-                setTimeout(() => {
-                    isProcessing = false;
-                    html5QrCode.resume();
-                }, 2000);
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            { fps: 20, qrbox: { width: 400, height: 160 } }, 
+            (decodedText) => {
+                if (isProcessing) return;
+                const cleanText = decodedText.trim().toUpperCase();
+                if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+                    isProcessing = true;
+                    html5QrCode.pause(true);
+                    playScanSound('success');
+                    addLogEntry(cleanText);
+                }
             }
-        }
-    ).catch(err => {
-        console.error("Erreur Caméra : ", err);
-        // On évite la boucle infinie si l'utilisateur refuse
-        if(err !== "NotAllowedError") {
-            setTimeout(startScanner, 2000);
-        }
-    });
-}
+        ).then(() => {
+            videoStream = html5QrCode.getRunningTrack();
+        }).catch(err => console.error("Erreur Camera:", err));
+    }
 
     async function toggleTorch() {
     if (!html5QrCode || !html5QrCode.isScanning) {

@@ -258,8 +258,6 @@
 }
  
     async function startScanner() {
-    alert("Le code se lance !");
-    // 1. Sécurité : On arrête toute instance existante pour libérer la caméra
     if (html5QrCode) {
         try {
             await html5QrCode.stop();
@@ -268,30 +266,25 @@
         }
     }
 
-    html5QrCode = new Html5Qrcode("reader");
+    // CORRECTION : Q majuscule, c minuscule
+    html5QrCode = new Html5Qrcode("reader"); 
+    
     const config = { 
         fps: 20, 
         qrbox: { width: 400, height: 160 },
-        aspectRatio: 1.0 // Aide à stabiliser l'affichage sur certains téléphones
+        aspectRatio: 1.0 
     };
 
-    // 2. Lancement avec gestion d'erreur (Indispensable hors-ligne)
     html5QrCode.start(
-        { facingMode: { exact:"environment" } }, 
+        { facingMode: "environment" }, // CORRECTION : Plus flexible
         config, 
         (decodedText) => {
             if (isProcessing) return;
-            
             const cleanText = decodedText.trim().toUpperCase();
-            
-            // FILTRE : 1 lettre + 7 chiffres (ex: T5071035)
             if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
                 isProcessing = true;
-                playScanSound('success');
-                
+                playScanSound(); 
                 addLogEntry(cleanText); 
-                
-                // Pause visuelle avant le prochain scan
                 html5QrCode.pause(true);
                 setTimeout(() => {
                     isProcessing = false;
@@ -300,9 +293,11 @@
             }
         }
     ).catch(err => {
-        // 3. Si la caméra ne s'allume pas (écran noir), on réessaie après 1 seconde
         console.error("Erreur Caméra : ", err);
-        setTimeout(startScanner, 1000);
+        // On évite la boucle infinie si l'utilisateur refuse
+        if(err !== "NotAllowedError") {
+            setTimeout(startScanner, 2000);
+        }
     });
 }
 

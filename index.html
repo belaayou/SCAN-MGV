@@ -535,14 +535,20 @@ function renderTable() {
     window.addEventListener('online', () => {
         logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
     });
-
-    if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('SW Ready'))
-            .catch(err => console.error('SW Error', err));
-    });
-    }
+<script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // هاد السطر كيعيط على الملف اللي عدلنا قبيلة
+          navigator.serviceWorker.register('./service-worker.js')
+            .then(reg => console.log('Service Worker Registered!'))
+            .catch(err => console.log('Service Worker Failed!', err));
+        });
+      }
+    </script>
+  </body>
+</html>
+   
+    
 </script>
 </body>
 </html>

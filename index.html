@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+8<!DOCTYPE html>
 <html class="dark" lang="fr">
 <head>
     <meta charset="utf-8"/>
@@ -257,62 +257,60 @@
     } 
 }
  
-    function startScanner() {
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("reader");
-        }
-        
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 20, qrbox: { width: 400, height: 160 } }, 
-            (decodedText) => {
-                if (isProcessing) return;
-                const cleanText = decodedText.trim().toUpperCase();
-                if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                    isProcessing = true;
-                    html5QrCode.pause(true);
-                    playScanSound('success');
-                    addLogEntry(cleanText);
-                }
-            }
-        ).then(() => {
-            videoStream = html5QrCode.getRunningTrack();
-        }).catch(err => console.error("Erreur Camera:", err));
-    }
+    async function startScanner() {
+    alert("Le code se lance !");
 
-    async function toggleTorch() {
-    if (!html5QrCode || !html5QrCode.isScanning) {
-        alert("Scanner inactif.");
-        return;
-    }
-
+    // 1. Demander la permission caméra EXPLICITEMENT
     try {
-        // Accès direct au flux vidéo via l'élément vidéo du scanner
-        const videoElement = document.querySelector('#reader video');
-        if (!videoElement || !videoElement.srcObject) {
-            alert("Caméra introuvable.");
-            return;
-        }
-
-        const track = videoElement.srcObject.getVideoTracks()[0];
-        const capabilities = track.getCapabilities();
-
-        if (capabilities.torch) {
-            const currentTorch = track.getSettings().torch;
-            await track.applyConstraints({
-                advanced: [{ torch: !currentTorch }]
-            });
-            // Retour visuel sur l'icône
-            document.getElementById('torch-btn').style.color = !currentTorch ? "#eaea00" : "#ffffff";
-        } else {
-            alert("Flash non supporté par cet appareil.");
-        }
+        await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
     } catch (err) {
-        console.error("Erreur Flash:", err);
-        alert("Erreur d'accès au flash.");
+        alert("Permission caméra refusée. Veuillez l'autoriser dans les paramètres.");
+        console.error("Permission refusée :", err);
+        return; // On arrête si refusé
     }
-}
 
+    // 2. Nettoyer toute instance existante
+    if (html5QrCode) {
+        try {
+            await html5QrCode.stop();
+        } catch (err) {
+            console.log("Nettoyage scanner...");
+        }
+    }
+
+    html5QrCode = new Html5QrCode("reader");
+    const config = { 
+        fps: 20, 
+        qrbox: { width: 400, height: 160 },
+        aspectRatio: 1.0
+    };
+
+    // 3. Lancement du scanner
+    html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        (decodedText) => {
+            if (isProcessing) return;
+            
+            const cleanText = decodedText.trim().toUpperCase();
+            
+            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+                isProcessing = true;
+                playScanSound('success');
+                addLogEntry(cleanText); 
+                
+                html5QrCode.pause(true);
+                setTimeout(() => {
+                    isProcessing = false;
+                    html5QrCode.resume();
+                }, 2000);
+            }
+        }
+    ).catch(err => {
+        console.error("Erreur Caméra : ", err);
+        setTimeout(startScanner, 1000);
+    });
+    }
 
     function ajouterManuellement() {
         const modal = document.getElementById('modal-saisie');

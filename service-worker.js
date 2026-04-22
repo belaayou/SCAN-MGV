@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-mgv-v5.2';
+const CACHE_NAME = 'stellantis-mgv-v5.3';
 
 // Liste des fichiers à sauvegarder dans le téléphone
 const ASSETS = [

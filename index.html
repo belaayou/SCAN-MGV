@@ -176,16 +176,14 @@
         document.getElementById('display-id').innerText = `ID: ${user.id}`;
         renderTable(); 
         startScanner();
-    } else if (!navigator.onLine) {
-        // MODE SECOURS : Pas d'internet et pas de session
-        document.getElementById('identity-screen').classList.add('hidden');
-        document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
-        document.getElementById('display-id').innerText = "ID: TEMP";
-        renderTable(); 
-        startScanner();
-        alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");
     }
-}
+    //else if (!navigator.onLine) {
+      // MODE SECOURS : Pas d'internet et pas de session
+     //   document.getElementById('identity-screen').classList.add('hidden');
+     //  document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
+     //  document.getElementById('display-id').innerText = "ID: TEMP";  renderTable(); 
+     // startScanner();
+     //  alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");    }}
 
    async function login() {
         const id = document.getElementById('login-id').value.trim().toUpperCase();

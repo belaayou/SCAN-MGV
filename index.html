@@ -533,7 +533,6 @@ function renderTable() {
     window.addEventListener('online', () => {
         logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
     });
-<script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           // هاد السطر كيعيط على الملف اللي عدلنا قبيلة
@@ -544,10 +543,5 @@ function renderTable() {
       }
     </script>
   </body>
-</html>
-   
-    
-</script>
-</body>
 </html>
     

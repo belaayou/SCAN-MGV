@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-mgv-v7.7';
+const CACHE_NAME = 'stellantis-mgv-v7.1';
 
 const ASSETS = [
   './',

@@ -1,11 +1,11 @@
-const CACHE_NAME = 'stellantis-mgv-v6.7';
+const CACHE_NAME = 'stellantis-mgv-v7.7';
 
 const ASSETS = [
   './',
   './index.html',      // ← vérifie ce nom !
   './manifest.json',
-   'https://cdn.tailwindcss.com',
-    'https://unpkg.com/html5-qrcode'
+  './https://cdn.tailwindcss.com',
+  './https://unpkg.com/html5-qrcode'
   './IMG_20260413_130653.png'
 ];
 

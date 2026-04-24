@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>
-     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="IMG_20260413_130653.png">
@@ -25,13 +25,13 @@
     <style>
         body { height: 100svh; margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: #000000; color: #ffffff; font-family: 'Inter', sans-serif; }
         #view-scanner { flex: 1; position: relative; width: 100%; overflow: hidden; }
-        .scan-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 160px; border: 1px solid rgba(234, 234, 0, 0.2); z-index: 20; pointer-events: none; }
+        .scan-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 460px; height: 360px; border: 1px solid rgba(234, 234, 0, 0.2); z-index: 20; pointer-events: none; }
         .corner { position: absolute; width: 30px; height: 30px; border: 5px solid #eaea00; }
         .top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
         .top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
         .bot-l { bottom: -5px; left: -5px; border-right: 0; border-top: 0; }
         .bot-r { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
-        .scan-line { position: absolute; width: 100%; height: 3px; background: #eaea00; box-shadow: 0 0 20px #eaea00; top: 0; animation: scan 2s linear infinite; opacity: 0.8; }
+        .scan-line { position: absolute; width: 100%; height: 3px; background: #eaea00; box-shadow: 0 0 20px #eaea00; top: 0; animation: scan 3s linear infinite; opacity: 0.8; }
         @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
         .editable-cell { border-bottom: 1px dashed #444; min-width: 50px; padding: 6px; font-size: 18px; transition: all 0.2s; }
         .editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.15); }
@@ -47,7 +47,7 @@
         <p id="auth-title" class="text-zinc-500 font-bold text-xs tracking-widest mb-8 uppercase">Connexion Terminal</p>
 
         <div id="login-form" class="space-y-4">
-            <input type="text" id="login-id"autocapitalize="characters" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
+            <input type="text" id="login-id" autocapitalize="characters" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
             <input type="password" id="login-pass" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
             <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
             <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
@@ -70,11 +70,11 @@
         <span id="display-id" class="text-[16px] font-mono text-white/80 font-bold tracking-tighter">ID: ---</span>
     </div>
     <div class="flex justify-center w-1/3 gap-4">
-    <button onclick="toggleTorch()" id="torch-btn" class="text-white hover:text-primary transition-all p-2 rounded-full border border-transparent active:bg-zinc-800">
-    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-    </svg>
-</button>
+        <button onclick="toggleTorch()" id="torch-btn" class="text-white hover:text-primary transition-all p-2 rounded-full border border-transparent active:bg-zinc-800">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+        </button>
         <button onclick="toggleView('scanner')" class="text-primary hover:scale-110 transition-transform">
             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </button>
@@ -89,7 +89,7 @@
 <main class="flex-1 flex flex-col overflow-hidden relative">
     <section id="view-scanner" class="view-section flex-1 flex flex-col">
         <div class="relative flex-1 bg-zinc-950 overflow-hidden">
-            <div id="reader" class="h-full"></div>
+            <div id="reader" class="h-full w-full"></div>
             <div class="scan-overlay">
                 <div class="scan-line"></div>
                 <div class="corner top-l"></div><div class="corner top-r"></div>
@@ -137,7 +137,6 @@
         <span class="text-[16px] font-black uppercase tracking-widest">Mémoire</span>
     </button>
 </nav>
-
 <div id="modal-saisie" class="hidden fixed inset-0 bg-black/90 z-[300] flex items-center justify-center p-4 backdrop-blur-md">
     <div class="bg-zinc-900 border-4 border-primary rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_30px_rgba(234,234,0,0.2)]">
         <div class="p-8">
@@ -166,7 +165,7 @@
         </div>
     </div>
 </div>
-    
+
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";
     let html5QrCode;
@@ -175,75 +174,55 @@
     let audioCtx = null;
     let videoStream = null;
 
-   function initApp() {
-    const user = JSON.parse(localStorage.getItem('StellantisUser'));
-    
-    if (user) {
-        // Mode normal : Utilisateur connecté
-        document.getElementById('identity-screen').classList.add('hidden');
-        document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
-        // CORRECTION ICI (Ajout des backticks) :
-        document.getElementById('display-id').innerText = `ID: ${user.id}`;
-        renderTable(); 
-        startScanner();
+    function initApp() {
+        const user = JSON.parse(localStorage.getItem('StellantisUser'));
+        if (user) {
+            document.getElementById('identity-screen').classList.add('hidden');
+            document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
+            document.getElementById('display-id').innerText = `ID: ${user.id}`;
+            renderTable();
+            startScanner();
+        } else if (!navigator.onLine) {
+            document.getElementById('identity-screen').classList.add('hidden');
+            document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
+            document.getElementById('display-id').innerText = "ID: TEMP";
+            renderTable();
+            startScanner();
+            alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");
+        }
     }
-   }
-    //else if (!navigator.onLine) {
-      // MODE SECOURS : Pas d'internet et pas de session
-     //   document.getElementById('identity-screen').classList.add('hidden');
-     //  document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
-     //  document.getElementById('display-id').innerText = "ID: TEMP";  renderTable(); 
-     // startScanner();
-     //  alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");    }}
 
-   async function login() {
+    async function login() {
         const id = document.getElementById('login-id').value.trim().toUpperCase();
         const pass = document.getElementById('login-pass').value;
-        
         if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
-
-        // GESTION HORS LIGNE
         if (!navigator.onLine) {
             const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
-            if (savedUser && savedUser.id === id) {
-                alert("Mode hors-ligne activé");
-                initApp(); 
-                return;
-            } else {
-                alert("Première connexion requise avec Internet.");
-                return;
-            }
+            if (savedUser && savedUser.id === id) { alert("Mode hors-ligne activé"); initApp(); return; }
+            else { alert("Première connexion requise avec Internet."); return; }
         }
-
-        // GESTION EN LIGNE
         try {
-            // AJOUT DES BACKTICKS ICI :
             const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
             const data = await res.json();
             if (data.status === 'active') {
                 localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
                 location.reload();
-            } else if (data.status === 'blocked') {
-                alert("🛑 ACCÈS REFUSÉ");
-            } else {
-                alert("❌ Identifiants incorrects.");
-            }
-        } catch(e) { 
-            alert("⚠️ Erreur serveur."); 
-        }
-    } 
-    // Fin de login
+            } else if (data.status === 'blocked') { alert("🛑 ACCÈS REFUSÉ"); }
+            else { alert("❌ Identifiants incorrects."); }
+        } catch(e) { alert("⚠️ Erreur serveur."); }
+    }
+
     async function register() {
         const n = document.getElementById('reg-nom').value.trim().toUpperCase();
         const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
         const i = document.getElementById('reg-id').value.trim().toUpperCase();
         const pass = document.getElementById('reg-pass').value;
-        if(!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
+        if (!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
         try {
             const res = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
             const data = await res.json();
-            if(data.status === "success") { alert("COMPTE CRÉÉ !"); toggleAuth(false); }
-            else if(data.status === "exists") alert("ID EXISTE DÉJÀ");
+            if (data.status === "success") { alert("COMPTE CRÉÉ !"); toggleAuth(false); }
+            else if (data.status === "exists") alert("ID EXISTE DÉJÀ");
         } catch(e) { alert("ERREUR SERVEUR"); }
     }
 
@@ -252,80 +231,45 @@
         document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
     }
 
-    function logoutIdentity() { 
-    if(confirm("Se déconnecter de la session ?")) { 
-        localStorage.removeItem('StellantisUser'); 
-        // Si on a internet, on recharge pour revenir au login
-        if (navigator.onLine) {
-            location.reload(); 
-        } else {
-            // Hors-ligne, on reste sur l'app mais en mode TEMP
-            alert("Déconnecté. L'app reste active en mode secours.");
-            initApp(); 
-        }
-    } 
-}
- 
-    async function startScanner() {
-    alert("Le code se lance !");
-
-    // 1. Demander la permission caméra EXPLICITEMENT
-    try {
-        await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-    } catch (err) {
-        alert("Permission caméra refusée. Veuillez l'autoriser dans les paramètres.");
-        console.error("Permission refusée :", err);
-        return; // On arrête si refusé
-    }
-
-    // 2. Nettoyer toute instance existante
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop();
-        } catch (err) {
-            console.log("Nettoyage scanner...");
+    function logoutIdentity() {
+        if (confirm("Se déconnecter de la session ?")) {
+            localStorage.removeItem('StellantisUser');
+            if (navigator.onLine) { location.reload(); }
+            else { alert("Déconnecté. L'app reste active en mode secours."); initApp(); }
         }
     }
 
-    html5QrCode = new Html5Qrcode("reader");
-    const config = { 
-        fps: 20, 
-        qrbox: { width: 400, height: 160 },
-        aspectRatio: 1.0
-    };
-
-    // 3. Lancement du scanner
-    html5QrCode.start(
-        { facingMode: "environment" }, 
-        config, 
-        (decodedText) => {
-            if (isProcessing) return;
-            
-            const cleanText = decodedText.trim().toUpperCase();
-            
-            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                isProcessing = true;
-                playScanSound('success');
-                addLogEntry(cleanText); 
-                
-                html5QrCode.pause(true);
-                setTimeout(() => {
-                    isProcessing = false;
-                    html5QrCode.resume();
-                }, 2000);
+    // ✅ startScanner — VERSION UNIQUE ET CORRIGÉE
+    function startScanner() {
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("reader");
+        }
+        
+        html5QrCode.start(
+    { facingMode: "environment" },
+    { 
+        fps: 20,
+        qrbox: undefined
+    },
+            (decodedText) => {
+                if (isProcessing) return;
+                const cleanText = decodedText.trim().toUpperCase();
+                if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+                    isProcessing = true;
+                    html5QrCode.pause(true);
+                    playScanSound('success');
+                    addLogEntry(cleanText);
+                }
             }
-        }
-    ).catch(err => {
-        console.error("Erreur Caméra : ", err);
-        setTimeout(startScanner, 1000);
-    });
+        ).then(() => {
+            videoStream = html5QrCode.getRunningTrack();
+        }).catch(err => console.error("Erreur Camera:", err));
     }
 
     function ajouterManuellement() {
-        const modal = document.getElementById('modal-saisie');
         const input = document.getElementById('input-vis');
-        input.value = ""; 
-        modal.classList.remove('hidden');
+        input.value = "";
+        document.getElementById('modal-saisie').classList.remove('hidden');
         input.focus();
     }
 
@@ -334,149 +278,67 @@
     }
 
     function validerSaisie() {
-    const input = document.getElementById('input-vis');
-    const codeClean = input.value.trim().toUpperCase();
-
-    if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
-        try {
-            // 1. On joue le son
-            playScanSound(); 
-
-            // 2. On ajoute l'entrée
-            addLogEntry(codeClean);
-            
-            // 3. FORCE LA FERMETURE (même si addLogEntry a un petit bug)
-            document.getElementById('modal-saisie').classList.add('hidden');
-            
-            // 4. Vide le champ
-            input.value = "";
-            
-            console.log("Succès : Enregistré et Fermé");
-        } catch (err) {
-            // En cas d'erreur interne, on force quand même la fermeture
-            document.getElementById('modal-saisie').classList.add('hidden');
-            console.error("Erreur lors de la validation:", err);
+        const input = document.getElementById('input-vis');
+        const codeClean = input.value.trim().toUpperCase();
+        if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
+            try {
+                playScanSound();
+                addLogEntry(codeClean);
+                document.getElementById('modal-saisie').classList.add('hidden');
+                input.value = "";
+            } catch (err) {
+                document.getElementById('modal-saisie').classList.add('hidden');
+                console.error("Erreur validation:", err);
+            }
+        } else {
+            alert("Format invalide ! (Ex: T5071035)");
         }
-    } else {
-        alert("Format invalide ! (Ex: T5071035)");
     }
-}
 
-    document.getElementById('input-vis').addEventListener('keypress', function (e) {
+    document.getElementById('input-vis').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') { validerSaisie(); }
     });
 
     function addLogEntry(codeValue) {
-    // 1. Récupérer l'utilisateur qui s'est connecté sur CE téléphone
-    const userData = localStorage.getItem('StellantisUser');
-    
-    // 2. Vérification de sécurité
-    if (!userData) {
-        alert("Erreur : Aucun opérateur connecté. Veuillez vous reconnecter.");
-        location.reload(); // Force le retour à l'écran d'identité
-        return;
+        const userData = localStorage.getItem('StellantisUser');
+        if (!userData) { alert("Erreur : Aucun opérateur connecté."); location.reload(); return; }
+        const user = JSON.parse(userData);
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const entry = { id: Date.now(), op: user.id, code: codeValue, zone: '', date: dateStr, time: timeStr, synced: false };
+        logs.unshift(entry);
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        renderTable();
+        setTimeout(() => toggleView('history'), 300); // ✅ Délai anti-corruption DOM
+        setTimeout(() => { isProcessing = false; }, 1500);
     }
 
-    const user = JSON.parse(userData);
-    const now = new Date();
-    
-    // Formatage de la date (ex: 19/4) et de l'heure (ex: 14:30)
-    // Remplace l'ancienne ligne dateStr par celle-ci :
-const dateStr = now.toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit'
-});
-    const timeStr = now.toLocaleTimeString('fr-FR', { 
-    hour: '2-digit', 
-    minute: '2-digit',
-    seconde: '2-digit'
-});
-    
-    // 3. Création de l'entrée avec le BON ID (plus de "99")
-    const entry = { 
-        id: Date.now(), 
-        op: user.id,      // Utilise l'ID de la personne connectée (ex: 55 ou 14)
-        code: codeValue, 
-        zone: '',         // Reste vide jusqu'à la saisie manuelle
-        date: dateStr, 
-        time: timeStr,
-        synced: false     // Deviendra true après l'envoi Google Sheets
-    };
-
-    // 4. Mise à jour de la mémoire locale
-    logs.unshift(entry);
-    localStorage.setItem('lumen_logs', JSON.stringify(logs));
-    
-    // 5. Mise à jour visuelle
-    renderTable(); 
-    toggleView('history');
-
-    // 6. Petit feedback sonore ou vibration
-    // if (navigator.vibrate) navigator.vibrate(50); 
-    
-    // Réinitialisation du verrou de scan après 1.5 seconde
-    setTimeout(() => { isProcessing = false; }, 1500);
-    }
-    
     async function sendToGoogle(entry) {
-    // 1. Vérifie si le téléphone a internet
-    if (!navigator.onLine) {
-        console.warn("Mode Hors-ligne : scan stocké localement.");
-        return;
-    }
-
-    // 2. Construction de l'URL avec les paramètres
-    // On utilise encodeURIComponent pour éviter les erreurs avec les espaces ou caractères spéciaux
-    const url = `${GOOGLE_URL}?action=saveScan` +
-                `&op=${encodeURIComponent(entry.op)}` +
-                `&code=${encodeURIComponent(entry.code)}` +
-                `&zone=${encodeURIComponent(entry.zone)}` +
-                `&date=${encodeURIComponent(entry.date)}` +
-                `&time=${encodeURIComponent(entry.time)}`;
-
-    try {
-        // 3. Envoi de la requête
-        const response = await fetch(url, { 
-            method: 'GET',
-            mode: 'cors' // Permet de communiquer avec Google
-        });
-
-        if (response.ok) {
-            // 4. Si succès, on marque l'entrée comme synchronisée
-            entry.synced = true;
-            
-            // Mise à jour du stockage local (localStorage)
-            const logIndex = logs.findIndex(l => l.id === entry.id);
-            if (logIndex !== -1) {
-                logs[logIndex].synced = true;
-                localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        if (!navigator.onLine) { console.warn("Hors-ligne : stocké localement."); return; }
+        const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
+        try {
+            const response = await fetch(url, { method: 'GET', mode: 'cors' });
+            if (response.ok) {
+                const logIndex = logs.findIndex(l => l.id === entry.id);
+                if (logIndex !== -1) { logs[logIndex].synced = true; localStorage.setItem('lumen_logs', JSON.stringify(logs)); }
+                renderTable();
+                console.log("✅ Envoyé à COMPTE-NAVETTE");
             }
-            
-            // Rafraîchir le tableau pour afficher le badge "SUCCESS ✅"
-            renderTable();
-            console.log("✅ Données envoyées à COMPTE-NAVETTE");
-        }
-    } catch (e) {
-        console.error("❌ Erreur lors de l'envoi vers Google Sheets :", e);
-    }
+        } catch(e) { console.error("❌ Erreur envoi Google Sheets :", e); }
     }
 
     async function updateEntry(id, field, val) {
-    const i = logs.findIndex(l => l.id === id);
-    if (i !== -1) {
-        logs[i][field] = val.trim().toUpperCase();
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        
-        // SI on vient de modifier la 'zone' ET qu'elle n'est pas vide
-        if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) {
-            sendToGoogle(logs[i]);
+        const i = logs.findIndex(l => l.id === id);
+        if (i !== -1) {
+            logs[i][field] = val.trim().toUpperCase();
+            localStorage.setItem('lumen_logs', JSON.stringify(logs));
+            if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) sendToGoogle(logs[i]);
         }
     }
-    }
-    
-function renderTable() {
-        document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
+
+    function renderTable() {
+    document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
         document.getElementById('history-body').innerHTML = logs.map(log => `
             <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}">
                 <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
@@ -488,71 +350,71 @@ function renderTable() {
                         ${log.synced ? 'SUCCESS ✅' : log.date}
                     </span>
                 </td>
-               <td class="p-1">
-                 <button onclick="deleteEntry(${log.id})" class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full transition-colors">×</button>
-                 </td>
-                 </tr>
+                <td class="p-1">
+                    <button onclick="deleteEntry(${log.id})" class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full transition-colors">×</button>
+                </td>
+            </tr>
         `).join('');
     }
 
     function playScanSound() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        oscillator.connect(gainNode); gainNode.connect(audioCtx.destination);
-        oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.1);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    function toggleView(v) {
+    // ===== TORCH =====
+    async function toggleTorch() {
+        try {
+            const track = document.querySelector('#reader video').srcObject.getVideoTracks()[0];
+            const caps = track.getCapabilities();
+            if (caps.torch) track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
+        } catch (e) { alert("Flash indisponible"); }
+    }
+
+function toggleView(v) {
         document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
         document.querySelectorAll('nav button').forEach(b => { b.classList.add('text-white/20'); b.classList.remove('active-nav'); });
-        
         document.getElementById(`view-${v}`).classList.remove('hidden');
         document.getElementById(`nav-${v}`).classList.add('active-nav');
-
-        if (v === 'scanner') {
-            isProcessing = false; 
-            if (html5QrCode) html5QrCode.resume();
-        } else {
-            if (html5QrCode) html5QrCode.pause(true);
-        }
+        if (v === 'scanner') { isProcessing = false; if (html5QrCode) html5QrCode.resume(); }
+        else { if (html5QrCode) html5QrCode.pause(true); }
     }
 
-    function deleteEntry(id) { 
-        if(confirm("Supprimer ?")) { 
-            logs = logs.filter(l => l.id !== id); 
-            localStorage.setItem('lumen_logs', JSON.stringify(logs)); 
-            renderTable(); 
-        } 
+    function deleteEntry(id) {
+        if (confirm("Supprimer ?")) { logs = logs.filter(l => l.id !== id); localStorage.setItem('lumen_logs', JSON.stringify(logs)); renderTable(); }
     }
 
-    function clearAllLogs() { if(confirm("PURGE ?")) { logs = []; localStorage.removeItem('lumen_logs'); renderTable(); } }
-    
+    function clearAllLogs() {
+        if (confirm("PURGE ?")) { logs = []; localStorage.removeItem('lumen_logs'); renderTable(); }
+    }
+
     function exportCSV() {
-        if(logs.length === 0) return;
+        if (logs.length === 0) return;
         let csv = "\uFEFFOP;CODE;ZONE;DATE;TIME\n";
         logs.forEach(l => csv += `${l.op};${l.code};${l.zone};${l.date};${l.time}\n`);
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
-        link.download = `COMPTE_NAVETTE.csv`; link.click();
+        link.download = `COMPTE_NAVETTE.csv`;
+        link.click();
     }
-        // --- SERVICE WORKER ET ONLINE CHECK ---
-    window.addEventListener('online', () => {
-        logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
+
+    window.addEventListener('online', () => {logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
     });
-      if ('serviceWorker' in navigator) {
+
+    if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          // هاد السطر كيعيط على الملف اللي عدلنا قبيلة
-          navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => console.log('Service Worker Registered!'))
-            .catch(err => console.log('Service Worker Failed!', err));
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('SW Ready'))
+                .catch(err => console.error('SW Error', err));
         });
-      }
-    </script>
-  </body>
+    }
+</script>
+</body>
 </html>
-    

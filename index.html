@@ -353,24 +353,24 @@ function lancerRecherche() {
     if (!q) return;
 
     document.getElementById('modal-recherche').classList.add('hidden');
+    
+    // ✅ D'abord render le tableau, puis chercher
     toggleView('history');
+    renderTable();
 
     setTimeout(() => {
+        let found = false;
         document.querySelectorAll('#history-body tr').forEach(tr => {
             tr.style.background = '';
             tr.style.outline = '';
         });
 
-        let found = false;
         document.querySelectorAll('#history-body tr').forEach(tr => {
-            const cells = tr.querySelectorAll('td');
-            let match = false;
-            cells.forEach(td => {
-                if (td.innerText.trim().toUpperCase().includes(q)) match = true;
-            });
-            if (match) {
-                tr.style.background = 'rgba(234,234,0,0.2)';
-                tr.style.outline = '2px solid #eaea00';
+            const codeCell = tr.querySelector('td:nth-child(2)');
+            if (codeCell && codeCell.innerText.trim().toUpperCase().includes(q)) {
+                tr.style.background = 'rgba(234,234,0,0.25)';
+                tr.style.outline = '3px solid #eaea00';
+                tr.style.borderRadius = '8px';
                 if (!found) {
                     tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     found = true;
@@ -379,7 +379,7 @@ function lancerRecherche() {
         });
 
         if (!found) alert(`❌ "${q}" introuvable dans le flux.`);
-    }, 200);
+    }, 300);
 }
     
 function validerSaisie() {

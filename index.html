@@ -353,33 +353,61 @@ function lancerRecherche() {
     if (!q) return;
 
     document.getElementById('modal-recherche').classList.add('hidden');
-    
-    // ✅ D'abord render le tableau, puis chercher
     toggleView('history');
-    renderTable();
 
+    // ✅ Chercher dans logs directement (pas dans le DOM)
+    const indices = [];
+    logs.forEach((log, index) => {
+        if (log.code.includes(q) || log.zone.includes(q) || log.op.includes(q)) {
+            indices.push(index);
+        }
+    });
+
+    if (indices.length === 0) {
+        alert(`❌ "${q}" introuvable dans le flux.`);
+        return;
+    }
+
+    // ✅ Re-rendre le tableau avec highlights
+    document.getElementById('history-body').innerHTML = logs.map((log, index) => {
+        const isMatch = indices.includes(index);
+        const rowStyle = isMatch 
+            ? 'background:rgba(234,234,0,0.25); outline:3px solid #eaea00;' 
+            : '';
+        return `
+        <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}" 
+            style="${rowStyle}" id="row-${log.id}">
+            <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
+            <td class="p-3 border-r border-zinc-800">
+                <div class="editable-cell text-primary font-black" 
+                     style="text-transform:uppercase" 
+                     contenteditable="true" 
+                     onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
+            </td>
+            <td class="p-3 border-r border-zinc-800">
+                <div class="editable-cell text-white font-bold" 
+                     style="text-transform:uppercase" 
+                     contenteditable="true" 
+                     onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
+            </td>
+            <td class="p-3 text-[16px] font-black leading-none">
+                ${log.time}<br>
+                <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
+                    ${log.synced ? 'SUCCESS ✅' : log.date}
+                </span>
+            </td>
+            <td class="p-1">
+                <button onclick="deleteEntry(${log.id})" 
+                        class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full">×</button>
+            </td>
+        </tr>`;
+    }).join('');
+
+    // ✅ Scroll vers la première ligne trouvée
     setTimeout(() => {
-        let found = false;
-        document.querySelectorAll('#history-body tr').forEach(tr => {
-            tr.style.background = '';
-            tr.style.outline = '';
-        });
-
-        document.querySelectorAll('#history-body tr').forEach(tr => {
-            const codeCell = tr.querySelector('td:nth-child(2)');
-            if (codeCell && codeCell.innerText.trim().toUpperCase().includes(q)) {
-                tr.style.background = 'rgba(234,234,0,0.25)';
-                tr.style.outline = '3px solid #eaea00';
-                tr.style.borderRadius = '8px';
-                if (!found) {
-                    tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    found = true;
-                }
-            }
-        });
-
-        if (!found) alert(`❌ "${q}" introuvable dans le flux.`);
-    }, 300);
+        const firstMatch = document.getElementById(`row-${logs[indices[0]].id}`);
+        if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
 }
     
 function validerSaisie() {
@@ -442,7 +470,12 @@ async function updateEntry(id, field, val) {
     if (i !== -1) {
         logs[i][field] = val.trim().toUpperCase();
         localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) sendToGoogle(logs[i]);
+        
+        if (field === 'zone' && logs[i].zone.length >= 3) {
+            // ✅ Toujours envoyer (même si déjà synced) pour corriger
+            logs[i].synced = false;
+            await sendToGoogle(logs[i]);
+        }
     }
 }
 

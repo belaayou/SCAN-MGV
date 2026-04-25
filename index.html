@@ -199,21 +199,35 @@ async function login() {
     const id = document.getElementById('login-id').value.trim().toUpperCase();
     const pass = document.getElementById('login-pass').value;
     if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
+
     if (!navigator.onLine) {
-        const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
-        if (savedUser && savedUser.id === id) {
-            initApp(); // ✅ Pas d'alert, juste on lance
-            return;
+        // ✅ Hors-ligne : on vérifie dans le cache local
+        const cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
+        const found = cachedUsers.find(u => u.id === id && u.pass === pass);
+        if (found) {
+            localStorage.setItem('StellantisUser', JSON.stringify({
+                id: found.id, nom: found.nom, prenom: found.prenom
+            }));
+            initApp();
         } else {
-            alert("Première connexion requise avec Internet.");
-            return;
+            alert("❌ ID ou mot de passe incorrect (mode hors-ligne).");
         }
+        return;
     }
+
     try {
         const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
         const data = await res.json();
         if (data.status === 'active') {
-            localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
+            // ✅ On sauvegarde aussi dans le cache local pour usage hors-ligne
+            let cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
+            cachedUsers = cachedUsers.filter(u => u.id !== id); // évite doublons
+            cachedUsers.push({ id, pass, nom: data.nom, prenom: data.prenom });
+            localStorage.setItem('StellantisUsers_cache', JSON.stringify(cachedUsers));
+
+            localStorage.setItem('StellantisUser', JSON.stringify({
+                id: id, nom: data.nom, prenom: data.prenom
+            }));
             location.reload();
         } else if (data.status === 'blocked') { alert("🛑 ACCÈS REFUSÉ"); }
         else { alert("❌ Identifiants incorrects."); }
@@ -242,7 +256,11 @@ function toggleAuth(showSignup) {
 function logoutIdentity() {
     if (confirm("Se déconnecter ?")) {
         localStorage.removeItem('StellantisUser');
-        location.reload();
+        // ✅ Affiche l'écran login sans recharger la page
+        document.getElementById('identity-screen').classList.remove('hidden');
+        document.getElementById('display-name').innerText = "---";
+        document.getElementById('display-id').innerText = "ID: ---";
+        if (html5QrCode) html5QrCode.pause(true);
     }
 }
 

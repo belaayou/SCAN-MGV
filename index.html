@@ -408,10 +408,10 @@ function lancerRecherche() {
     <td class="p-1">
         <button onclick="deleteEntry(${log.id})" 
                 class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full">×</button>
-    </td>
-</tr>
+  </td>
+    </tr>
+    `; 
     }).join('');
-
     // ✅ Scroll vers première occurrence
     setTimeout(() => {
         const firstRow = document.getElementById(`row-${logs[indices[0]].id}`);

@@ -47,8 +47,8 @@
         <p id="auth-title" class="text-zinc-500 font-bold text-xs tracking-widest mb-8 uppercase">Connexion Terminal</p>
 
         <div id="login-form" class="space-y-4">
-            <input type="text" id="login-id" autocapitalize="characters" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
-            <input type="password" id="login-pass" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
+            <input type="text" id="login-id" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">        
+            <input type="password" id="login-pass" autocomplete="new-password" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
             <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
             <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
         </div>
@@ -257,6 +257,8 @@ function logoutIdentity() {
     if (confirm("Se déconnecter ?")) {
         localStorage.removeItem('StellantisUser');
         // ✅ Affiche l'écran login sans recharger la page
+        document.getElementById('login-id').value = "";
+        document.getElementById('login-pass').value = "";
         document.getElementById('identity-screen').classList.remove('hidden');
         document.getElementById('display-name').innerText = "---";
         document.getElementById('display-id').innerText = "ID: ---";
@@ -366,8 +368,8 @@ function renderTable() {
     document.getElementById('history-body').innerHTML = logs.map(log => `
         <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}">
             <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
-            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
-            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
+            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" style="text-transform:uppercase" oninput="this.innerText = this.innerText.toUpperCase(); const sel = window.getSelection(); sel.collapse(this, 1);" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
+            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" style="text-transform:uppercase" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
             <td class="p-3 text-[16px] font-black leading-none">
                 ${log.time}<br>
                 <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">

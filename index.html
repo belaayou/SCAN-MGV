@@ -56,8 +56,17 @@
         <div id="signup-form" class="hidden space-y-3">
             <input type="text" id="reg-nom" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="NOM">
             <input type="text" id="reg-prenom" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="PRÉNOM">
-            <input type="text" id="reg-id" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">
-            <input type="password" id="reg-pass" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
+       <input type="text" id="login-id" 
+       autocapitalize="characters" 
+       autocomplete="off"
+       autocorrect="off"
+       spellcheck="false"
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl"
+       placeholder="ID MATRICULE">
+       <input type="password" id="login-pass" 
+       autocomplete="new-password"
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl"
+       placeholder="MOT DE PASSE">            
             <button onclick="register()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Valider</button>
             <button onclick="toggleAuth(false)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Retour</button>
         </div>
@@ -353,9 +362,18 @@ function lancerRecherche() {
     if (!q) return;
 
     document.getElementById('modal-recherche').classList.add('hidden');
-    toggleView('history');
 
-    // ✅ Chercher dans logs directement
+    // ✅ Aller sur Mémoire SANS renderTable
+    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('nav button').forEach(b => {
+        b.classList.add('text-white/20');
+        b.classList.remove('active-nav');
+    });
+    document.getElementById('view-history').classList.remove('hidden');
+    document.getElementById('nav-history').classList.add('active-nav');
+    if (html5QrCode) html5QrCode.pause(true);
+
+    // ✅ Chercher dans logs
     const indices = [];
     logs.forEach((log, index) => {
         if (log.code.includes(q) || log.zone.includes(q) || log.op.includes(q)) {
@@ -364,54 +382,49 @@ function lancerRecherche() {
     });
 
     if (indices.length === 0) {
+        renderTable();
         alert(`❌ "${q}" introuvable dans le flux.`);
         return;
     }
 
-    // ✅ Render avec highlight intégré directement dans le HTML
+    // ✅ Render avec highlight
     document.getElementById('history-body').innerHTML = logs.map((log, index) => {
         const isMatch = indices.includes(index);
         return `
-      <tr class="border-b border-zinc-800" 
-    id="row-${log.id}"
-    style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow: inset 0 0 0 3px #eaea00;' : log.synced ? 'background:rgba(0,255,0,0.05)' : ''}">
-    
-    <td class="p-3 text-[16px]" 
-        style="${isMatch ? 'color:#eaea00; border-bottom: 3px solid #eaea00;' : 'color:rgba(255,255,255,0.3)'}">
-        ${log.op}
-    </td>
-    
-    <td class="p-3 border-r border-zinc-800"
-        style="${isMatch ? 'border-bottom: 3px solid #eaea00;' : ''}">
-        <div class="editable-cell font-black" 
-             style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}"
-             contenteditable="true" 
-             onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
-    </td>
-    
-    <td class="p-3 border-r border-zinc-800"
-        style="${isMatch ? 'border-bottom: 3px solid #eaea00;' : ''}">
-        <div class="editable-cell text-white font-bold" 
-             style="text-transform:uppercase"
-             contenteditable="true" 
-             onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
-    </td>
-    
-    <td class="p-3 text-[16px] font-black leading-none"
-        style="${isMatch ? 'border-bottom: 3px solid #eaea00;' : ''}">
-        ${log.time}<br>
-        <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
-            ${log.synced ? 'SUCCESS ✅' : log.date}
-        </span>
-    </td>
-    
-    <td class="p-1">
-        <button onclick="deleteEntry(${log.id})" 
-                class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full">×</button>
-  </td>
-    </tr>
-    `; 
+        <tr class="border-b border-zinc-800" id="row-${log.id}"
+            style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow: inset 0 0 0 3px #eaea00;' : log.synced ? 'background:rgba(0,255,0,0.05)' : ''}">
+            <td class="p-3 text-[16px]" 
+                style="${isMatch ? 'color:#eaea00; border-bottom:3px solid #eaea00;' : 'color:rgba(255,255,255,0.3)'}">
+                ${log.op}
+            </td>
+            <td class="p-3 border-r border-zinc-800"
+                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+                <div class="editable-cell font-black" 
+                     style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}"
+                     contenteditable="true" 
+                     onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
+            </td>
+            <td class="p-3 border-r border-zinc-800"
+                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+                <div class="editable-cell text-white font-bold" 
+                     style="text-transform:uppercase"
+                     contenteditable="true" 
+                     onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
+            </td>
+            <td class="p-3 text-[16px] font-black leading-none"
+                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+                ${log.time}<br>
+                <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
+                    ${log.synced ? 'SUCCESS ✅' : log.date}
+                </span>
+            </td>
+            <td class="p-1">
+                <button onclick="deleteEntry(${log.id})" 
+                        class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full">×</button>
+            </td>
+        </tr>`;
     }).join('');
+
     // ✅ Scroll vers première occurrence
     setTimeout(() => {
         const firstRow = document.getElementById(`row-${logs[indices[0]].id}`);

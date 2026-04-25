@@ -5,7 +5,7 @@
     <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>  
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="IMG_20260413_130653.png">
     <meta name="theme-color" content="#EAB308">
@@ -404,17 +404,35 @@ function toggleView(v) {
         link.download = `COMPTE_NAVETTE.csv`;
         link.click();
     }
+    
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        console.log('[App] SW enregistré:', reg.scope);
 
-    window.addEventListener('online', () => {logs.forEach(entry => { if (!entry.synced) sendToGoogle(entry); });
-    });
-
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./service-worker.js')
-                .then(reg => console.log('SW Ready'))
-                .catch(err => console.error('SW Error', err));
+        // Background Sync : demande de synchro dès que le réseau revient
+        window.addEventListener('online', () => {
+          if ('SyncManager' in window) {
+            reg.sync.register('sync-scans');
+          } else {
+            // Fallback si Background Sync non supporté
+            reg.active?.postMessage({ type: 'SYNC_NOW' });
+          }
         });
-    }
-</script>
+
+        // Écouter les confirmations de sync depuis le SW
+        navigator.serviceWorker.addEventListener('message', e => {
+          if (e.data.type === 'SCAN_SYNCED') {
+            // Recharger la table pour mettre à jour les ✅
+            logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+            renderTable();
+          }
+        });
+      });
+    });
+  }
+   </script>
+  </body>
+</html>
 </body>
 </html>

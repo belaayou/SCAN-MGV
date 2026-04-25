@@ -407,7 +407,7 @@ function toggleView(v) {
     
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
+      navigator.serviceWorker.register('./service-worker.js').then(reg => {
         console.log('[App] SW enregistré:', reg.scope);
 
         // Background Sync : demande de synchro dès que le réseau revient

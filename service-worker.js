@@ -5,7 +5,7 @@
 //              Queue offline pour les scans non synchronisés
 // ============================================================
 
-const CACHE_NAME = 'stellantis-mgv-v1';
+const CACHE_NAME = 'stellantis-mgv-v2';
 const SYNC_TAG   = 'sync-scans';
 
 // Assets à mettre en cache lors de l'installation

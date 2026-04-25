@@ -46,27 +46,36 @@
         <h1 class="text-primary font-[900] text-4xl tracking-tighter mb-2 uppercase italic">STELLANTIS</h1>
         <p id="auth-title" class="text-zinc-500 font-bold text-xs tracking-widest mb-8 uppercase">Connexion Terminal</p>
 
-        <div id="login-form" class="space-y-4">
-            <input type="text" id="login-id" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="ID MATRICULE">        
-            <input type="password" id="login-pass" autocomplete="new-password" class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center" placeholder="MOT DE PASSE">
-            <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
+        <div id="login-form" class="space-y-4"><
+        <input type="text" id="login-id" 
+        autocapitalize="characters" 
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl"
+        placeholder="ID MATRICULE">
+        <input type="password" id="login-pass" 
+        autocomplete="new-password"
+        class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl"
+        placeholder="MOT DE PASSE">                <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
             <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
         </div>
+             <div id="signup-form" class="hidden space-y-3">
+          <input type="text" id="reg-nom" 
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl" 
+       placeholder="NOM">
 
-        <div id="signup-form" class="hidden space-y-3">
-            <input type="text" id="reg-nom" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="NOM">
-            <input type="text" id="reg-prenom" class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center" placeholder="PRÉNOM">
-       <input type="text" id="login-id" 
-       autocapitalize="characters" 
-       autocomplete="off"
-       autocorrect="off"
-       spellcheck="false"
-       class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl"
+       <input type="text" id="reg-prenom" 
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl" 
+       placeholder="PRÉNOM">
+
+       <input type="text" id="reg-id" 
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold uppercase text-center text-2xl" 
        placeholder="ID MATRICULE">
-       <input type="password" id="login-pass" 
-       autocomplete="new-password"
-       class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl"
-       placeholder="MOT DE PASSE">            
+
+       <input type="password" id="reg-pass" 
+       class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl" 
+       placeholder="MOT DE PASSE">           
             <button onclick="register()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Valider</button>
             <button onclick="toggleAuth(false)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Retour</button>
         </div>
@@ -359,10 +368,14 @@ function fermerRecherche() {
 
 function lancerRecherche() {
     const q = document.getElementById('search-input').value.trim().toUpperCase();
+    
+    // 🔍 TEST — à supprimer après
+    alert(`Recherche: "${q}" | Logs: ${logs.length} entrées`);
+    
     if (!q) return;
 
     document.getElementById('modal-recherche').classList.add('hidden');
-
+    // ... reste du code inchangé
     // ✅ Aller sur Mémoire SANS renderTable
     document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
     document.querySelectorAll('nav button').forEach(b => {

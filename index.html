@@ -102,11 +102,11 @@
        <div class="flex justify-between items-center mb-4 px-2">
         <div class="flex items-center gap-3">
         <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
-        <button onclick="toggleSearch()" class="text-white/50 hover:text-primary transition-colors">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-        </button>
+        <button onclick="toggleSearch()" class="text-primary hover:scale-110 transition-transform">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+    </svg>
+</button>
     </div>
     <div class="flex gap-2">
         <button onclick="ajouterManuellement()" class="bg-blue-600 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">+ Manuel</button>
@@ -353,38 +353,33 @@ function lancerRecherche() {
     if (!q) return;
 
     document.getElementById('modal-recherche').classList.add('hidden');
-
-    // ✅ Aller sur l'onglet Mémoire
     toggleView('history');
 
-    // ✅ Retirer anciens highlights
-    document.querySelectorAll('tr.highlight-found').forEach(tr => {
-        tr.classList.remove('highlight-found');
-        tr.style.background = '';
-        tr.style.outline = '';
-    });
+    setTimeout(() => {
+        document.querySelectorAll('#history-body tr').forEach(tr => {
+            tr.style.background = '';
+            tr.style.outline = '';
+        });
 
-    // ✅ Chercher dans toutes les lignes du tableau
-    let found = false;
-    document.querySelectorAll('#history-body tr').forEach(tr => {
-        const codeCell = tr.querySelector('td:nth-child(2)');
-        if (codeCell && codeCell.innerText.trim().toUpperCase().includes(q)) {
-            // Highlight de la ligne
-            tr.classList.add('highlight-found');
-            tr.style.background = 'rgba(234,234,0,0.15)';
-            tr.style.outline = '2px solid #eaea00';
-
-            // ✅ Scroll vers la première occurrence
-            if (!found) {
-                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                found = true;
+        let found = false;
+        document.querySelectorAll('#history-body tr').forEach(tr => {
+            const cells = tr.querySelectorAll('td');
+            let match = false;
+            cells.forEach(td => {
+                if (td.innerText.trim().toUpperCase().includes(q)) match = true;
+            });
+            if (match) {
+                tr.style.background = 'rgba(234,234,0,0.2)';
+                tr.style.outline = '2px solid #eaea00';
+                if (!found) {
+                    tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    found = true;
+                }
             }
-        }
-    });
+        });
 
-    if (!found) {
-        alert(`❌ VIS "${q}" introuvable dans le flux.`);
-    }
+        if (!found) alert(`❌ "${q}" introuvable dans le flux.`);
+    }, 200);
 }
     
 function validerSaisie() {
@@ -519,14 +514,32 @@ function clearAllLogs() {
 }
 
 function exportCSV() {
-    if (logs.length === 0) return;
-    let csv = "\uFEFFOP;CODE;ZONE;DATE;TIME\n";
-    logs.forEach(l => csv += `${l.op};${l.code};${l.zone};${l.date};${l.time}\n`);
+    if (logs.length === 0) return alert("Aucune donnée à exporter.");
+    
+    const now = new Date();
+    const dateFile = now.toLocaleDateString('fr-FR', {
+        day: '2-digit', month: '2-digit', year: '2-digit'
+    }).replace(/\//g, '-');
+    const timeFile = now.toLocaleTimeString('fr-FR', {
+        hour: '2-digit', minute: '2-digit'
+    }).replace(/:/g, 'h');
+
+    // ✅ En-tête + données
+    let csv = "OP;CODE VIS;ZONE;DATE;HEURE;STATUT\n";
+    logs.forEach(l => {
+        const statut = l.synced ? "ENVOYÉ" : "EN ATTENTE";
+        csv += `${l.op};${l.code};${l.zone};${l.date};${l.time};${statut}\n`;
+    });
+
+    // ✅ Téléchargement
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `COMPTE_NAVETTE.csv`;
+    link.download = `STELLANTIS_MGV_${dateFile}_${timeFile}.csv`;
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
 }
 
 if ('serviceWorker' in navigator) {

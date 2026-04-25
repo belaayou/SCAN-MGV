@@ -165,7 +165,34 @@
         </div>
     </div>
 </div>
-
+<!-- MODAL RECHERCHE -->
+<div id="modal-recherche" class="hidden fixed inset-0 bg-black/90 z-[300] flex items-center justify-center p-4 backdrop-blur-md">
+    <div class="bg-zinc-900 border-4 border-primary rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_30px_rgba(234,234,0,0.2)]">
+        <div class="p-8">
+            <h3 class="text-primary text-xl font-[900] mb-8 tracking-widest uppercase italic text-center">
+                RECHERCHE VIS
+            </h3>
+            <div class="relative">
+                <input type="text" id="search-input"
+                       class="w-full bg-black border-b-4 border-zinc-700 py-5 text-4xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center"
+                       placeholder="CODE VIS"
+                       oninput="this.value = this.value.toUpperCase()"
+                       autocomplete="off" autocorrect="off" spellcheck="false">
+            </div>
+        </div>
+        <div class="flex border-t-4 border-zinc-800">
+            <button onclick="fermerRecherche()"
+                    class="flex-1 py-7 text-zinc-400 font-black uppercase tracking-widest text-lg active:bg-zinc-800 transition-colors">
+                Annuler
+            </button>
+            <button onclick="lancerRecherche()"
+                    class="flex-1 py-7 bg-primary text-black font-[900] uppercase tracking-widest text-xl active:bg-yellow-500 transition-colors">
+                Rechercher
+            </button>
+        </div>
+    </div>
+</div>
+    
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";
     let html5QrCode;
@@ -298,7 +325,61 @@ function ajouterManuellement() {
 function fermerSaisie() {
     document.getElementById('modal-saisie').classList.add('hidden');
 }
+function toggleSearch() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('modal-recherche').classList.remove('hidden');
+    setTimeout(() => document.getElementById('search-input').focus(), 100);
+}
 
+function fermerRecherche() {
+    document.getElementById('modal-recherche').classList.add('hidden');
+    // ✅ Retirer tous les highlights
+    document.querySelectorAll('tr.highlight-found').forEach(tr => {
+        tr.classList.remove('highlight-found');
+        tr.style.background = '';
+        tr.style.outline = '';
+    });
+}
+
+function lancerRecherche() {
+    const q = document.getElementById('search-input').value.trim().toUpperCase();
+    if (!q) return;
+
+    document.getElementById('modal-recherche').classList.add('hidden');
+
+    // ✅ Aller sur l'onglet Mémoire
+    toggleView('history');
+
+    // ✅ Retirer anciens highlights
+    document.querySelectorAll('tr.highlight-found').forEach(tr => {
+        tr.classList.remove('highlight-found');
+        tr.style.background = '';
+        tr.style.outline = '';
+    });
+
+    // ✅ Chercher dans toutes les lignes du tableau
+    let found = false;
+    document.querySelectorAll('#history-body tr').forEach(tr => {
+        const codeCell = tr.querySelector('td:nth-child(2)');
+        if (codeCell && codeCell.innerText.trim().toUpperCase().includes(q)) {
+            // Highlight de la ligne
+            tr.classList.add('highlight-found');
+            tr.style.background = 'rgba(234,234,0,0.15)';
+            tr.style.outline = '2px solid #eaea00';
+
+            // ✅ Scroll vers la première occurrence
+            if (!found) {
+                tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                found = true;
+            }
+        }
+    });
+
+    if (!found) {
+        alert(`❌ VIS "${q}" introuvable dans le flux.`);
+    }
+}
+    
 function validerSaisie() {
     const input = document.getElementById('input-vis');
     const codeClean = input.value.trim().toUpperCase();

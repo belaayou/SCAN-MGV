@@ -174,263 +174,273 @@
     let audioCtx = null;
     let videoStream = null;
 
-    function initApp() {
-        const user = JSON.parse(localStorage.getItem('StellantisUser'));
-        if (user) {
-            document.getElementById('identity-screen').classList.add('hidden');
-            document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
-            document.getElementById('display-id').innerText = `ID: ${user.id}`;
-            renderTable();
-            startScanner();
-        } else if (!navigator.onLine) {
-            document.getElementById('identity-screen').classList.add('hidden');
-            document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
-            document.getElementById('display-id').innerText = "ID: TEMP";
-            renderTable();
-            startScanner();
-            alert("Attention : Mode secours sans connexion. Connectez-vous dès que possible.");
-        }
-    }
-
-    async function login() {
-        const id = document.getElementById('login-id').value.trim().toUpperCase();
-        const pass = document.getElementById('login-pass').value;
-        if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
-        if (!navigator.onLine) {
-            const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
-            if (savedUser && savedUser.id === id) { alert("Mode hors-ligne activé"); initApp(); return; }
-            else { alert("Première connexion requise avec Internet."); return; }
-        }
-        try {
-            const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
-            const data = await res.json();
-            if (data.status === 'active') {
-                localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
-                location.reload();
-            } else if (data.status === 'blocked') { alert("🛑 ACCÈS REFUSÉ"); }
-            else { alert("❌ Identifiants incorrects."); }
-        } catch(e) { alert("⚠️ Erreur serveur."); }
-    }
-
-    async function register() {
-        const n = document.getElementById('reg-nom').value.trim().toUpperCase();
-        const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
-        const i = document.getElementById('reg-id').value.trim().toUpperCase();
-        const pass = document.getElementById('reg-pass').value;
-        if (!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
-        try {
-            const res = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
-            const data = await res.json();
-            if (data.status === "success") { alert("COMPTE CRÉÉ !"); toggleAuth(false); }
-            else if (data.status === "exists") alert("ID EXISTE DÉJÀ");
-        } catch(e) { alert("ERREUR SERVEUR"); }
-    }
-
-    function toggleAuth(showSignup) {
-        document.getElementById('login-form').classList.toggle('hidden', showSignup);
-        document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
-    }
-
-    function logoutIdentity() {
-        if (confirm("Se déconnecter de la session ?")) {
-            localStorage.removeItem('StellantisUser');
-            if (navigator.onLine) { location.reload(); }
-            else { alert("Déconnecté. L'app reste active en mode secours."); initApp(); }
-        }
-    }
-
-    // ✅ startScanner — VERSION UNIQUE ET CORRIGÉE
-    function startScanner() {
-        if (!html5QrCode) {
-            html5QrCode = new Html5Qrcode("reader");
-        }
-        
-        html5QrCode.start(
-    { facingMode: "environment" },
-    { 
-        fps: 20,
-        qrbox: undefined
-    },
-            (decodedText) => {
-                if (isProcessing) return;
-                const cleanText = decodedText.trim().toUpperCase();
-                if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                    isProcessing = true;
-                    html5QrCode.pause(true);
-                    playScanSound('success');
-                    addLogEntry(cleanText);
-                }
-            }
-        ).then(() => {
-            videoStream = html5QrCode.getRunningTrack();
-        }).catch(err => console.error("Erreur Camera:", err));
-    }
-
-    function ajouterManuellement() {
-        const input = document.getElementById('input-vis');
-        input.value = "";
-        document.getElementById('modal-saisie').classList.remove('hidden');
-        input.focus();
-    }
-
-    function fermerSaisie() {
-        document.getElementById('modal-saisie').classList.add('hidden');
-    }
-
-    function validerSaisie() {
-        const input = document.getElementById('input-vis');
-        const codeClean = input.value.trim().toUpperCase();
-        if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
-            try {
-                playScanSound();
-                addLogEntry(codeClean);
-                document.getElementById('modal-saisie').classList.add('hidden');
-                input.value = "";
-            } catch (err) {
-                document.getElementById('modal-saisie').classList.add('hidden');
-                console.error("Erreur validation:", err);
-            }
-        } else {
-            alert("Format invalide ! (Ex: T5071035)");
-        }
-    }
-
-    document.getElementById('input-vis').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') { validerSaisie(); }
-    });
-
-    function addLogEntry(codeValue) {
-        const userData = localStorage.getItem('StellantisUser');
-        if (!userData) { alert("Erreur : Aucun opérateur connecté."); location.reload(); return; }
-        const user = JSON.parse(userData);
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-        const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        const entry = { id: Date.now(), op: user.id, code: codeValue, zone: '', date: dateStr, time: timeStr, synced: false };
-        logs.unshift(entry);
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+   function initApp() {
+    const user = JSON.parse(localStorage.getItem('StellantisUser'));
+    if (user) {
+        document.getElementById('identity-screen').classList.add('hidden');
+        document.getElementById('display-name').innerText = user.prenom + " " + user.nom;
+        document.getElementById('display-id').innerText = `ID: ${user.id}`;
         renderTable();
-        setTimeout(() => toggleView('history'), 300); // ✅ Délai anti-corruption DOM
-        setTimeout(() => { isProcessing = false; }, 1500);
+        startScanner();
+    } else if (!navigator.onLine) {
+        // ✅ Ouverture silencieuse sans alert
+        localStorage.setItem('StellantisUser', JSON.stringify({
+            id: 'TEMP', nom: 'HORS-LIGNE', prenom: 'MODE'
+        }));
+        document.getElementById('identity-screen').classList.add('hidden');
+        document.getElementById('display-name').innerText = "MODE HORS-LIGNE";
+        document.getElementById('display-id').innerText = "ID: TEMP";
+        renderTable();
+        startScanner();
     }
+}
 
-    async function sendToGoogle(entry) {
-        if (!navigator.onLine) { console.warn("Hors-ligne : stocké localement."); return; }
-        const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
-        try {
-            const response = await fetch(url, { method: 'GET', mode: 'cors' });
-            if (response.ok) {
-                const logIndex = logs.findIndex(l => l.id === entry.id);
-                if (logIndex !== -1) { logs[logIndex].synced = true; localStorage.setItem('lumen_logs', JSON.stringify(logs)); }
-                renderTable();
-                console.log("✅ Envoyé à COMPTE-NAVETTE");
-            }
-        } catch(e) { console.error("❌ Erreur envoi Google Sheets :", e); }
-    }
-
-    async function updateEntry(id, field, val) {
-        const i = logs.findIndex(l => l.id === id);
-        if (i !== -1) {
-            logs[i][field] = val.trim().toUpperCase();
-            localStorage.setItem('lumen_logs', JSON.stringify(logs));
-            if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) sendToGoogle(logs[i]);
+async function login() {
+    const id = document.getElementById('login-id').value.trim().toUpperCase();
+    const pass = document.getElementById('login-pass').value;
+    if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
+    if (!navigator.onLine) {
+        const savedUser = JSON.parse(localStorage.getItem('StellantisUser'));
+        if (savedUser && savedUser.id === id) {
+            initApp(); // ✅ Pas d'alert, juste on lance
+            return;
+        } else {
+            alert("Première connexion requise avec Internet.");
+            return;
         }
     }
+    try {
+        const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
+        const data = await res.json();
+        if (data.status === 'active') {
+            localStorage.setItem('StellantisUser', JSON.stringify({id: id, nom: data.nom, prenom: data.prenom}));
+            location.reload();
+        } else if (data.status === 'blocked') { alert("🛑 ACCÈS REFUSÉ"); }
+        else { alert("❌ Identifiants incorrects."); }
+    } catch(e) { alert("⚠️ Erreur serveur."); }
+}
 
-    function renderTable() {
+async function register() {
+    const n = document.getElementById('reg-nom').value.trim().toUpperCase();
+    const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
+    const i = document.getElementById('reg-id').value.trim().toUpperCase();
+    const pass = document.getElementById('reg-pass').value;
+    if (!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
+    try {
+        const res = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
+        const data = await res.json();
+        if (data.status === "success") { alert("COMPTE CRÉÉ !"); toggleAuth(false); }
+        else if (data.status === "exists") alert("ID EXISTE DÉJÀ");
+    } catch(e) { alert("ERREUR SERVEUR"); }
+}
+
+function toggleAuth(showSignup) {
+    document.getElementById('login-form').classList.toggle('hidden', showSignup);
+    document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
+}
+
+function logoutIdentity() {
+    if (confirm("Se déconnecter ?")) {
+        localStorage.removeItem('StellantisUser');
+        location.reload();
+    }
+}
+
+function startScanner() {
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+    html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 20, qrbox: undefined },
+        (decodedText) => {
+            if (isProcessing) return;
+            const cleanText = decodedText.trim().toUpperCase();
+            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+                isProcessing = true;
+                html5QrCode.pause(true);
+                playScanSound();
+                addLogEntry(cleanText);
+            }
+        }
+    ).then(() => {
+        videoStream = html5QrCode.getRunningTrack();
+    }).catch(err => console.error("Erreur Camera:", err));
+}
+
+function ajouterManuellement() {
+    const input = document.getElementById('input-vis');
+    input.value = "";
+    document.getElementById('modal-saisie').classList.remove('hidden');
+    input.focus();
+}
+
+function fermerSaisie() {
+    document.getElementById('modal-saisie').classList.add('hidden');
+}
+
+function validerSaisie() {
+    const input = document.getElementById('input-vis');
+    const codeClean = input.value.trim().toUpperCase();
+    if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
+        playScanSound();
+        addLogEntry(codeClean);
+        document.getElementById('modal-saisie').classList.add('hidden');
+        input.value = "";
+    } else {
+        alert("Format invalide ! (Ex: T5071035)");
+    }
+}
+
+document.getElementById('input-vis').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') { validerSaisie(); }
+});
+
+function addLogEntry(codeValue) {
+    // ✅ Plus de blocage si TEMP — on récupère ou on crée
+    let user = { id: 'TEMP', nom: 'HORS-LIGNE', prenom: 'MODE' };
+    try {
+        const userData = localStorage.getItem('StellantisUser');
+        if (userData) user = JSON.parse(userData);
+    } catch(e) {}
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const timeStr = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const entry = {
+        id: Date.now(), op: user.id, code: codeValue,
+        zone: '', date: dateStr, time: timeStr, synced: false
+    };
+    logs.unshift(entry);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    renderTable();
+    setTimeout(() => toggleView('history'), 300);
+    setTimeout(() => { isProcessing = false; }, 1500);
+}
+
+async function sendToGoogle(entry) {
+    if (!navigator.onLine) { console.warn("Hors-ligne : stocké localement."); return; }
+    const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
+    try {
+        const response = await fetch(url, { method: 'GET', mode: 'cors' });
+        if (response.ok) {
+            const logIndex = logs.findIndex(l => l.id === entry.id);
+            if (logIndex !== -1) {
+                logs[logIndex].synced = true;
+                localStorage.setItem('lumen_logs', JSON.stringify(logs));
+            }
+            renderTable();
+        }
+    } catch(e) { console.error("Erreur envoi Google Sheets:", e); }
+}
+
+async function updateEntry(id, field, val) {
+    const i = logs.findIndex(l => l.id === id);
+    if (i !== -1) {
+        logs[i][field] = val.trim().toUpperCase();
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        if (field === 'zone' && logs[i].zone !== "" && !logs[i].synced) sendToGoogle(logs[i]);
+    }
+}
+
+function renderTable() {
     document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
-        document.getElementById('history-body').innerHTML = logs.map(log => `
-            <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}">
-                <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
-                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
-                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
-                <td class="p-3 text-[16px] font-black leading-none">
-                    ${log.time}<br>
-                    <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
-                        ${log.synced ? 'SUCCESS ✅' : log.date}
-                    </span>
-                </td>
-                <td class="p-1">
-                    <button onclick="deleteEntry(${log.id})" class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full transition-colors">×</button>
-                </td>
-            </tr>
-        `).join('');
-    }
+    document.getElementById('history-body').innerHTML = logs.map(log => `
+        <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}">
+            <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
+            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
+            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
+            <td class="p-3 text-[16px] font-black leading-none">
+                ${log.time}<br>
+                <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
+                    ${log.synced ? 'SUCCESS ✅' : log.date}
+                </span>
+            </td>
+            <td class="p-1">
+                <button onclick="deleteEntry(${log.id})" class="w-12 h-12 flex items-center justify-center text-red-500 text-4xl font-bold active:bg-red-500/20 rounded-full transition-colors">×</button>
+            </td>
+        </tr>
+    `).join('');
+}
 
-    function playScanSound() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-    }
+function playScanSound() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+}
 
-    // ===== TORCH =====
-    async function toggleTorch() {
-        try {
-            const track = document.querySelector('#reader video').srcObject.getVideoTracks()[0];
-            const caps = track.getCapabilities();
-            if (caps.torch) track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
-        } catch (e) { alert("Flash indisponible"); }
-    }
+async function toggleTorch() {
+    try {
+        const track = document.querySelector('#reader video').srcObject.getVideoTracks()[0];
+        const caps = track.getCapabilities();
+        if (caps.torch) track.applyConstraints({ advanced: [{ torch: !track.getSettings().torch }] });
+    } catch (e) { alert("Flash indisponible"); }
+}
 
 function toggleView(v) {
-        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-        document.querySelectorAll('nav button').forEach(b => { b.classList.add('text-white/20'); b.classList.remove('active-nav'); });
-        document.getElementById(`view-${v}`).classList.remove('hidden');
-        document.getElementById(`nav-${v}`).classList.add('active-nav');
-        if (v === 'scanner') { isProcessing = false; if (html5QrCode) html5QrCode.resume(); }
-        else { if (html5QrCode) html5QrCode.pause(true); }
-    }
-
-    function deleteEntry(id) {
-        if (confirm("Supprimer ?")) { logs = logs.filter(l => l.id !== id); localStorage.setItem('lumen_logs', JSON.stringify(logs)); renderTable(); }
-    }
-
-    function clearAllLogs() {
-        if (confirm("PURGE ?")) { logs = []; localStorage.removeItem('lumen_logs'); renderTable(); }
-    }
-
-    function exportCSV() {
-        if (logs.length === 0) return;
-        let csv = "\uFEFFOP;CODE;ZONE;DATE;TIME\n";
-        logs.forEach(l => csv += `${l.op};${l.code};${l.zone};${l.date};${l.time}\n`);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `COMPTE_NAVETTE.csv`;
-        link.click();
-    }
-    
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./service-worker.js').then(reg => {
-        console.log('[App] SW enregistré:', reg.scope);
-
-        // Background Sync : demande de synchro dès que le réseau revient
-        window.addEventListener('online', () => {
-          if ('SyncManager' in window) {
-            reg.sync.register('sync-scans');
-          } else {
-            // Fallback si Background Sync non supporté
-            reg.active?.postMessage({ type: 'SYNC_NOW' });
-          }
-        });
-
-        // Écouter les confirmations de sync depuis le SW
-        navigator.serviceWorker.addEventListener('message', e => {
-          if (e.data.type === 'SCAN_SYNCED') {
-            // Recharger la table pour mettre à jour les ✅
-            logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
-            renderTable();
-          }
-        });
-      });
+    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+    document.querySelectorAll('nav button').forEach(b => {
+        b.classList.add('text-white/20');
+        b.classList.remove('active-nav');
     });
-  }
+    document.getElementById(`view-${v}`).classList.remove('hidden');
+    document.getElementById(`nav-${v}`).classList.add('active-nav');
+    if (v === 'scanner') { isProcessing = false; if (html5QrCode) html5QrCode.resume(); }
+    else { if (html5QrCode) html5QrCode.pause(true); }
+}
+
+function deleteEntry(id) {
+    if (confirm("Supprimer ?")) {
+        logs = logs.filter(l => l.id !== id);
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+        renderTable();
+    }
+}
+
+function clearAllLogs() {
+    if (confirm("PURGE ?")) {
+        logs = [];
+        localStorage.removeItem('lumen_logs');
+        renderTable();
+    }
+}
+
+function exportCSV() {
+    if (logs.length === 0) return;
+    let csv = "\uFEFFOP;CODE;ZONE;DATE;TIME\n";
+    logs.forEach(l => csv += `${l.op};${l.code};${l.zone};${l.date};${l.time}\n`);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `COMPTE_NAVETTE.csv`;
+    link.click();
+}
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').then(reg => {
+            console.log('[App] SW enregistré:', reg.scope);
+            window.addEventListener('online', () => {
+                if ('SyncManager' in window) {
+                    reg.sync.register('sync-scans');
+                } else {
+                    reg.active?.postMessage({ type: 'SYNC_NOW' });
+                }
+            });
+            navigator.serviceWorker.addEventListener('message', e => {
+                if (e.data.type === 'SCAN_SYNCED') {
+                    logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+                    renderTable();
+                }
+            });
+        });
+    });
+}
    </script>
   </body>
 </html>

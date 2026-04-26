@@ -57,7 +57,8 @@
         <input type="password" id="login-pass" 
         autocomplete="new-password"
         class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl"
-        placeholder="MOT DE PASSE">                <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
+        placeholder="MOT DE PASSE">               
+            <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
             <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
         </div>
              <div id="signup-form" class="hidden space-y-3">
@@ -116,27 +117,38 @@
         </div>
     </section>
 
-    <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
-       <div class="flex justify-between items-center mb-4 px-2">
+   <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
+    
+    <div class="flex justify-between items-center mb-4 px-2">
         <div class="flex items-center gap-3">
-        <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
-        <button onclick="toggleSearch()" 
-        class="text-primary hover:scale-110 transition-transform">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
-   </button>
-    </div>
-    <div class="flex gap-2">
-        <button onclick="ajouterManuellement()" class="bg-blue-600 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">+ Manuel</button>
-                <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[18px] uppercase italic">Purger</button>
-                <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
-            </div>
+            <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
+            <!-- ✅ Bouton 🔍 ICI -->
+            <button onclick="toggleSearch()" id="search-btn" class="text-primary hover:scale-110 transition-transform">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </button>
         </div>
-        <div class="bg-zinc-900 rounded-xl overflow-x-auto border-2 border-zinc-800">
-            <table class="w-full text-left border-collapse">
-                <thead>
+        <div class="flex gap-2">
+            <button onclick="ajouterManuellement()" class="bg-blue-600 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">+ Manuel</button>
+            <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[18px] uppercase italic">Purger</button>
+            <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
+        </div>
+    </div>
+
+    <!-- ✅ Barre cachée par défaut — ENTRE header et tableau -->
+    <div id="search-bar" class="hidden px-2 mb-3">
+        <input type="text" id="search-input"
+               placeholder="🔍 RECHERCHER UN VIS..."
+               oninput="this.value = this.value.toUpperCase(); filtrerEnTempsReel(this.value)"
+               autocomplete="off" autocorrect="off" spellcheck="false"
+               class="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-4 py-3 text-white font-mono uppercase outline-none focus:border-primary text-[18px] text-center transition-colors">
+    </div>
+
+    <!-- Tableau existant — NE PAS TOUCHER -->
+    <div class="bg-zinc-900 rounded-xl overflow-x-auto border-2 border-zinc-800">
+        <table class="w-full text-left border-collapse">                <thead>
                     <tr class="bg-zinc-800 text-[16px] text-white/40 uppercase font-black">
                         <th class="p-3">OP</th><th class="p-3">Code</th><th class="p-3">Zone</th><th class="p-3">H/D</th><th class="p-3">X</th>
                     </tr>
@@ -188,33 +200,6 @@
             <button onclick="validerSaisie()" 
                     class="flex-1 py-7 bg-primary text-black font-[900] uppercase tracking-widest text-xl active:bg-yellow-500 transition-colors">
                 Valider
-            </button>
-        </div>
-    </div>
-</div>
-<!-- MODAL RECHERCHE -->
-<div id="modal-recherche" class="hidden fixed inset-0 bg-black/90 z-[300] flex items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-zinc-900 border-4 border-primary rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_30px_rgba(234,234,0,0.2)]">
-        <div class="p-8">
-            <h3 class="text-primary text-xl font-[900] mb-8 tracking-widest uppercase italic text-center">
-                RECHERCHE VIS
-            </h3>
-            <div class="relative">
-                <input type="text" id="search-input"
-                       class="w-full bg-black border-b-4 border-zinc-700 py-5 text-4xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center"
-                       placeholder="CODE VIS"
-                       oninput="this.value = this.value.toUpperCase()"
-                       autocomplete="off" autocorrect="off" spellcheck="false">
-            </div>
-        </div>
-        <div class="flex border-t-4 border-zinc-800">
-            <button onclick="fermerRecherche()"
-                    class="flex-1 py-7 text-zinc-400 font-black uppercase tracking-widest text-lg active:bg-zinc-800 transition-colors">
-                Annuler
-            </button>
-            <button onclick="lancerRecherche()"
-                    class="flex-1 py-7 bg-primary text-black font-[900] uppercase tracking-widest text-xl active:bg-yellow-500 transition-colors">
-                Rechercher
             </button>
         </div>
     </div>
@@ -353,76 +338,50 @@ function fermerSaisie() {
     document.getElementById('modal-saisie').classList.add('hidden');
 }
 function toggleSearch() {
-    document.getElementById('search-input').value = '';
-    document.getElementById('modal-recherche').classList.remove('hidden');
-    setTimeout(() => document.getElementById('search-input').focus(), 100);
-}
-
-function fermerRecherche() {
-    document.getElementById('modal-recherche').classList.add('hidden');
-    // ✅ Retirer tous les highlights
-    document.querySelectorAll('tr.highlight-found').forEach(tr => {
-        tr.classList.remove('highlight-found');
-        tr.style.background = '';
-        tr.style.outline = '';
-    });
-}
-
-function lancerRecherche() {
-    const q = document.getElementById('search-input').value.trim().toUpperCase();
-    if (!q) return;
-    document.getElementById('modal-recherche').classList.add('hidden');
-    // ... reste du code inchangé
-    // ✅ Aller sur Mémoire SANS renderTable
-    document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-    document.querySelectorAll('nav button').forEach(b => {
-        b.classList.add('text-white/20');
-        b.classList.remove('active-nav');
-    });
-    document.getElementById('view-history').classList.remove('hidden');
-    document.getElementById('nav-history').classList.add('active-nav');
-    if (html5QrCode) html5QrCode.pause(true);
-
-    // ✅ Chercher dans logs
-    const indices = [];
-    logs.forEach((log, index) => {
-        if (log.code.includes(q) || log.zone.includes(q) || log.op.includes(q)) {
-            indices.push(index);
-        }
-    });
-
-    if (indices.length === 0) {
+    const bar = document.getElementById('search-bar');
+    const input = document.getElementById('search-input');
+    const isHidden = bar.classList.contains('hidden');
+    
+    if (isHidden) {
+        // ✅ Ouvrir
+        bar.classList.remove('hidden');
+        setTimeout(() => input.focus(), 100);
+    } else {
+        // ✅ Fermer + reset
+        bar.classList.add('hidden');
+        input.value = '';
         renderTable();
-        alert(`❌ "${q}" introuvable dans le flux.`);
-        return;
     }
+}
 
-    // ✅ Render avec highlight
-    document.getElementById('history-body').innerHTML = logs.map((log, index) => {
-        const isMatch = indices.includes(index);
+function filtrerEnTempsReel(query) {
+    const q = query.trim().toUpperCase();
+    if (!q) { renderTable(); return; }
+
+    document.getElementById('history-body').innerHTML = logs.map(log => {
+        const isMatch = log.code.includes(q) || log.zone.includes(q) || log.op.includes(q);
         return `
         <tr class="border-b border-zinc-800" id="row-${log.id}"
-            style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow: inset 0 0 0 3px #eaea00;' : log.synced ? 'background:rgba(0,255,0,0.05)' : ''}">
+            style="${isMatch 
+                ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;' 
+                : 'opacity:0.3'}">
             <td class="p-3 text-[16px]" 
-                style="${isMatch ? 'color:#eaea00; border-bottom:3px solid #eaea00;' : 'color:rgba(255,255,255,0.3)'}">
+                style="color:${isMatch ? '#eaea00' : 'rgba(255,255,255,0.3)'}">
                 ${log.op}
             </td>
-            <td class="p-3 border-r border-zinc-800"
-                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+            <td class="p-3 border-r border-zinc-800">
                 <div class="editable-cell font-black" 
                      style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}"
                      contenteditable="true" 
                      onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
             </td>
-            <td class="p-3 border-r border-zinc-800"
-                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+            <td class="p-3 border-r border-zinc-800">
                 <div class="editable-cell text-white font-bold" 
                      style="text-transform:uppercase"
                      contenteditable="true" 
                      onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
             </td>
-            <td class="p-3 text-[16px] font-black leading-none"
-                style="${isMatch ? 'border-bottom:3px solid #eaea00;' : ''}">
+            <td class="p-3 text-[16px] font-black leading-none">
                 ${log.time}<br>
                 <span class="text-[12px] ${log.synced ? 'text-green-500 font-bold' : 'text-white/20'}">
                     ${log.synced ? 'SUCCESS ✅' : log.date}
@@ -435,13 +394,11 @@ function lancerRecherche() {
         </tr>`;
     }).join('');
 
-    // ✅ Scroll vers première occurrence
-    setTimeout(() => {
-        const firstRow = document.getElementById(`row-${logs[indices[0]].id}`);
-        if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-}
-    
+    // Scroll vers première occurrence
+    const firstMatch = document.getElementById(`row-${logs.find(l => 
+        l.code.includes(q) || l.zone.includes(q) || l.op.includes(q))?.id}`);
+    if (firstMatch) firstMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}    
 function validerSaisie() {
     const input = document.getElementById('input-vis');
     const codeClean = input.value.trim().toUpperCase();

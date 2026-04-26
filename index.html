@@ -368,12 +368,7 @@ function fermerRecherche() {
 
 function lancerRecherche() {
     const q = document.getElementById('search-input').value.trim().toUpperCase();
-    
-    // 🔍 TEST — à supprimer après
-    alert(`Recherche: "${q}" | Logs: ${logs.length} entrées`);
-    
     if (!q) return;
-
     document.getElementById('modal-recherche').classList.add('hidden');
     // ... reste du code inchangé
     // ✅ Aller sur Mémoire SANS renderTable

@@ -37,9 +37,19 @@
         .editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.15); }
         .active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; }
         .hidden { display: none !important; }
-        /* Figer la première colonne */
-        table { border-collapse: separate; border-spacing: 0; } #history-body td:first-child, thead tr th:first-child { position: sticky; left: 0; background: #18181b; z-index: 10; border-right: 2px solid #3f3f46; }
-        thead tr th:first-child { bakground: #27272a; }
+       /* Figer première colonne */
+       .overflow-x-auto { overflow-x: auto; }
+       #history-body tr td:first-child,
+       thead tr th:first-child {
+       position: sticky !important;
+       left: 0 !important;
+       z-index: 10 !important;
+       background: #18181b !important;
+       border-right: 2px solid #3f3f46 !important;
+       }
+      thead tr th:first-child {
+      background: #27272a !important;
+}
     </style>
 </head>
 <body onload="initApp()">
@@ -316,13 +326,17 @@ function startScanner() {
         (decodedText) => {
             if (isProcessing) return;
             const cleanText = decodedText.trim().toUpperCase();
-            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                isProcessing = true;
-                html5QrCode.pause(true);
-                playScanSound();
-                addLogEntry(cleanText);
-            }
-        }
+          if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+    isProcessing = true;         
+    html5QrCode.pause(true);     
+    playScanSound();              
+    addLogEntry(cleanText);     
+    // ✅ CORRECT :
+    setTimeout(() => {
+        isProcessing = false;
+        html5QrCode.resume();
+    }, 2000);
+}                                 
     ).then(() => {
         videoStream = html5QrCode.getRunningTrack();
     }).catch(err => console.error("Erreur Camera:", err));
@@ -436,7 +450,6 @@ function addLogEntry(codeValue) {
     localStorage.setItem('lumen_logs', JSON.stringify(logs));
     renderTable();
     setTimeout(() => toggleView('history'), 300);
-    setTimeout(() => { isProcessing = false; }, 1500);
 }
 
 async function sendToGoogle(entry) {

@@ -336,7 +336,8 @@ function startScanner() {
         isProcessing = false;
         html5QrCode.resume();
     }, 2000);
-}                                 
+}  
+}              
     ).then(() => {
         videoStream = html5QrCode.getRunningTrack();
     }).catch(err => console.error("Erreur Camera:", err));

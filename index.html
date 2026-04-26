@@ -25,7 +25,7 @@
     <style>
         body { height: 100svh; margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: #000000; color: #ffffff; font-family: 'Inter', sans-serif; }
         #view-scanner { flex: 1; position: relative; width: 100%; overflow: hidden; }
-        .scan-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 460px; height: 360px; border: 1px solid rgba(234, 234, 0, 0.2); z-index: 20; pointer-events: none; }
+        .scan-overlay { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 460px; height: 360px; border: 1px solid rgba(234, 234, 0, 0.2); z-index: 20; pointer-events: none; }
         .corner { position: absolute; width: 30px; height: 30px; border: 5px solid #eaea00; }
         .top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
         .top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
@@ -37,6 +37,9 @@
         .editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.15); }
         .active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; }
         .hidden { display: none !important; }
+        /* Figer la première colonne */
+        table { border-collapse: separate; border-spacing: 0; } #history-body td:first-child, thead tr th:first-child { position: sticky; left: 0; background: #18181b; z-index: 10; border-right: 2px solid #3f3f46; }
+        thead tr th:first-child { bakground: #27272a; }
     </style>
 </head>
 <body onload="initApp()">
@@ -59,7 +62,7 @@
         class="w-full bg-zinc-900 border-2 border-zinc-800 p-5 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl"
         placeholder="MOT DE PASSE">               
             <button onclick="login()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Se Connecter</button>
-            <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Créer un compte</button>
+            <button onclick="toggleAuth(true)" class="mt-4 text-zinc-500 underline text-lg uppercase font-bold">Créer un compte</button>
         </div>
              <div id="signup-form" class="hidden space-y-3">
           <input type="text" id="reg-nom" 
@@ -78,7 +81,7 @@
        class="w-full bg-zinc-900 border-2 border-zinc-800 p-4 rounded-xl outline-none focus:border-primary text-white font-bold text-center text-2xl" 
        placeholder="MOT DE PASSE">           
             <button onclick="register()" class="w-full mt-4 bg-primary text-black font-[900] uppercase py-6 rounded-xl tracking-widest text-lg">Valider</button>
-            <button onclick="toggleAuth(false)" class="mt-4 text-zinc-500 underline text-sm uppercase font-bold">Retour</button>
+            <button onclick="toggleAuth(false)" class="mt-4 text-zinc-500 underline text-lg uppercase font-bold">Retour</button>
         </div>
     </div>
 </div>
@@ -116,9 +119,8 @@
             </div>
         </div>
     </section>
-
-   <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
     
+ <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
     <div class="flex justify-between items-center mb-4 px-2">
         <div class="flex items-center gap-3">
             <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
@@ -146,7 +148,6 @@
                class="w-full bg-zinc-800 border-2 border-zinc-700 rounded-xl px-4 py-3 text-white font-mono uppercase outline-none focus:border-primary text-[18px] text-center transition-colors">
     </div>
 
-    <!-- Tableau existant — NE PAS TOUCHER -->
     <div class="bg-zinc-900 rounded-xl overflow-x-auto border-2 border-zinc-800">
         <table class="w-full text-left border-collapse">                <thead>
                     <tr class="bg-zinc-800 text-[16px] text-white/40 uppercase font-black">

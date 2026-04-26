@@ -331,11 +331,6 @@ function startScanner() {
     html5QrCode.pause(true);     
     playScanSound();              
     addLogEntry(cleanText);     
-    // ✅ CORRECT :
-    setTimeout(() => {
-        isProcessing = false;
-        html5QrCode.resume();
-    }, 2000);
 }  
 }              
     ).then(() => {
@@ -451,6 +446,7 @@ function addLogEntry(codeValue) {
     localStorage.setItem('lumen_logs', JSON.stringify(logs));
     renderTable();
     setTimeout(() => toggleView('history'), 300);
+    setTimeout(() => { isProcessing = false; }, 1500);
 }
 
 async function sendToGoogle(entry) {

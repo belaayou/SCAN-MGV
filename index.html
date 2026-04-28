@@ -26,7 +26,7 @@
       }
     </script>
     <style>
-   /* 🔥 MODE APP FIXE */
+   
 body {
     margin: 0;
     padding: 0;
@@ -88,7 +88,7 @@ body {
 .scan-line {
     position: absolute;
     width: 100%;
-    height: 3px;
+    height: 2px;
     background: #eaea00;
     box-shadow: 0 0 20px #eaea00;
     top: 0;
@@ -187,73 +187,14 @@ thead tr th:first-child {
 }
 thead tr th:first-child { background: #27272a !important; }
 
-    /* ✅ SOLUTION UNIVERSELLE TOUS ÉCRANS */
-    * { 
-        box-sizing: border-box;
-        -webkit-text-size-adjust: none;
-        text-size-adjust: none;
-    }
-
-    html { font-size: clamp(12px, 2.5vw, 16px); }
-
-    /* ✅ Header adaptatif */
-    header {
-        height: clamp(60px, 12vw, 80px) !important;
-        padding: clamp(4px, 1vw, 8px) clamp(8px, 3vw, 24px) !important;
-    }
-
-    /* ✅ Nav adaptatif */
-    nav {
-        height: clamp(60px, 12vw, 80px) !important;
-        padding-bottom: env(safe-area-inset-bottom, 4px) !important;
-    }
-
-    /* ✅ Icônes header */
-    header svg { 
-        width: clamp(24px, 6vw, 40px) !important; 
-        height: clamp(24px, 6vw, 40px) !important; 
-    }
-
-    /* ✅ Nav icônes et textes */
-    nav svg { 
-        width: clamp(20px, 5vw, 32px) !important; 
-        height: clamp(20px, 5vw, 32px) !important; 
-    }
-    nav span { font-size: clamp(9px, 2.5vw, 14px) !important; }
-
-    /* ✅ Textes header */
-    #display-name { font-size: clamp(9px, 2.5vw, 12px) !important; }
-    #display-id { font-size: clamp(12px, 3.5vw, 18px) !important; }
-
-    /* ✅ Inputs login */
-    #login-id, #login-pass,
-    #reg-nom, #reg-prenom, #reg-id, #reg-pass {
-        font-size: clamp(14px, 4vw, 22px) !important;
-        padding: clamp(10px, 3vw, 20px) !important;
-    }
-
-    /* ✅ Tableau */
-    #history-body td { 
-        font-size: clamp(10px, 3vw, 16px) !important;
-        padding: clamp(4px, 1.5vw, 12px) !important;
-    }
-
-    /* ✅ Figer première colonne */
-    table { border-collapse: collapse; border-spacing: 0; }
-    #history-body td:first-child,
-    thead tr th:first-child {
-        position: sticky !important;
-        left: 0 !important;
-        z-index: 10 !important;
-        background: #18181b !important;
-        border-right: 2px solid #3f3f46 !important;
-    }
-    thead tr th:first-child { background: #27272a !important; } 
-</style>
-</head>
+/* ✅ Ecran login dans le container */
+#identity-screen {
+    max-width: 420px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}</head>
 <body onload="initApp()">
-<div id="app-container"> <!-- ✅ WRAPPER GLOBAL -->
-
+<div id="app-container"> 
 <div id="identity-screen" class="fixed inset-0 bg-black z-[200] flex flex-col p-8 items-center justify-center">
     <div class="w-full max-sm:max-w-xs text-center">
         <h1 class="text-primary font-[900] text-4xl tracking-tighter mb-2 uppercase italic">STELLANTIS</h1>

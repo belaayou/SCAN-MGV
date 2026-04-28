@@ -59,12 +59,25 @@ body {
 
 /* 📱 SUR TABLETTE */
 @media (min-width: 600px) {
-    #app-container { border-radius: 20px; }
+    #app-container { border-radius: 20px; }}
+    
+     /* ✅ Scanner — AJOUTER flex: 1 */
+    #view-scanner { 
+    flex: 1; 
+    position: relative; 
+    width: 100%; 
+    overflow: hidden; 
+}               
+
+/* ✅ Caméra remplit tout */
+#view-scanner > div {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
 }
-
-/* ✅ Scanner */
-#view-scanner { flex: 1; position: relative; width: 100%; overflow: hidden; }
-
+        
 /* ✅ Overlay plein écran */
 .scan-overlay {
     position: absolute;
@@ -95,7 +108,7 @@ body {
     animation: scan 4s linear infinite;
     opacity: 0.8;
 }
-@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+@keyframes scan { 0% { top: 0; } 100% { top: 100%; } 
 
 /* ✅ Caméra plein écran */
 #reader {
@@ -148,11 +161,11 @@ nav {
 }
 
 /* ✅ Icônes header */
-header svg { width: 28px !important; height: 28px !important; }
+header svg { width: 32px !important; height: 32px !important; }
 
 /* ✅ Nav icônes et textes */
-nav svg { width: 26px !important; height: 26px !important; }
-nav span { font-size: 11px !important; }
+nav svg { width: 32px !important; height: 32px !important; }
+nav span { font-size: 13px !important; }
 
 /* ✅ Textes header */
 #display-name { font-size: 11px !important; }
@@ -189,9 +202,15 @@ thead tr th:first-child { background: #27272a !important; }
 
 /* ✅ Ecran login dans le container */
 #identity-screen {
-    max-width: 420px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+    z-index: 200;
 }
 </style>
 </head>
@@ -317,7 +336,8 @@ thead tr th:first-child { background: #27272a !important; }
     </div>
 </main>
 
-<nav class="bg-black border-t-2 border-zinc-900 flex justify-around items-center z-[100] shrink-0" style="min-height:70px; padding-bottom: env(safe-area-inset-bottom, 8px);">
+<nav class="bg-black border-t-2 border-zinc-900 flex justify-around items-center z-[100] shrink-0" 
+     style="min-height:80px; padding-bottom: env(safe-area-inset-bottom, 8px);">
     <button onclick="toggleView('scanner')" id="nav-scanner" class="active-nav flex flex-col items-center p-2 w-1/2">
         <svg class="w-8 h-8 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         <span class="text-[16px] font-black uppercase tracking-widest">Scanner</span>

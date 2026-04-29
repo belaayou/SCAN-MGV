@@ -26,9 +26,9 @@
       }
     </script>
     <style>
- <style>
-   /* ============================= */
-/* 🔧 RESET GLOBAL PROPRE */
+
+/* ============================= */
+/* 🔧 RESET GLOBAL */
 /* ============================= */
 * {
     box-sizing: border-box;
@@ -46,86 +46,129 @@ body {
     background: #000;
     color: #fff;
     font-family: 'Inter', sans-serif;
-
     height: 100dvh;
     overflow: hidden;
-}}
+}
 
 /* ============================= */
-/* 📱 CONTENEUR PRINCIPAL */
+/* 📱 APP CONTAINER */
 /* ============================= */
 #app-container {
     width: 100%;
     height: 100dvh;
+    position: relative;
+    overflow: hidden;
+}
 
+/* ============================= */
+/* 🧭 HEADER FIXE */
+/* ============================= */
+header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    padding: 0 15px;
+    padding-top: env(safe-area-inset-top, 0px);
     display: flex;
-    flex-direction: column;
-
+    align-items: center;
+    justify-content: space-between;
     background: #000;
-}
-        
-/* Mobile full width */
-@media (max-width: 420px) {
-    #app-container {
-        max-width: 100%;
-    }
+    border-bottom: 2px solid #18181b;
+    z-index: 1000;
+    flex-shrink: 0;
 }
 
-/* Tablet style */
-@media (min-width: 600px) {
-    #app-container {
-        border-radius: 20px;
-    }
+/* ============================= */
+/* 🔒 BOUTON STELLANTIS MGV FIXE */
+/* ============================= */
+#stellantis-btn {
+    position: fixed;
+    bottom: 70px;
+    left: 0;
+    width: 100%;
+    padding: 8px 16px;
+    background: #000;
+    border-top: 1px solid #18181b;
+    z-index: 999;
+}
+
+/* ============================= */
+/* 🧭 NAV FIXE */
+/* ============================= */
+nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #000;
+    border-top: 2px solid #18181b;
+    z-index: 1000;
+}
+
+/* ============================= */
+/* 📱 VIEWS — zones dynamiques */
+/* ============================= */
+.view-section {
+    position: fixed;
+    top: 70px;
+    bottom: 140px; /* header 70px + nav 70px */
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ✅ Vue Mémoire — scrollable */
+#view-history {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 8px;
 }
 
 /* ============================= */
 /* 📷 SCANNER ZONE */
 /* ============================= */
 #view-scanner {
-    height: 70dvh; /* ✅ 70% réel écran */
-    width: 100%;
-    position: relative;
     overflow: hidden;
 }
 
-/* ============================= */
-/* 📷 CAMERA FULLSCREEN */
-/* ============================= */
 #reader {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 #reader video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 🔥 essentiel */
-}
-        
-/* Supprimer UI interne html5-qrcode */
-#reader__dashboard,
-#reader img {
-    display: none !important;
+    object-fit: cover;
 }
 
-#reader__scan_region {
-    width: 100%;
-    height: 100%;
-}
+#reader__dashboard,
+#reader img { display: none !important; }
+#reader__scan_region { width: 100%; height: 100%; }
 
 /* ============================= */
 /* 🎯 OVERLAY SCAN */
 /* ============================= */
 .scan-overlay {
+    position: absolute;
     width: 80%;
     height: 60%;
     top: 20%;
     left: 10%;
+    pointer-events: none;
+    z-index: 20;
 }
 
-/* Coins */
 .corner {
     position: absolute;
     width: 40px;
@@ -138,15 +181,13 @@ body {
 .bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
 .bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
 
-/* Ligne scan */
 .scan-line {
     position: absolute;
     width: 100%;
     height: 2px;
     background: #eaea00;
     box-shadow: 0 0 15px #eaea00;
-
-    animation: scan 4s linear infinite;
+    animation: scan 3s linear infinite;
     opacity: 0.8;
 }
 
@@ -156,79 +197,30 @@ body {
 }
 
 /* ============================= */
-/* 🧭 HEADER & NAV */
-/* ============================= */
-header {
-    height: clamp(60px, 12vw, 80px);
-    padding: 0 clamp(10px, 3vw, 20px);
-    padding-top: env(safe-area-inset-top, 0px);
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-nav {
-    height: clamp(60px, 12vw, 80px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Icônes */
-header svg {
-    width: clamp(32px, 6vw, 36px);
-    height: clamp(32px, 6vw, 36px);
-}
-
-nav svg {
-    width: clamp(24px, 5vw, 30px);
-    height: clamp(24px, 5vw, 30px);
-}
-
-nav span {
-    font-size: clamp(9px, 2.5vw, 13px);
-}
-
-/* Textes */
-#display-name {
-    font-size: clamp(9px, 2.5vw, 12px);
-}
-
-#display-id {
-    font-size: clamp(12px, 3.5vw, 18px);
-}
-
-/* ============================= */
-/* 🧾 INPUTS */
-/* ============================= */
-#login-id, #login-pass,
-#reg-nom, #reg-prenom, #reg-id, #reg-pass {
-    font-size: clamp(14px, 4vw, 20px);
-    padding: clamp(10px, 3vw, 18px);
-}
-
-/* ============================= */
 /* 📊 TABLE */
 /* ============================= */
 table {
+    width: 100%;
     border-collapse: collapse;
 }
 
 #history-body td {
     font-size: clamp(10px, 3vw, 15px);
     padding: clamp(6px, 2vw, 12px);
+    border-bottom: 1px solid #333;
 }
 
 thead th {
     font-size: clamp(11px, 3vw, 14px);
+    padding: 10px 8px;
 }
 
-/* Sticky colonne */
 #history-body td:first-child,
 thead th:first-child {
     position: sticky;
     left: 0;
-    z-index: 5;
     background: #18181b;
+    z-index: 5;
     border-right: 2px solid #3f3f46;
 }
 
@@ -239,7 +231,7 @@ thead th:first-child {
     border-bottom: 1px dashed #444;
     min-width: 50px;
     padding: 6px;
-    transition: 0.4s;
+    transition: 0.2s;
 }
 
 .editable-cell:focus {
@@ -249,18 +241,53 @@ thead th:first-child {
 }
 
 /* ============================= */
+/* 🧾 INPUTS LOGIN */
+/* ============================= */
+#login-id, #login-pass,
+#reg-nom, #reg-prenom, #reg-id, #reg-pass {
+    font-size: clamp(14px, 4vw, 20px);
+    padding: clamp(10px, 3vw, 18px);
+}
+
+/* ============================= */
+/* 🧩 ICÔNES */
+/* ============================= */
+header svg {
+    width: clamp(28px, 6vw, 36px);
+    height: clamp(28px, 6vw, 36px);
+}
+
+nav svg {
+    width: clamp(24px, 5vw, 30px);
+    height: clamp(24px, 5vw, 30px);
+}
+
+nav span { font-size: clamp(10px, 2.5vw, 13px); }
+#display-name { font-size: clamp(9px, 2.5vw, 12px); }
+#display-id { font-size: clamp(12px, 3.5vw, 18px); }
+
+/* ============================= */
 /* 🧩 UTIL */
 /* ============================= */
 .active-nav {
-    color: #eaea00;
+    color: #eaea00 !important;
     border-top: 3px solid #eaea00;
 }
 
-.hidden {
-    display: none !important;
-        }
-</style>
-</style>
+.hidden { display: none !important; }
+
+/* ============================= */
+/* 🔐 ECRAN LOGIN */
+/* ============================= */
+#identity-screen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+    z-index: 2000 !important;
+}
+    </style>
 </head>
 <body onload="initApp()">
 <div id="app-container"> 
@@ -376,7 +403,7 @@ thead th:first-child {
         </div>
     </section>
 
-    <div class="px-8 py-4 bg-black border-t border-zinc-900/50">
+    <div id="stellantis-btn" class="px-8 py-4 bg-black border-t border-zinc-900/50">
         <button disabled class="w-full bg-primary text-black py-6 flex items-center justify-center gap-4 rounded-2xl cursor-default shadow-[0_10px_20px_rgba(234,234,0,0.15)]">
             <svg class="w-8 h-8 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4h2v16H3V4zm4 0h1v16H7V4zm3 0h3v16h-3V4zm5 0h2v16h-2V4zm4 0h2v16h-2V4z"/></svg>
             <span class="font-[800] uppercase tracking-[0.2em] text-xl text-black">STELLANTIS MGV</span>

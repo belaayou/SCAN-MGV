@@ -161,25 +161,25 @@ nav {
 /* ============================= */
 .scan-overlay {
     position: absolute;
-    width: 80%;
-    height: 60%;
-    top: 20%;
-    left: 10%;
+    width: 90%;
+    height: 90%;
+    top: 0%;
+    left: 0%;
     pointer-events: none;
     z-index: 20;
 }
 
 .corner {
     position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 5px solid #eaea00;
+    width: 50px;
+    height: 50px;
+    border: 6px solid #eaea00;
 }
 
-.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.top-r { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.top-l { top: 10; left: 10; border-right: 0; border-bottom: 0; }
+.top-r { top: 10; right: 10; border-left: 0; border-bottom: 0; }
+.bot-l { bottom: 10; left: 10; border-right: 0; border-top: 0; }
+.bot-r { bottom: 10; right: 10; border-left: 0; border-top: 0; }
 
 .scan-line {
     position: absolute;
@@ -367,22 +367,20 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
 
     <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
         <div class="flex justify-between items-center mb-4 px-2">
-            <div class="flex items-center gap-3">
-                <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
-                <button onclick="toggleSearch()" id="search-btn" class="text-primary hover:scale-110 transition-transform">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="ajouterManuellement()" class="bg-blue-600 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">+ Manuel</button>
-                <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[18px] uppercase italic">Purger</button>
-                <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
-            </div>
-        </div>
-
+    <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
+    <div class="flex gap-2 items-center">
+        <!-- ✅ Icône recherche ICI entre flux et +Manuel -->
+        <button onclick="toggleSearch()" id="search-btn" class="text-primary hover:scale-110 transition-transform">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" 
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </button>
+        <button onclick="ajouterManuellement()" class="bg-blue-600 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">+ Manuel</button>
+        <button onclick="clearAllLogs()" class="bg-red-900/20 border border-red-500/30 text-red-500 px-3 py-1 rounded font-black text-[18px] uppercase italic">Purger</button>
+        <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
+    </div>
+</div>
         <div id="search-bar" class="hidden px-2 mb-3">
             <input type="text" id="search-input"
                    placeholder="🔍 RECHERCHER UN VIS..."

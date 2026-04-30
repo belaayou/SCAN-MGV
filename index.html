@@ -25,213 +25,125 @@
         },
       }
     </script>
-    <style>
-/* ============================= */
-/* 🔧 RESET GLOBAL */
-/* ============================= */
-* {
-    box-sizing: border-box;
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
+<style>
+/* ✅ BASE */
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
-body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-
-    height: 100dvh;
-    overflow: hidden;
+body { 
+  height: 100svh; 
+  margin: 0; 
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex; 
+  flex-direction: column; 
+  background: #000000; 
+  color: #ffffff; 
+  font-family: 'Inter', sans-serif; 
 }
 
-/* ============================= */
-/* 🧭 HEADER FIXE */
-/* ============================= */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-
-    height: 70px;
-    padding: 0 15px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    background: #000;
-    z-index: 1000;
+/* ✅ SCANNER */
+#view-scanner { 
+  flex: 1; 
+  position: relative; 
+  width: 100%; 
+  overflow: hidden; 
 }
 
-/* ============================= */
-/* 🧭 NAV FIXE */
-/* ============================= */
-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-
-    height: 70px;
-
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-
-    background: #000;
-    z-index: 1000;
-}
-
-/* ============================= */
-/* 📱 VIEWS (pages dynamiques) */
-/* ============================= */
-.view {
-    position: absolute;
-    top: 70px;     /* espace header */
-    bottom: 70px;  /* espace nav */
-    left: 0;
-    width: 100%;
-
-    overflow-y: auto;
-    padding: 10px;
-
-    /* animation */
-    opacity: 0;
-    transform: translateX(100%);
-    transition: 
-        transform 0.35s ease,
-        opacity 0.25s ease;
-
-    pointer-events: none;
-}
-
-/* page active */
-.view.active {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
-}
-
-/* ============================= */
-/* 📷 SCANNER */
-/* ============================= */
-#reader {
-    width: 100%;
-    height: 70vh; /* 🔥 70% écran */
-
-    position: relative;
-    overflow: hidden;
-}
-
-/* vidéo caméra */
+/* 🔥 FIX CAMÉRA (TRÈS IMPORTANT) */
 #reader video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 🔥 supprime bandes noires */
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
-/* cacher UI html5-qrcode */
-#reader__dashboard,
-#reader img {
-    display: none !important;
+/* 🔥 CONTAINER CAMÉRA STABLE */
+.camera-wrapper {
+  position: relative;
+  width: 100%;
+  height: 60vh;
+  max-height: 70vh;
+  overflow: hidden;
+  background: #000;
 }
 
-#reader__scan_region {
-    width: 100%;
-    height: 100%;
-}
-
-/* ============================= */
-/* 🎯 OVERLAY SCAN */
-/* ============================= */
-.scan-overlay {
-    position: absolute;
-    width: 80%;
-    height: 60%;
-    top: 20%;
-    left: 10%;
-    pointer-events: none;
+/* 🔥 OVERLAY RESPONSIVE */
+.scan-overlay { 
+  position: absolute; 
+  top: 50%; 
+  left: 50%; 
+  width: 80%;
+  max-width: 400px;
+  aspect-ratio: 4 / 3;
+  transform: translate(-50%, -50%); 
+  border: 1px solid rgba(234, 234, 0, 0.2); 
+  z-index: 20; 
+  pointer-events: none; 
 }
 
 /* coins */
-.corner {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 5px solid #eaea00;
+.corner { 
+  position: absolute; 
+  width: 30px; 
+  height: 30px; 
+  border: 5px solid #eaea00; 
+}
+.top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
+.top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
+.bot-l { bottom: -5px; left: -5px; border-right: 0; border-top: 0; }
+.bot-r { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
+
+/* 🔥 scan line corrigée */
+.scan-line { 
+  position: absolute; 
+  width: 100%; 
+  height: 3px; 
+  background: #eaea00; 
+  box-shadow: 0 0 20px #eaea00; 
+  animation: scan 3s linear infinite; 
+  opacity: 0.8; 
 }
 
-.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.top-r { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-
-/* ligne scan */
-.scan-line {
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: #eaea00;
-    box-shadow: 0 0 15px #eaea00;
-    animation: scan 3s linear infinite;
+@keyframes scan { 
+  0% { top: 5%; } 
+  100% { top: 95%; } 
 }
 
-@keyframes scan {
-    from { top: 0; }
-    to { top: 100%; }
-}
+/* reste inchangé */
+.editable-cell { border-bottom: 1px dashed #444; min-width: 50px; padding: 6px; font-size: 18px; }
+.editable-cell:focus { outline: none; border-bottom: 2px solid #eaea00; background: rgba(234,234,0,0.15); }
+.active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; }
+.hidden { display: none !important; }
 
-/* ============================= */
-/* 📊 TABLE */
-/* ============================= */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+/* responsive global */
+* { box-sizing: border-box; -webkit-text-size-adjust: none; }
+html { font-size: clamp(12px, 2.5vw, 16px); }
 
-td, th {
-    padding: 8px;
-    border-bottom: 1px solid #444;
-}
+/* header/nav */
+header { height: clamp(60px, 12vw, 80px) !important; }
+nav { height: clamp(60px, 12vw, 80px) !important; }
 
-/* colonne fixe */
+header svg { width: clamp(24px, 6vw, 40px) !important; }
+nav svg { width: clamp(20px, 5vw, 32px) !important; }
+
+#display-name { font-size: clamp(9px, 2.5vw, 12px); }
+#display-id { font-size: clamp(12px, 3.5vw, 18px); }
+
+/* tableau */
+#history-body td { font-size: clamp(10px, 3vw, 16px); }
+
+table { border-collapse: collapse; }
 #history-body td:first-child,
-thead th:first-child {
-    position: sticky;
-    left: 0;
-    background: #18181b;
-    z-index: 5;
+thead tr th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #18181b;
 }
-
-/* ============================= */
-/* ✏️ EDITABLE */
-/* ============================= */
-.editable-cell {
-    border-bottom: 1px dashed #444;
-    padding: 6px;
-}
-
-.editable-cell:focus {
-    outline: none;
-    border-bottom: 2px solid #eaea00;
-    background: rgba(234,234,0,0.15);
-}
-
-/* ============================= */
-/* 🧩 UTIL */
-/* ============================= */
-.active-nav {
-    color: #eaea00;
-    border-top: 3px solid #eaea00;
-}
-
-.hidden {
-    display: none !important;
-}
-   </style>
+thead tr th:first-child { background: #27272a; }
+</style>
 </head>
 <body onload="initApp()">
 <div id="app-container"> 

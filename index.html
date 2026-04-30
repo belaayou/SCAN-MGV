@@ -76,7 +76,7 @@ header {
     align-items: center;
     justify-content: space-between;
     background: #000;
-    border-bottom: 2px solid #18181b;
+    border-bottom: 3px solid #18181b;
     z-index: 1000;
     flex-shrink: 0;
 }
@@ -109,7 +109,7 @@ nav {
     justify-content: space-around;
     align-items: center;
     background: #000;
-    border-top: 2px solid #18181b;
+    border-top: 3px solid #18181b;
     z-index: 1000;
 }
 
@@ -170,33 +170,25 @@ nav {
     z-index: 20;
 }
 
-.corner {
-    position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 5px solid #eaea00;
-}
+/* ✅ Coins */
+.corner { position: absolute; width: 40px; height: 40px; border: 6px solid #eaea00; }
+.top-l { top: -5px; left: -5px; border-right: 0; border-bottom: 0; }
+.top-r { top: -5px; right: -5px; border-left: 0; border-bottom: 0; }
+.bot-l { bottom: -5px; left: -5px; border-right: 0; border-top: 0; }
+.bot-r { bottom: -5px; right: -5px; border-left: 0; border-top: 0; }
 
-.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.top-r { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-
+/* ✅ Ligne laser */
 .scan-line {
     position: absolute;
     width: 100%;
     height: 2px;
     background: #eaea00;
-    box-shadow: 0 0 15px #eaea00;
-    animation: scan 3s linear infinite;
+    box-shadow: 0 0 20px #eaea00;
+    top: 0;
+    animation: scan 4s linear infinite;
     opacity: 0.8;
 }
-
-@keyframes scan {
-    from { top: 0; }
-    to { top: 100%; }
-}
-
+@keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
 /* ============================= */
 /* 📊 TABLE */
 /* ============================= */

@@ -113,21 +113,26 @@ nav {
 /* ============================= */
 /* 📱 VIEWS — zones dynamiques */
 /* ============================= */
-.view-section {
-    position: fixed;
-    top: 70px;
-    bottom: 140px;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-}
-
-/* ✅ Scanner */
 #view-scanner {
-    overflow: hidden;
-    position: relative !important;
+    bottom: 0 !important;
+    top: 70px !important;
+    position: fixed !important;
+    height: calc(100dvh - 220px) !important; /* ✅ +10px = bande noire */
 }
 
+/* ✅ Coins bas positionnés au-dessus du bouton */
+.bot-l { 
+    bottom: 10px; 
+    left: 10px; 
+    border-right: 0; 
+    border-top: 0; 
+}
+.bot-r { 
+    bottom: 10px; 
+    right: 10px; 
+    border-left: 0; 
+    border-top: 0; 
+}
 /* ✅ Mémoire — TABLEAU SCROLLABLE */
 #view-history {
     overflow-y: auto !important;
@@ -277,13 +282,13 @@ thead th:first-child {
 /* 🧩 ICÔNES */
 /* ============================= */
 header svg {
-    width: clamp(28px, 6vw, 36px);
-    height: clamp(28px, 6vw, 36px);
+    width: clamp(32px, 6vw, 36px);
+    height: clamp(32px, 6vw, 36px);
 }
 
 nav svg {
-    width: clamp(24px, 5vw, 30px);
-    height: clamp(24px, 5vw, 30px);
+    width: clamp(28px, 5vw, 30px);
+    height: clamp(28px, 5vw, 30px);
 }
 
 nav span { font-size: clamp(10px, 2.5vw, 13px); }
@@ -326,11 +331,14 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
         left: 50%;
         transform: translateX(-50%);
     }
-    .view-section {
-        max-width: 500px;
-        left: 50%;
-        transform: translateX(-50%);
-    }
+   .view-section {
+    position: fixed;
+    top: 70px;
+    bottom: 140px;
+    left: 0;
+    width: 100%;
+    overflow: hidden;
+}
 }
 </style>
     

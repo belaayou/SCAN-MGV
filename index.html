@@ -214,7 +214,49 @@ nav span {
     font-size: clamp(14px, 4vw, 20px);
     padding: clamp(10px, 3vw, 18px);
 }
+/* ============================= */
+/* 📊 TABLE WRAPPER */
+/* ============================= */
+.table-wrapper{
+    flex:1;
+    overflow-y:auto;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+}
 
+/* ============================= */
+/* 🔘 ACTIONS FIXES */
+/* ============================= */
+.fixed-actions{
+    padding:10px;
+    background:#000;
+    border-bottom:1px solid #27272a;
+    flex-shrink:0;
+}
+
+/* ============================= */
+/* 🟡 STELLANTIS FIXE */
+/* ============================= */
+.stellantis-bar{
+    padding:10px;
+    background:#000;
+    border-bottom:1px solid #27272a;
+    flex-shrink:0;
+}
+
+/* ============================= */
+/* 🎯 SCAN BOX */
+/* ============================= */
+.scan-box{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+
+    width:80%;
+    height:220px;
+}
+    
 /* ============================= */
 /* 📊 TABLE */
 /* ============================= */
@@ -278,8 +320,8 @@ thead th:first-child {
     <!-- ========================= -->
     <!-- LOGIN -->
     <!-- ========================= -->
-    <div id="identity-screen" class="fixed inset-0 bg-black z-[200] flex flex-col p-8 items-center justify-center">
-        <!-- TON CODE LOGIN RESTE IDENTIQUE -->
+    <div id="identity-screen" class="hidden fixed inset-0 bg-black z-[200] flex flex-col p-8 items-center justify-center">
+          <!-- TON CODE LOGIN RESTE IDENTIQUE -->
     </div>
 
     <!-- ========================= -->

@@ -27,7 +27,7 @@
     </script>
 <style>
     
-   /* ============================= */
+  /* ============================= */
 /* 🔧 RESET GLOBAL PROPRE */
 /* ============================= */
 * {
@@ -47,19 +47,30 @@ body {
     color: #fff;
     font-family: 'Inter', sans-serif;
 
-    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 100dvh; /* ✅ mieux que svh */
     overflow: hidden;
-}}
+}
 
 /* ============================= */
-/* 📱 APP CONTAINER */
+/* 📱 CONTENEUR PRINCIPAL */
 /* ============================= */
 #app-container {
     width: 100%;
+    max-width: 420px;
     height: 100dvh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #000;
     position: relative;
     overflow: hidden;
-}        
+}
+
 /* Mobile full width */
 @media (max-width: 420px) {
     #app-container {
@@ -78,9 +89,10 @@ body {
 /* 📷 SCANNER ZONE */
 /* ============================= */
 #view-scanner {
-    height: 70dvh; /* ✅ 70% réel écran */
-    width: 100%;
+    flex: 1;
     position: relative;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
 }
 
@@ -92,14 +104,15 @@ body {
     inset: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 #reader video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* 🔥 essentiel */
+    object-fit: cover; /* 🔥 clé principale */
 }
-        
+
 /* Supprimer UI interne html5-qrcode */
 #reader__dashboard,
 #reader img {
@@ -115,10 +128,10 @@ body {
 /* 🎯 OVERLAY SCAN */
 /* ============================= */
 .scan-overlay {
-    width: 80%;
-    height: 60%;
-    top: 20%;
-    left: 10%;
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
 }
 
 /* Coins */
@@ -142,7 +155,7 @@ body {
     background: #eaea00;
     box-shadow: 0 0 15px #eaea00;
 
-    animation: scan 4s linear infinite;
+    animation: scan 3s linear infinite;
     opacity: 0.8;
 }
 
@@ -152,54 +165,37 @@ body {
 }
 
 /* ============================= */
-/* 🧭 HEADER FIXE */
+/* 🧭 HEADER & NAV */
 /* ============================= */
 header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    padding: 0 15px;
+    height: clamp(60px, 12vw, 80px);
+    padding: 0 clamp(10px, 3vw, 20px);
     padding-top: env(safe-area-inset-top, 0px);
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #000;
-    border-bottom: 2px solid #18181b;
-    z-index: 1000;
-    flex-shrink: 0;
 }
 
-    /* ============================= */
-/* 🔒 BOUTON STELLANTIS MGV FIXE */
-/* ============================= */
-#stellantis-btn {
-    position: fixed;
-    bottom: 70px;
-    left: 0;
-    width: 100%;
-    padding: 8px 16px;
-    background: #000;
-    border-top: 1px solid #18181b;
-    z-index: 999;
+nav {
+    height: clamp(60px, 12vw, 80px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
-/* ============================= */
-/* 🧩 ICÔNES */
-/* ============================= */
+
+/* Icônes */
 header svg {
-    width: clamp(28px, 6vw, 36px);
-    height: clamp(28px, 6vw, 36px);
+    width: clamp(24px, 6vw, 36px);
+    height: clamp(24px, 6vw, 36px);
 }
 
 nav svg {
-    width: clamp(24px, 5vw, 30px);
-    height: clamp(24px, 5vw, 30px);
+    width: clamp(20px, 5vw, 30px);
+    height: clamp(20px, 5vw, 30px);
 }
 
-nav span { font-size: clamp(10px, 2.5vw, 13px); }
-#display-name { font-size: clamp(9px, 2.5vw, 12px); }
-#display-id { font-size: clamp(12px, 3.5vw, 18px); }
+nav span {
+    font-size: clamp(9px, 2.5vw, 13px);
+}
 
 /* Textes */
 #display-name {
@@ -252,7 +248,7 @@ thead th:first-child {
     border-bottom: 1px dashed #444;
     min-width: 50px;
     padding: 6px;
-    transition: 0.4s;
+    transition: 0.2s;
 }
 
 .editable-cell:focus {
@@ -271,18 +267,6 @@ thead th:first-child {
 
 .hidden {
     display: none !important;
-        }
-    
-    /* ============================= */
-/* 🔐 ECRAN LOGIN */
-/* ============================= */
-#identity-screen {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    transform: none !important;
-    z-index: 2000 !important;
 }
 
 </style>

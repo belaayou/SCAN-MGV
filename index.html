@@ -26,7 +26,252 @@
       }
     </script>
 <style>
-    
+    /* ============================= /
+/ 🔧 RESET GLOBAL PROPRE /
+/ ============================= */
+
+{
+box-sizing: border-box;
+-webkit-text-size-adjust: none;
+text-size-adjust: none;
+}
+
+
+html {
+font-size: clamp(12px, 2.5vw, 16px);
+}
+
+body {
+margin: 0;
+padding: 0;
+background: #000;
+color: #fff;
+font-family: 'Inter', sans-serif;
+height: 100dvh;
+overflow: hidden;
+}
+
+/* ============================= /
+/ 📱 CONTENEUR PRINCIPAL /
+/ ============================= */
+#app-container {
+width: 100%;
+max-width: 420px;
+height: 100dvh;
+
+display: flex;  
+flex-direction: column;  
+
+background: #000;  
+position: relative;  
+overflow: hidden;
+
+}
+
+/* Mobile full width */
+@media (max-width: 420px) {
+#app-container {
+max-width: 100%;
+}
+}
+
+/* Tablet style */
+@media (min-width: 600px) {
+#app-container {
+border-radius: 20px;
+}
+}
+
+/* ============================= /
+/ 📷 SCANNER ZONE /
+/ ============================= */
+#view-scanner {
+flex: 1;
+position: relative;
+width: 100%;
+height: 100%;
+overflow: hidden;
+}
+
+/* ============================= /
+/ 📷 CAMERA FULLSCREEN /
+/ ============================= */
+#reader {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+overflow: hidden;
+}
+
+#reader video {
+width: 100%;
+height: 100%;
+object-fit: cover; /* 🔥 clé principale */
+}
+
+/* Supprimer UI interne html5-qrcode */
+#reader__dashboard,
+#reader img {
+display: none !important;
+}
+
+#reader__scan_region {
+width: 100%;
+height: 100%;
+}
+
+/* ============================= /
+/ 🎯 OVERLAY SCAN /
+/ ============================= */
+.scan-overlay {
+position: absolute;
+inset: 0;
+z-index: 20;
+pointer-events: none;
+}
+
+/* Coins */
+.corner {
+position: absolute;
+width: 40px;
+height: 40px;
+border: 5px solid #eaea00;
+}
+
+.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.top-r { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+
+/* Ligne scan */
+.scan-line {
+position: absolute;
+width: 100%;
+height: 2px;
+background: #eaea00;
+box-shadow: 0 0 15px #eaea00;
+
+animation: scan 3s linear infinite;  
+opacity: 0.8;
+
+}
+
+@keyframes scan {
+from { top: 0; }
+to { top: 100%; }
+}
+
+/* ============================= /
+/ 🧭 HEADER & NAV /
+/ ============================= */
+header {
+    flex-shrink: 0; /* Empêche le header de s'écraser */
+    height: clamp(60px, 12vw, 80px);
+    background: #000;
+    z-index: 100;
+}
+
+nav {
+    flex-shrink: 0; /* Empêche la nav de s'écraser */
+    height: clamp(60px, 12vw, 80px);
+    background: #000;
+    z-index: 100;
+}
+
+/* Icônes */
+header svg {
+width: clamp(24px, 6vw, 36px);
+height: clamp(24px, 6vw, 36px);
+}
+
+nav svg {
+width: clamp(20px, 5vw, 30px);
+height: clamp(20px, 5vw, 30px);
+}
+
+nav span {
+font-size: clamp(9px, 2.5vw, 13px);
+}
+
+/* Textes */
+#display-name {
+font-size: clamp(9px, 2.5vw, 12px);
+}
+
+#display-id {
+font-size: clamp(12px, 3.5vw, 18px);
+}
+
+/* ============================= /
+/ 🧾 INPUTS /
+/ ============================= */
+#login-id, #login-pass,
+#reg-nom, #reg-prenom, #reg-id, #reg-pass {
+font-size: clamp(14px, 4vw, 20px);
+padding: clamp(10px, 3vw, 18px);
+}
+.control-bar {
+    flex-shrink: 0;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #000;
+    /* Ces boutons ne bougeront pas */
+}
+/* ============================= /
+/ 📊 TABLE /
+/ ============================= */
+table {
+border-collapse: collapse;
+}
+
+#history-body td {
+font-size: clamp(10px, 3vw, 15px);
+padding: clamp(6px, 2vw, 12px);
+}
+
+thead th {
+font-size: clamp(11px, 3vw, 14px);
+}
+
+/* Sticky colonne */
+#history-body td:first-child,
+thead th:first-child {
+position: sticky;
+left: 0;
+z-index: 5;
+background: #18181b;
+border-right: 2px solid #3f3f46;
+}
+
+/* ============================= /
+/ ✏️ EDITABLE /
+/ ============================= */
+.editable-cell {
+border-bottom: 1px dashed #444;
+min-width: 50px;
+padding: 6px;
+transition: 0.2s;
+}
+
+.editable-cell:focus {
+outline: none;
+border-bottom: 2px solid #eaea00;
+background: rgba(234,234,0,0.15);
+}
+
+/* ============================= /
+/ 🧩 UTIL /
+/ ============================= */
+.active-nav {
+color: #eaea00;
+border-top: 3px solid #eaea00;
+}
+
+.hidden {
+display: none !important;
+}
 <body onload="initApp()">
 <div id="app-container"> 
 <div id="identity-screen" class="fixed inset-0 bg-black z-[200] flex flex-col p-8 items-center justify-center">

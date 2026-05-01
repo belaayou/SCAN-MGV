@@ -76,7 +76,6 @@ header {
     background: #000;
     border-bottom: 2px solid #18181b;
     z-index: 1000;
-    flex-shrink: 0;
 }
 
 /* ============================= */
@@ -117,26 +116,43 @@ nav {
 .view-section {
     position: fixed;
     top: 70px;
-    bottom: 140px; /* header 70px + nav 70px */
+    bottom: 140px;
     left: 0;
     width: 100%;
     overflow: hidden;
 }
 
-/* ✅ Vue Mémoire — scrollable */
-#view-history {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 8px;
-}
-
-/* ============================= */
-/* 📷 SCANNER ZONE */
-/* ============================= */
+/* ✅ Scanner */
 #view-scanner {
     overflow: hidden;
+    position: relative !important;
 }
 
+/* ✅ Mémoire — TABLEAU SCROLLABLE */
+#view-history {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* En-tête tableau fixe dans la vue */
+#view-history > div:first-child {
+    flex-shrink: 0;
+}
+
+/* Zone tableau scrollable */
+#view-history .bg-zinc-900 {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+/* ============================= */
+/* 📷 CAMERA FULLSCREEN */
+/* ============================= */
 #reader {
     position: absolute;
     inset: 0;
@@ -160,25 +176,25 @@ nav {
 /* ============================= */
 .scan-overlay {
     position: absolute;
-    width: 80%;
-    height: 60%;
-    top: 20%;
-    left: 10%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     z-index: 20;
 }
 
 .corner {
     position: absolute;
-    width: 40px;
-    height: 40px;
-    border: 5px solid #eaea00;
+    width: 50px;
+    height: 50px;
+    border: 6px solid #eaea00;
 }
 
-.top-l { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.top-r { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.bot-l { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.bot-r { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.top-l { top: 10px; left: 10px; border-right: 0; border-bottom: 0; }
+.top-r { top: 10px; right: 10px; border-left: 0; border-bottom: 0; }
+.bot-l { bottom: 10px; left: 10px; border-right: 0; border-top: 0; }
+.bot-r { bottom: 10px; right: 10px; border-left: 0; border-top: 0; }
 
 .scan-line {
     position: absolute;
@@ -212,6 +228,10 @@ table {
 thead th {
     font-size: clamp(11px, 3vw, 14px);
     padding: 10px 8px;
+    position: sticky;
+    top: 0;
+    background: #27272a;
+    z-index: 10;
 }
 
 #history-body td:first-child,
@@ -221,6 +241,11 @@ thead th:first-child {
     background: #18181b;
     z-index: 5;
     border-right: 2px solid #3f3f46;
+}
+
+thead th:first-child {
+    z-index: 15;
+    background: #27272a;
 }
 
 /* ============================= */
@@ -285,6 +310,27 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
     max-width: 100% !important;
     transform: none !important;
     z-index: 2000 !important;
+}
+
+/* ============================= */
+/* 📱 TABLETTE */
+/* ============================= */
+@media (min-width: 768px) {
+    #app-container {
+        max-width: 500px;
+        margin: auto;
+        border-radius: 20px;
+    }
+    header, nav, #stellantis-btn {
+        max-width: 500px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .view-section {
+        max-width: 500px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
 </style>
     

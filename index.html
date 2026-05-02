@@ -474,20 +474,15 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
                 SAISIE MANUELLE VIS
             </h3>
             
-            <div class="relative mb-8">
-                <input type="text" 
-                       id="input-vis" 
-                       class="w-full bg-transparent border-b-2 border-zinc-700 py-2 text-xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center placeholder:text-zinc-600" 
-                       placeholder="EX: T5071035">
+            <<div class="relative mb-5">
+                <input type="text" id="input-vis" 
+                       class="w-full bg-black border-b-2 border-zinc-700 py-3 text-2xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center" 
+                       placeholder="CODE VIS">
             </div>
 
-            <div class="flex gap-3 h-10">
-                <button onclick="closeModal()" class="flex-1 bg-zinc-800 text-zinc-400 text-[10px] font-bold rounded-xl uppercase hover:bg-zinc-700 transition-colors">
-                    Annuler
-                </button>
-                <button class="flex-1 bg-primary text-black text-[10px] font-bold rounded-xl uppercase hover:opacity-90 transition-opacity">
-                    Valider
-                </button>
+            <div class="flex gap-2 h-12">
+                <button onclick="closeModal()" class="flex-1 bg-zinc-800 text-zinc-400 text-xs font-bold rounded-lg uppercase">Annuler</button>
+                <button class="flex-1 bg-primary text-black text-xs font-bold rounded-lg uppercase">Valider</button>
             </div>
         </div>
     </div>

@@ -412,7 +412,7 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
 
     <section id="view-history" class="view-section hidden flex-1 p-2 overflow-y-auto">
         <div class="flex justify-between items-center mb-4 px-2">
-        <div class="flex items-center gap-8">
+        <div class="flex items-center gap-4">
                 <h3 id="flux-title" class="text-primary font-[900] text-sm uppercase tracking-widest italic">Flux (0)</h3>
                 <button onclick="toggleSearch()" id="search-btn" class="text-primary hover:scale-110 transition-transform">
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,7 +427,7 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
                 <button onclick="exportCSV()" class="bg-zinc-800 px-3 py-1 rounded font-black text-[18px] uppercase text-white italic">CSV</button>
             </div>
         </div>
-        <div id="search-bar" class="hidden px-5 ">
+        <div id="search-bar" class="hidden px-3 mb-3 ">
             <input type="text" id="search-input"
                    placeholder="🔍 RECHERCHER UN VIS..."
                    oninput="this.value = this.value.toUpperCase(); filtrerEnTempsReel(this.value)"
@@ -468,9 +468,9 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
 </nav>
 
 <div id="modal-saisie" class="hidden fixed inset-0 bg-black/90 z-[300] flex items-center justify-center p-4 backdrop-blur-md">
-    <div class="bg-zinc-900 border-4 border-primary rounded-3xl w-full max-w-sm overflow-hidden shadow-[0_0_30px_rgba(234,234,0,0.2)]">
+    <div class="bg-zinc-900 border-4 border-primary rounded-3xl w-1/2 px-4 max-w-sm overflow-hidden shadow-[0_0_30px_rgba(234,234,0,0.2)]">
         <div class="p-8">
-            <h3 class="text-primary text-xl font-[900] mb-8 tracking-widest uppercase italic text-center">
+            <h3 class="text-primary text-lg font-[900] mb-8 tracking-widest uppercase italic text-center">
                 SAISIE MANUELLE VIS
             </h3>
             <div class="relative">

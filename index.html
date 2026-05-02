@@ -466,7 +466,7 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
         <span class="text-[17px] font-black uppercase tracking-widest">Mémoire</span>
     </button>
 </nav>
-<div id="modal-saisie" class="fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-sm">
+<div id="modal-saisie" class="hidden fixed inset-0 bg-black/80 z-[300] flex items-center justify-center p-4 backdrop-blur-sm">
     
     <div class="bg-zinc-900 border-2 border-primary rounded-[2rem] w-full max-w-[280px] overflow-hidden shadow-2xl">
         <div class="p-6">
@@ -478,14 +478,20 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
                 <input type="text" 
                        id="input-vis" 
                        class="w-full bg-transparent border-b-2 border-zinc-700 py-2 text-xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center placeholder:text-zinc-600" 
-                       placeholder="EX: T5071035">
+                       placeholder="EX: T5071035"
+                       oninput="this.value = this.value.toUpperCase()"
+                       autocapitalize="characters">
             </div>
 
             <div class="flex gap-3 h-10">
-                <button onclick="closeModal()" class="flex-1 bg-zinc-800 text-zinc-400 text-[10px] font-bold rounded-xl uppercase hover:bg-zinc-700 transition-colors">
+                <!-- ✅ Annuler — bonne fonction -->
+                <button onclick="fermerSaisie()" 
+                        class="flex-1 bg-zinc-800 text-zinc-400 text-[10px] font-bold rounded-xl uppercase hover:bg-zinc-700 transition-colors">
                     Annuler
                 </button>
-                <button class="flex-1 bg-primary text-black text-[10px] font-bold rounded-xl uppercase hover:opacity-90 transition-opacity">
+                <!-- ✅ Valider — fonction ajoutée -->
+                <button onclick="validerSaisie()" 
+                        class="flex-1 bg-primary text-black text-[10px] font-bold rounded-xl uppercase hover:opacity-90 transition-opacity">
                     Valider
                 </button>
             </div>

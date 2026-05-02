@@ -473,14 +473,15 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
             <h3 class="text-primary text-xs font-black mb-6 tracking-widest uppercase italic text-center">
                 SAISIE MANUELLE VIS
             </h3>
-            
             <div class="relative mb-8">
-                <input type="text" 
-                       id="input-vis" 
-                       class="w-full bg-transparent border-b-2 border-zinc-700 py-2 text-xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center placeholder:text-zinc-600" 
-                       placeholder="EX: T5071035"
-                       oninput="this.value = this.value.toUpperCase()"
-                       autocapitalize="characters">
+    <input type="text" 
+           id="input-vis" 
+           class="w-full bg-black border-2 border-zinc-700 rounded-xl py-4 px-4 text-xl text-white outline-none focus:border-primary transition-colors font-mono uppercase text-center placeholder:text-zinc-600" 
+           placeholder="EX: T5071035"
+           oninput="this.value = this.value.toUpperCase()"
+           autocapitalize="characters"
+           autocomplete="off"
+           spellcheck="false">
             </div>
 
             <div class="flex gap-3 h-10">

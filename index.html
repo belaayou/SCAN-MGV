@@ -657,33 +657,30 @@ function startScanner() {
 
             const cleanText = decodedText.trim().toUpperCase();
 
-            // ✅ Vérification VIS
             if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
 
-                isProcessing = true;
+    isProcessing = true;
 
-                // ✅ Pause caméra
-                html5QrCode.pause(true);
+    html5QrCode.pause(true);
 
-                // ✅ Son
-                playScanSound();
+    playScanSound();
 
-                // ✅ Ajouter VIS
-                addLogEntry(cleanText);
+    // ✅ Ajouter VIS
+    addLogEntry(cleanText);
 
-                // ✅ Synchroniser après nouveau scan
-                await syncPendingLogs();
+    // ✅ Synchroniser
+    await syncPendingLogs();
 
-                // ✅ Reprendre scanner après 2 sec
-                setTimeout(() => {
+    // ✅ Reprendre scanner après 2 secondes
+    setTimeout(() => {
 
-                    isProcessing = false;
+        isProcessing = false;
 
-                    html5QrCode.resume();
+        html5QrCode.resume();
 
-                }, 2000);
-            }
-        }
+    }, 2000);
+}
+  }
 
     ).then(() => {
 

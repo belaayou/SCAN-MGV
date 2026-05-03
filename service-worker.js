@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
     './',
     './index.html',
     './manifest.json',
+     './install.js',
     './IMG_20260413_130653.png',
     // CDN — mis en cache au premier chargement (voir fetch handler)
     'https://cdn.tailwindcss.com',

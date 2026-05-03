@@ -1,11 +1,11 @@
 // ============================================================
-//  STELLANTIS MGV — Service Worker v8.6
+//  STELLANTIS MGV — Service Worker v8.7
 //  Stratégie : Cache-First pour assets statiques
 //              Network-First pour Google Apps Script
 //              Queue offline pour les scans non synchronisés
 // ============================================================
 
-const CACHE_NAME = 'stellantis-mgv-v8.6';
+const CACHE_NAME = 'stellantis-mgv-v8.7';
 const SYNC_TAG   = 'sync-scans';
 
 // Assets à mettre en cache lors de l'installation
@@ -13,7 +13,6 @@ const STATIC_ASSETS = [
     './',
     './index.html',
     './manifest.json',
-     './install.js',
     './IMG_20260413_130653.png',
     // CDN — mis en cache au premier chargement (voir fetch handler)
     'https://cdn.tailwindcss.com',

@@ -600,35 +600,118 @@ function logoutIdentity() {
     }
 }
 
-function startScanner() { 
-      // ✅ Synchroniser les entrées en attente avant de scanner
-    if (navigator.onLine) {
-        const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
-        pendingLogs.forEach(async entry => {
-            await sendToGoogle(entry);
-        });
+function startScanner() {
+
+    // ✅ Synchroniser les entrées en attente avant scanner
+    async function syncPendingLogs() {
+
+        if (!navigator.onLine) return;
+
+        const pendingLogs = logs.filter(
+            l => !l.synced && l.zone && l.zone !== ''
+        );
+
+        for (const entry of pendingLogs) {
+
+            try {
+
+                // ✅ Envoi Google Sheets
+                await sendToGoogle(entry);
+
+                // ✅ Marquer synchronisé
+                entry.synced = true;
+
+            } catch (err) {
+
+                console.error("Erreur sync :", err);
+            }
+        }
+
+        // ✅ Sauvegarde locale
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
     }
+
+    // ✅ Première synchronisation au lancement scanner
+    syncPendingLogs();
+
+    // =========================
+    // ✅ Initialisation scanner
+    // =========================
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
     }
+
     html5QrCode.start(
+
         { facingMode: "environment" },
-        { fps: 20, qrbox: undefined },
-        (decodedText) => {
+
+        {
+            fps: 20,
+            qrbox: undefined
+        },
+
+        // ✅ IMPORTANT : async
+        async (decodedText) => {
+
             if (isProcessing) return;
+
             const cleanText = decodedText.trim().toUpperCase();
-          if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-    isProcessing = true;         
-    html5QrCode.pause(true);     
-    playScanSound();              
-    addLogEntry(cleanText);     
-}  
-}              
+
+            // ✅ Vérification VIS
+            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+
+                isProcessing = true;
+
+                // ✅ Pause caméra
+                html5QrCode.pause(true);
+
+                // ✅ Son
+                playScanSound();
+
+                // ✅ Ajouter VIS
+                addLogEntry(cleanText);
+
+                // ✅ Synchroniser après nouveau scan
+                await syncPendingLogs();
+
+                // ✅ Reprendre scanner après 2 sec
+                setTimeout(() => {
+
+                    isProcessing = false;
+
+                    html5QrCode.resume();
+
+                }, 2000);
+            }
+        }
+
     ).then(() => {
+
         videoStream = html5QrCode.getRunningTrack();
+
     }).catch(err => console.error("Erreur Camera:", err));
 }
 
+
+// =====================================
+// ✅ Update Entry
+// =====================================
+async function updateEntry(id, field, val) {
+
+    const i = logs.findIndex(l => l.id === id);
+
+    if (i !== -1) {
+
+        // ✅ Mise à jour
+        logs[i][field] = val.trim().toUpperCase();
+
+        // ✅ Marquer non synchronisé
+        logs[i].synced = false;
+
+        // ✅ Sauvegarde locale
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    }
+}
 function ajouterManuellement() {
     const input = document.getElementById('input-vis');
     input.value = "";

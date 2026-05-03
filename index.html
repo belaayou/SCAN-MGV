@@ -599,116 +599,43 @@ function logoutIdentity() {
         if (html5QrCode) html5QrCode.pause(true);
     }
 }
-
-function startScanner() {
-
-    // ✅ Synchroniser les entrées en attente avant scanner
-    async function syncPendingLogs() {
-
-        if (!navigator.onLine) return;
-
-        const pendingLogs = logs.filter(
-            l => !l.synced && l.zone && l.zone !== ''
-        );
-
+    
+async function startScanner() {
+    if (navigator.onLine) {
+        const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
         for (const entry of pendingLogs) {
-
-            try {
-
-                // ✅ Envoi Google Sheets
-                await sendToGoogle(entry);
-
-                // ✅ Marquer synchronisé
-                entry.synced = true;
-
-            } catch (err) {
-
-                console.error("Erreur sync :", err);
-            }
+            await sendToGoogle(entry);
         }
-
-        // ✅ Sauvegarde locale
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
     }
 
-    // ✅ Première synchronisation au lancement scanner
-    syncPendingLogs();
-
-    // =========================
-    // ✅ Initialisation scanner
-    // =========================
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
     }
 
+    try {
+        await html5QrCode.stop();
+    } catch (e) {}
+
     html5QrCode.start(
-
         { facingMode: "environment" },
-
-        {
-            fps: 20,
-            qrbox: undefined
-        },
-
-        // ✅ IMPORTANT : async
-        async (decodedText) => {
-
+        { fps: 20, qrbox: undefined },
+        (decodedText) => {
             if (isProcessing) return;
 
             const cleanText = decodedText.trim().toUpperCase();
 
             if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-
-    isProcessing = true;
-
-    html5QrCode.pause(true);
-
-    playScanSound();
-
-    // ✅ Ajouter VIS
-    addLogEntry(cleanText);
-
-    // ✅ Synchroniser
-    await syncPendingLogs();
-
-    // ✅ Reprendre scanner après 2 secondes
-    setTimeout(() => {
-
-        isProcessing = false;
-
-        html5QrCode.resume();
-
-    }, 2000);
-}
-  }
-
+                isProcessing = true;
+                html5QrCode.pause();
+                playScanSound();
+                addLogEntry(cleanText);
+            }
+        }
     ).then(() => {
-
         videoStream = html5QrCode.getRunningTrack();
-
     }).catch(err => console.error("Erreur Camera:", err));
 }
-
-
-// =====================================
-// ✅ Update Entry
-// =====================================
-async function updateEntry(id, field, val) {
-
-    const i = logs.findIndex(l => l.id === id);
-
-    if (i !== -1) {
-
-        // ✅ Mise à jour
-        logs[i][field] = val.trim().toUpperCase();
-
-        // ✅ Marquer non synchronisé
-        logs[i].synced = false;
-
-        // ✅ Sauvegarde locale
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-    }
-}
+ 
 function ajouterManuellement() {
     const input = document.getElementById('input-vis');
     input.value = "";

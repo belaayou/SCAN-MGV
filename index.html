@@ -601,13 +601,10 @@ function logoutIdentity() {
 }
     
 async function startScanner() {
-    if (navigator.onLine) {
-        const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
-        for (const entry of pendingLogs) {
-            await sendToGoogle(entry);
-        }
-    }
-
+   if (navigator.onLine) {
+    const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
+    await Promise.all(pendingLogs.map(entry => sendToGoogle(entry)));
+}
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
     }

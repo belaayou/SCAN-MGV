@@ -600,7 +600,14 @@ function logoutIdentity() {
     }
 }
 
-function startScanner() {
+function startScanner() { 
+      // ✅ Synchroniser les entrées en attente avant de scanner
+    if (navigator.onLine) {
+        const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
+        pendingLogs.forEach(async entry => {
+            await sendToGoogle(entry);
+        });
+    }
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
     }
@@ -753,16 +760,12 @@ async function updateEntry(id, field, val) {
     const i = logs.findIndex(l => l.id === id);
     if (i !== -1) {
         logs[i][field] = val.trim().toUpperCase();
+        logs[i].synced = false; // ✅ marquer non synchronisé
         localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        
-        if (field === 'zone' && logs[i].zone.length >= 3) {
-            // ✅ Toujours envoyer (même si déjà synced) pour corriger
-            logs[i].synced = false;
-            await sendToGoogle(logs[i]);
-        }
+        // ✅ Plus d'envoi automatique ici
     }
 }
-
+    
 function renderTable() {
     document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
     document.getElementById('history-body').innerHTML = logs.map(log => `

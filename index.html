@@ -600,38 +600,28 @@ function logoutIdentity() {
     }
 }
     
-async function startScanner() {
-  // if (navigator.onLine) {
-  //  const pendingLogs = logs.filter(l => !l.synced && l.zone !== '');
-  //  await Promise.all(pendingLogs.map(entry => sendToGoogle(entry)));}
-    if (!html5QrCode) {
+function startScanner() { 
+   if (!html5QrCode) {
         html5QrCode = new Html5Qrcode("reader");
     }
-
-    try {
-        await html5QrCode.stop();
-    } catch (e) {}
-
     html5QrCode.start(
         { facingMode: "environment" },
         { fps: 20, qrbox: undefined },
         (decodedText) => {
             if (isProcessing) return;
-
             const cleanText = decodedText.trim().toUpperCase();
-
-            if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
-                isProcessing = true;
-                html5QrCode.pause();
-                playScanSound();
-                addLogEntry(cleanText);
-            }
-        }
+          if (/^[A-Z][0-9]{7}$/.test(cleanText)) {
+    isProcessing = true;         
+    html5QrCode.pause(true);     
+    playScanSound();              
+    addLogEntry(cleanText);     
+}  
+}              
     ).then(() => {
         videoStream = html5QrCode.getRunningTrack();
     }).catch(err => console.error("Erreur Camera:", err));
 }
- 
+    
 function ajouterManuellement() {
     const input = document.getElementById('input-vis');
     input.value = "";
@@ -763,9 +753,13 @@ async function updateEntry(id, field, val) {
     const i = logs.findIndex(l => l.id === id);
     if (i !== -1) {
         logs[i][field] = val.trim().toUpperCase();
-        logs[i].synced = false; // ✅ marquer non synchronisé
         localStorage.setItem('lumen_logs', JSON.stringify(logs));
-        // ✅ Plus d'envoi automatique ici
+        
+        if (field === 'zone' && logs[i].zone.length >= 3) {
+            // ✅ Toujours envoyer (même si déjà synced) pour corriger
+            logs[i].synced = false;
+            await sendToGoogle(logs[i]);
+        }
     }
 }
     

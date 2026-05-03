@@ -14,6 +14,7 @@
     <meta name="theme-color" content="#EAB308">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <script src="install.js"></script>
       
     <script id="tailwind-config">
       tailwind.config = {
@@ -387,6 +388,14 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
             </svg>
         </button>
+        <button id="install-button" 
+        style="display:none"
+        class="text-primary hover:scale-110 transition-transform">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+    </svg>
+     </button>
         <button onclick="toggleView('scanner')" class="text-primary hover:scale-110 transition-transform">
             <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </button>

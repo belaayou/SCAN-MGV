@@ -1,11 +1,11 @@
 // ============================================================
-//  STELLANTIS MGV — Service Worker v8.3
+//  STELLANTIS MGV — Service Worker v8.4
 //  Stratégie : Cache-First pour assets statiques
 //              Network-First pour Google Apps Script
 //              Queue offline pour les scans non synchronisés
 // ============================================================
 
-const CACHE_NAME = 'stellantis-mgv-v8.3';
+const CACHE_NAME = 'stellantis-mgv-v8.4';
 const SYNC_TAG   = 'sync-scans';
 
 // Assets à mettre en cache lors de l'installation

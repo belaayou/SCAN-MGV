@@ -768,7 +768,7 @@ function renderTable() {
     document.getElementById('history-body').innerHTML = logs.map(log => `
         <tr class="border-b border-zinc-800 ${log.synced ? 'bg-green-900/10' : ''}">
             <td class="p-3 text-white/30 text-[16px]">${log.op}</td>
-            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary font-black" contenteditable="true" style="text-transform:uppercase" oninput="this.innerText = this.innerText.toUpperCase(); const sel = window.getSelection(); sel.collapse(this, 1);" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
+            <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary text-[20px] font-black" contenteditable="true" style="text-transform:uppercase" oninput="this.innerText = this.innerText.toUpperCase(); const sel = window.getSelection(); sel.collapse(this, 1);" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
             <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" style="text-transform:uppercase" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
             <td class="p-3 text-[16px] font-black leading-none">
                 ${log.time}<br>

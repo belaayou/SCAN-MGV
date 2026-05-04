@@ -82,17 +82,13 @@ header {
 /* ============================= */
 #stellantis-btn {
     position: fixed;
-    bottom: 70px;        /* juste au-dessus de la nav */
+    bottom: 100px;
     left: 0;
     width: 100%;
-    height: 70px;        /* hauteur fixe */
     padding: 8px 16px;
     background: #000;
     border-top: 1px solid #18181b;
     z-index: 999;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 /* ============================= */
@@ -120,232 +116,6 @@ nav {
     position: fixed;
     top: 70px;
     bottom: 140px;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-}
-
-/* ✅ Scanner */
-#view-scanner {
-    overflow: hidden;
-    position: relative !important;
-}
-
-/* ✅ Mémoire — TABLEAU SCROLLABLE */
-#view-history {
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-}
-
-/* En-tête tableau fixe dans la vue */
-#view-history > div:first-child {
-    flex-shrink: 0;
-}
-
-/* Zone tableau scrollable */
-#view-history .bg-zinc-900 {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-}
-
-/* ============================= */
-/* 📷 CAMERA FULLSCREEN */
-/* ============================= */
-#reader {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-#reader video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#reader__dashboard,
-#reader img { display: none !important; }
-#reader__scan_region { width: 100%; height: 100%; }
-
-/* ============================= */
-/* 🎯 OVERLAY SCAN */
-/* ============================= */
-.scan-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 20;
-}
-
-.corner {
-    position: absolute;
-    width: 50px;
-    height: 50px;
-    border: 5px solid #eaea00;
-}
-
-.top-l { top: 5px; left: 5px; border-right: 0; border-bottom: 0; }
-.top-r { top: 5px; right: 5px; border-left: 0; border-bottom: 0; }
-.bot-l { bottom: 75px; left: 5px; border-right: 0; border-top: 0; }
-.bot-r { bottom: 75px; right: 5px; border-left: 0; border-top: 0; }
-
-.scan-line {
-    position: absolute;
-    width: 100%;
-    height: 2px;
-    background: #eaea00;
-    box-shadow: 0 0 15px #eaea00;
-    animation: scan 4s linear infinite;
-    opacity: 0.8;
-}
-
-@keyframes scan {
-    from { top: 0; }
-    to { top: 100%; }
-}
-
-/* ============================= */
-/* 📊 TABLE */
-/* ============================= */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#history-body td {
-    font-size: clamp(10px, 3vw, 15px);
-    padding: clamp(6px, 2vw, 12px);
-    border-bottom: 2px solid #333;
-}
-
-thead th {
-    font-size: clamp(11px, 3vw, 14px);
-    padding: 10px 8px;
-    position: sticky;
-    top: 0;
-    background: #27272a;
-    z-index: 10;
-}
-
-#history-body td:first-child,
-thead th:first-child {
-    position: sticky;
-    left: 0;
-    background: #18181b;
-    z-index: 5;
-    border-right: 2px solid #3f3f46;
-}
-
-thead th:first-child {
-    z-index: 15;
-    background: #27272a;
-}
-
-/* ============================= */
-/* ✏️ EDITABLE */
-/* ============================= */
-.editable-cell {
-/* ============================= */
-/* 🔧 RESET GLOBAL */
-/* ============================= */
-* {
-    box-sizing: border-box;
-    -webkit-text-size-adjust: none;
-    text-size-adjust: none;
-}
-
-html {
-    font-size: clamp(12px, 2.5vw, 16px);
-}
-
-body {
-    margin: 0;
-    padding: 0;
-    background: #000;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    height: 100dvh;
-    overflow: hidden;
-}
-
-/* ============================= */
-/* 📱 APP CONTAINER */
-/* ============================= */
-#app-container {
-    width: 100%;
-    height: 100dvh;
-    position: relative;
-    overflow: hidden;
-}
-
-/* ============================= */
-/* 🧭 HEADER FIXE */
-/* ============================= */
-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    padding: 0 15px;
-    padding-top: env(safe-area-inset-top, 0px);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: #000;
-    border-bottom: 2px solid #18181b;
-    z-index: 1000;
-}
-
-/* ============================= */
-/* 🔒 BOUTON STELLANTIS MGV FIXE */
-/* ============================= */
-#stellantis-btn {
-    position: fixed;
-    bottom: 100px;
-    left: 0;
-    width: 100%;
-    padding: 8px 16px;
-    background: #000;
-    border-top: 1px solid #18181b;
-    z-index: 999;
-}
-
-/* ============================= */
-/* 🧭 NAV FIXE */
-/* ============================= */
-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 70px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: #000;
-    border-top: 2px solid #18181b;
-    z-index: 1000;
-}
-
-/* ============================= */
-/* 📱 VIEWS — zones dynamiques */
-/* ============================= */
-.view-section {
-    position: fixed;
-    top: 70px;
-    bottom: 100px;
     left: 0;
     width: 100%;
     overflow: hidden;
@@ -560,7 +330,8 @@ nav span { font-size: clamp(10px, 2.5vw, 13px); }
         left: 50%;
         transform: translateX(-50%);
     }
-    }
+}
+
 </style>
     
 <body onload="initApp()">

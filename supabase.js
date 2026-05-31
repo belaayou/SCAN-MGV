@@ -8,8 +8,8 @@
 // │  1. CONFIGURATION — Remplacez par vos vraies valeurs         │
 // └──────────────────────────────────────────────────────────────┘
 
-const SUPABASE_URL = 'postgresql://postgres.rdhmsbqhjlmtlgrjuyxa:[VEKCBojZyIkIRyyU]@aws-1-eu-central-1.pooler.supabase.com:6543/postgres?pgbouncer=true';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
+const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_S_NgVByTSPeH1ZE7DTSTAg_3yAoRQSK';
 //                    ↑ Project Settings → API → anon public
 
 // ┌──────────────────────────────────────────────────────────────┐
@@ -25,7 +25,7 @@ function _initSupabaseClient() {
         return false;
     }
 
-    if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo') {
+    if (!SUPABASE_URL || !SUPABASE_KEY || SUPABASE_KEY === 'sb_publishable_S_NgVByTSPeH1ZE7DTSTAg_3yAoRQSK') {
         console.warn('▲ [Supabase] Clé non configurée — sync désactivée');
         return false;
     }

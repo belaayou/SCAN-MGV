@@ -11,7 +11,7 @@ const SUPABASE_URL =
 'https://rlkhtuflfyafdpshyrcs.supabase.co';
 
 const SUPABASE_KEY =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJibWJ2c2ZzdG1qbGhpeXhpdWJ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDE4NDYsImV4cCI6MjA5NTcxNzg0Nn0.4kmdGiFSosNk1ybpxMncebaFLAoCfzVm1g10uF6PzE4';
+'sb_publishable_qcQJZ0SL35UEKGxKriPkCg_dvmupP8U';
 
 let supabaseClient = null;
 

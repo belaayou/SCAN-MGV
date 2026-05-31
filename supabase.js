@@ -1,111 +1,425 @@
-/**
- * Architecture d'intégration Supabase pour SCAN MGV
- * Gère la synchronisation parallèle, le mode hors ligne et le traitement par lot.
- */
+// ======================================================
+// SUPABASE CONFIG
+// ======================================================
 
-// ⚠️ À REMPLACER PAR VOS IDENTIFIANTS SUPABASE CONFIDENTIELS
-const SUPABASE_URL = "https://rlkhtuflfyafdpshyrcs.supabase.co";
-const SUPABASE_KEY = "sb_publishable_qcQJZ0SL35UEKGxKriPkCg_dvmupP8U";
+const SUPABASE_URL =
+'// ======================================================
+// SUPABASE CONFIG
+// ======================================================
+
+const SUPABASE_URL =
+'https://rlkhtuflfyafdpshyrcs.supabase.co';
+
+const SUPABASE_KEY =
+'sb_publishable_pr-ErTMDI_ljq59D71pV0w_Jx7Qri8R';
 
 let supabaseClient = null;
 
-// Initialisation sécurisée du client Supabase
 if (typeof supabase !== 'undefined') {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    console.log("▲ Supabase connecté avec succès au module d'arrière-plan.");
+
+    supabaseClient = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+    console.log('▲ Supabase connecté');
+
 } else {
-    console.error("▲ Erreur : La librairie Supabase CDN n'est pas chargée.");
+
+    console.error(
+        '▲ Librairie Supabase non chargée'
+    );
 }
 
-/**
- * Enregistre ou met à jour un scan dans la file d'attente locale Supabase et tente l'envoi
- */
+// ======================================================
+// FILE D'ATTENTE LOCALE
+// ======================================================
+
+function getPendingSupabase() {
+
+    return JSON.parse(
+        localStorage.getItem(
+            'pendingSupabaseSync'
+        ) || '[]'
+    );
+}
+
+function savePendingSupabase(data) {
+
+    localStorage.setItem(
+        'pendingSupabaseSync',
+        JSON.stringify(data)
+    );
+}
+
+// ======================================================
+// AJOUT FILE D'ATTENTE
+// ======================================================
+
 async function queueForSupabase(logEntry) {
-    let pendingSyncs = JSON.parse(localStorage.getItem('pendingSupabaseSync')) || [];
-    
-    // Vérification anti-doublon locale dans la file d'attente
-    const exists = pendingSyncs.some(item => item.scan_id === logEntry.scan_id);
-    if (!exists) {
-        pendingSyncs.push(logEntry);
-        localStorage.setItem('pendingSupabaseSync', JSON.stringify(pendingSyncs));
+
+    let queue = getPendingSupabase();
+
+    const existingIndex =
+        queue.findIndex(
+            item =>
+            item.scan_id === logEntry.scan_id
+        );
+
+    if (existingIndex !== -1) {
+
+        queue[existingIndex] = logEntry;
+
     } else {
-        // Mise à jour de la zone ou du code si modifié localement
-        pendingSyncs = pendingSyncs.map(item => item.scan_id === logEntry.scan_id ? logEntry : item);
-        localStorage.setItem('pendingSupabaseSync', JSON.stringify(pendingSyncs));
+
+        queue.push(logEntry);
     }
 
+    savePendingSupabase(queue);
+
+    console.log(
+        '▲ Ajout file Supabase',
+        logEntry.scan_id
+    );
+
     if (navigator.onLine) {
+
         await syncPendingScansToSupabase();
     }
 }
 
-/**
- * Traite la file d'attente des scans non synchronisés vers Supabase (Batch Sync)
- */
+// ======================================================
+// SYNCHRO SUPABASE
+// ======================================================
+
 async function syncPendingScansToSupabase() {
-    if (!navigator.onLine || !supabaseClient) return;
 
-    let pendingSyncs = JSON.parse(localStorage.getItem('pendingSupabaseSync')) || [];
-    if (pendingSyncs.length === 0) return;
+    if (!navigator.onLine) return;
 
-    console.log(`▲ Début de la synchronisation Supabase (${pendingSyncs.length} éléments en attente)`);
+    if (!supabaseClient) return;
 
-    const successfullySyncedIds = [];
+    const queue = getPendingSupabase();
 
-    for (const scan of pendingSyncs) {
+    if (queue.length === 0) {
+
+        console.log(
+            '▲ Aucun élément à synchroniser'
+        );
+
+        return;
+    }
+
+    console.log(
+        `▲ Synchronisation ${queue.length} scan(s)`
+    );
+
+    const syncedIds = [];
+
+    for (const scan of queue) {
+
         try {
-            // Utilisation d'un upsert basé sur la contrainte d'unicité de 'scan_id' pour éliminer les doublons
-            const { error } = await supabaseClient
-                .from('scans')
-                .upsert({
-                    scan_id: scan.scan_id,
-                    op: scan.op,
-                    code: scan.code,
-                    zone: scan.zone,
-                    date: scan.date,
-                    time: scan.time
-                }, { onConflict: 'scan_id' });
 
-            if (!error) {
-                console.log(`▲ Scan envoyé avec succès à Supabase : ${scan.code}`);
-                successfullySyncedIds.push(scan.scan_id);
-            } else {
-                console.error("▲ Erreur d'insertion Supabase :", error.message);
+            const { error } =
+            await supabaseClient
+            .from('scans')
+            .upsert(
+                {
+                    scan_id: scan.scan_id,
+
+                    op: scan.op || '',
+
+                    code: scan.code || '',
+
+                    zone: scan.zone || '',
+
+                    date: scan.date || '',
+
+                    time: scan.time || ''
+                },
+                {
+                    onConflict: 'scan_id'
+                }
+            );
+
+            if (error) {
+
+                console.error(
+                    '▲ Supabase Error:',
+                    error
+                );
+
+                continue;
             }
-        } catch (e) {
-            console.error("▲ Erreur réseau lors de la tentative de synchronisation Supabase :", e);
-            break; // Arrêt de la boucle si le serveur ne répond plus
+
+            syncedIds.push(
+                scan.scan_id
+            );
+
+            console.log(
+                '▲ Scan synchronisé:',
+                scan.code
+            );
+
+        } catch (err) {
+
+            console.error(
+                '▲ Erreur réseau:',
+                err
+            );
+
+            break;
         }
     }
 
-    // Filtrer et vider les éléments validés du localStorage
-    if (successfullySyncedIds.length > 0) {
-        const remainingSyncs = pendingSyncs.filter(item => !successfullySyncedIds.includes(item.scan_id));
-        localStorage.setItem('pendingSupabaseSync', JSON.stringify(remainingSyncs));
-        console.log(`▲ Sync Supabase terminé. Reste en attente : ${remainingSyncs.length}`);
-    }
+    const remaining = queue.filter(
+        item =>
+        !syncedIds.includes(
+            item.scan_id
+        )
+    );
+
+    savePendingSupabase(
+        remaining
+    );
+
+    console.log(
+        `▲ Sync terminée. Reste: ${remaining.length}`
+    );
 }
 
-// ==========================================================================
-// 🔗 PONTS DE COMPATIBILITÉ AVEC LE CODE DE L'INDEX.HTML
-// ==========================================================================
+// ======================================================
+// COMPATIBILITÉ APP
+// ======================================================
 
-/**
- * Alias pour correspondre à l'appel initApp() de l'index.html
- */
-function syncPendingScans() {
+async function sendToSupabase(entry) {
+
+    return queueForSupabase(entry);
+}
+
+async function syncPendingScans() {
+
     return syncPendingScansToSupabase();
 }
 
-/**
- * Alias pour correspondre à l'appel updateEntry() lors de la saisie d'une ZONE
- */
-function sendToSupabase(logEntry) {
-    return queueForSupabase(logEntry);
+// ======================================================
+// RETOUR EN LIGNE
+// ======================================================
+
+window.addEventListener(
+    'online',
+    () => {
+
+        console.log(
+            '▲ Retour réseau'
+        );
+
+        syncPendingScansToSupabase();
+    }
+);';
+
+const SUPABASE_KEY =
+'VOTRE_CLE_PUBLISHABLE_ICI';
+
+let supabaseClient = null;
+
+if (typeof supabase !== 'undefined') {
+
+    supabaseClient = supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+    console.log('▲ Supabase connecté');
+
+} else {
+
+    console.error(
+        '▲ Librairie Supabase non chargée'
+    );
 }
 
-// Écouteur global de retour en ligne pour vider la file d'attente automatiquement
-window.addEventListener('online', () => {
-    console.log("▲ Terminal en ligne : Amorçage de la synchronisation forcée vers Supabase...");
-    syncPendingScansToSupabase();
-});
+// ======================================================
+// FILE D'ATTENTE LOCALE
+// ======================================================
+
+function getPendingSupabase() {
+
+    return JSON.parse(
+        localStorage.getItem(
+            'pendingSupabaseSync'
+        ) || '[]'
+    );
+}
+
+function savePendingSupabase(data) {
+
+    localStorage.setItem(
+        'pendingSupabaseSync',
+        JSON.stringify(data)
+    );
+}
+
+// ======================================================
+// AJOUT FILE D'ATTENTE
+// ======================================================
+
+async function queueForSupabase(logEntry) {
+
+    let queue = getPendingSupabase();
+
+    const existingIndex =
+        queue.findIndex(
+            item =>
+            item.scan_id === logEntry.scan_id
+        );
+
+    if (existingIndex !== -1) {
+
+        queue[existingIndex] = logEntry;
+
+    } else {
+
+        queue.push(logEntry);
+    }
+
+    savePendingSupabase(queue);
+
+    console.log(
+        '▲ Ajout file Supabase',
+        logEntry.scan_id
+    );
+
+    if (navigator.onLine) {
+
+        await syncPendingScansToSupabase();
+    }
+}
+
+// ======================================================
+// SYNCHRO SUPABASE
+// ======================================================
+
+async function syncPendingScansToSupabase() {
+
+    if (!navigator.onLine) return;
+
+    if (!supabaseClient) return;
+
+    const queue = getPendingSupabase();
+
+    if (queue.length === 0) {
+
+        console.log(
+            '▲ Aucun élément à synchroniser'
+        );
+
+        return;
+    }
+
+    console.log(
+        `▲ Synchronisation ${queue.length} scan(s)`
+    );
+
+    const syncedIds = [];
+
+    for (const scan of queue) {
+
+        try {
+
+            const { error } =
+            await supabaseClient
+            .from('scans')
+            .upsert(
+                {
+                    scan_id: scan.scan_id,
+
+                    op: scan.op || '',
+
+                    code: scan.code || '',
+
+                    zone: scan.zone || '',
+
+                    date: scan.date || '',
+
+                    time: scan.time || ''
+                },
+                {
+                    onConflict: 'scan_id'
+                }
+            );
+
+            if (error) {
+
+                console.error(
+                    '▲ Supabase Error:',
+                    error
+                );
+
+                continue;
+            }
+
+            syncedIds.push(
+                scan.scan_id
+            );
+
+            console.log(
+                '▲ Scan synchronisé:',
+                scan.code
+            );
+
+        } catch (err) {
+
+            console.error(
+                '▲ Erreur réseau:',
+                err
+            );
+
+            break;
+        }
+    }
+
+    const remaining = queue.filter(
+        item =>
+        !syncedIds.includes(
+            item.scan_id
+        )
+    );
+
+    savePendingSupabase(
+        remaining
+    );
+
+    console.log(
+        `▲ Sync terminée. Reste: ${remaining.length}`
+    );
+}
+
+// ======================================================
+// COMPATIBILITÉ APP
+// ======================================================
+
+async function sendToSupabase(entry) {
+
+    return queueForSupabase(entry);
+}
+
+async function syncPendingScans() {
+
+    return syncPendingScansToSupabase();
+}
+
+// ======================================================
+// RETOUR EN LIGNE
+// ======================================================
+
+window.addEventListener(
+    'online',
+    () => {
+
+        console.log(
+            '▲ Retour réseau'
+        );
+
+        syncPendingScansToSupabase();
+    }
+);

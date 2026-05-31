@@ -3,7 +3,7 @@
  * Gère la synchronisation parallèle, le mode hors ligne et le traitement par lot.
  */
 
-// À REMPLACER PAR VOS IDENTIFIANTS SUPABASE CONCHUSSIONNELS
+// ⚠️ À REMPLACER PAR VOS IDENTIFIANTS SUPABASE CONFIDENTIELS
 const SUPABASE_URL = "https://rlkhtuflfyafdpshyrcs.supabase.co";
 const SUPABASE_KEY = "sb_publishable_qcQJZ0SL35UEKGxKriPkCg_dvmupP8U";
 
@@ -84,6 +84,24 @@ async function syncPendingScansToSupabase() {
         localStorage.setItem('pendingSupabaseSync', JSON.stringify(remainingSyncs));
         console.log(`▲ Sync Supabase terminé. Reste en attente : ${remainingSyncs.length}`);
     }
+}
+
+// ==========================================================================
+// 🔗 PONTS DE COMPATIBILITÉ AVEC LE CODE DE L'INDEX.HTML
+// ==========================================================================
+
+/**
+ * Alias pour correspondre à l'appel initApp() de l'index.html
+ */
+function syncPendingScans() {
+    return syncPendingScansToSupabase();
+}
+
+/**
+ * Alias pour correspondre à l'appel updateEntry() lors de la saisie d'une ZONE
+ */
+function sendToSupabase(logEntry) {
+    return queueForSupabase(logEntry);
 }
 
 // Écouteur global de retour en ligne pour vider la file d'attente automatiquement

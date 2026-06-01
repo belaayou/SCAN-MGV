@@ -12,7 +12,6 @@
     
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
 
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="IMG_20260413_130653.png">
@@ -488,7 +487,81 @@
         </div>
     </div>
 </div>
+<script>
+// 1. CONFIGURATION INTEGRATION SUPABASE DIRECTE
+const SUPABASE_URL = "https://rdhmsbqhjlmtlgrjuyxa.supabase.co"; // حط الرابط ديالك هنا
+const SUPABASE_ANON_KEY = "sb_publishable_S_NgVByTSPeH1ZE7DTSTAg_3yAoRQSK"; // المفتاح الجديد ديالك
 
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+console.log("▲ Supabase connecté avec succès (Mode: INSERT ONLY)");
+
+// 2. دالة إرسال سكاّن جديد (INSERT)
+async function sendRecordToSupabase(record) {
+    if (!record.scan_id) {
+        record.scan_id = crypto.randomUUID();
+    }
+
+    // تنسيق التاريخ والوقت بناءً على الـ timestamp الخاص بالسكّان
+    const scanDate = new Date(record.timestamp);
+    const formattedDate = record.date || scanDate.toLocaleDateString('fr-FR'); // DD/MM/YY
+    const formattedTime = record.time || scanDate.toLocaleTimeString('fr-FR'); // HH:MM:SS
+
+    try {
+        const { error } = await supabaseClient
+            .from('scans')
+            .insert([{
+                scan_id:    record.scan_id,
+                op:         record.op,          // ID Matricule opérateur
+                code:       record.codeVis,     // Code VIS scanné
+                zone:       record.zone || '',  // Zone de production
+                date:       formattedDate,      // DD/MM/YY
+                time:       formattedTime,      // HH:MM:SS
+                created_at: scanDate.toISOString()
+            }]);
+
+        if (error) {
+            // إذا كان السكّان ديجا تصيفط (Doublon)، كنرجعو true باش يتحيد من الـ LocalStorage وميبقاش يتعاود
+            if (error.code === '23505') { 
+                console.warn(`▲ Scan doublon ignoré de manière sécurisée (scan_id: ${record.scan_id})`);
+                return true; 
+            }
+            throw error;
+        }
+        
+        console.log(`▲ Scan envoyé avec succès à Supabase (CODE: ${record.codeVis})`);
+        return true;
+    } catch (err) {
+        console.error("▲ Erreur sync Supabase :", err);
+        return false;
+    }
+}
+
+// 3. نظام المزامنة التلقائية عند عودة الإنترنت (Offline Sync)
+async function syncPendingSupabaseScans() {
+    if (!navigator.onLine) return;
+    
+    let pendingSupabaseSync = [];
+    const savedPending = localStorage.getItem('pendingSupabaseSync');
+    if (savedPending) {
+        pendingSupabaseSync = JSON.parse(savedPending);
+    }
+    if (pendingSupabaseSync.length === 0) return;
+    
+    console.log(`▲ Traitement batch Supabase : ${pendingSupabaseSync.length} scan(s) en attente.`);
+    const remainingToSync = [];
+    
+    for (const record of pendingSupabaseSync) {
+        const success = await sendRecordToSupabase(record);
+        if (!success) remainingToSync.push(record);
+    }
+    
+    localStorage.setItem('pendingSupabaseSync', JSON.stringify(remainingToSync));
+    console.log("▲ Sync Supabase terminé. Reste en attente :", remainingToSync.length);
+}
+
+// تفعيل المزامنة التلقائية فور عودة اتصال الهاتف بالإنترنت
+window.addEventListener('online', syncPendingSupabaseScans);
+</script>
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";
     let isProcessing = false;

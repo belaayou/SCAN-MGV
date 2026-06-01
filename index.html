@@ -517,7 +517,7 @@ async function sendRecordToSupabase(record) {
                 date:       formattedDate,      // DD/MM/YY
                 time:       formattedTime,      // HH:MM:SS
                 created_at: scanDate.toISOString()
-            }]);
+            }], { returning: 'minimal' });
 
         if (error) {
             // إذا كان السكّان ديجا تصيفط (Doublon)، كنرجعو true باش يتحيد من الـ LocalStorage وميبقاش يتعاود

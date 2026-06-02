@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stellantis-mgv-v11.0';
+const CACHE_NAME = 'stellantis-mgv-v12.0';
 const SYNC_TAG = 'sync-scans';
 
 const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';

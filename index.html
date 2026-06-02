@@ -735,6 +735,58 @@ window.addEventListener(
     'load',
     syncPendingSupabaseScans
 );
+    async function loadSupabaseScans() {
+    if (!supabaseClient) {
+        console.warn("Supabase non initialisé");
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('scans')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data) return;
+
+        // Conversion Supabase → format local logs
+        logs = data.map(row => ({
+            id: Date.now() + Math.random(), // id local UI
+            scan_id: row.scan_id,
+            op: row.op,
+            code: row.code,
+            zone: row.zone || '',
+            date: row.date,
+            time: row.time,
+            synced: true
+        }));
+
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+
+        renderTable();
+
+        console.log("▲ Données Supabase chargées :", logs.length);
+
+    } catch (err) {
+        console.error("Erreur loadSupabaseScans:", err);
+    }
+}
+
+    async function refreshLogs() {
+    // 1. recharge Supabase
+    await loadSupabaseScans();
+
+    // 2. recharge localStorage fallback
+    logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+
+    // 3. affiche tableau
+    renderTable();
+
+    console.log("▲ refreshLogs terminé");
+}
+    
 </script>
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";
@@ -1092,49 +1144,90 @@ setTimeout(() => {
 
 }
 
-    async function sendToGoogle(entry) {
-        if (!navigator.onLine) return false;
-        const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
-        try {
-            const response = await fetch(url);
-            if (response.ok) {
-                const idx = logs.findIndex(l => l.id === entry.id);
-                if (idx !== -1) { logs[idx].synced = true; localStorage.setItem('lumen_logs', JSON.stringify(logs)); }
-                renderTable();
-                return true;
-            }
-        } catch(e) { console.error(e); }
-        return false;
-    }
-
-    async function syncAllLogs() {
-    if (!navigator.onLine) return alert("Vous êtes hors-ligne.");
-    
-    // 1. Forcer la synchro Supabase
-    if (typeof syncPendingScansToSupabase === 'function') {
-        try {
-            await syncPendingScansToSupabase();
-        } catch(e) {
-            console.error("Erreur synchro Supabase:", e);
-        }
-    }
-    
-    // 2. Forcer la synchro Google Sheets
-    const nonSynced = logs.filter(l => !l.synced);
-    let count = 0;
-    
-    if (nonSynced.length > 0) {
-        for (const log of nonSynced) { 
-            const success = await sendToGoogle(log);
-            if (success) count++; 
-        }
-        alert(`Synchronisé Google Sheets : ${count} ligne(s). Supabase actualisé.`);
-    } else {
-        alert("Google Sheets déjà à jour. File d'attente Supabase traitée.");
-    }
+   function sendToGoogle(entry) {
+    return fetch(GOOGLE_URL + `?action=saveScan&op=${entry.op}&code=${entry.code}&zone=${entry.zone}&date=${entry.date}&time=${entry.time}`)
+        .then(r => r.ok)
+        .catch(() => false);
 }
 
-   async function updateEntry(id, field, val) {
+   async function syncAllLogs() {
+
+    if (!navigator.onLine) {
+        alert("Vous êtes hors-ligne.");
+        return;
+    }
+
+    try {
+
+        // ======================================================
+        // 1. PUSH LOCAL → SUPABASE
+        // ======================================================
+        for (const log of logs) {
+
+            if (!log.synced) {
+
+                try {
+                    const ok = await sendToSupabase(log);
+
+                    if (ok) {
+                        log.synced = true;
+                    }
+
+                } catch (e) {
+                    console.error("Supabase error:", e);
+                }
+            }
+        }
+
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+
+        // ======================================================
+        // 2. PUSH LOCAL → GOOGLE SHEETS (OPTIONNEL)
+        // ======================================================
+        let googleCount = 0;
+
+        for (const log of logs) {
+
+            if (typeof sendToGoogle === 'function' && !log.googleSynced) {
+
+                try {
+                    const ok = await sendToGoogle(log);
+
+                    if (ok) {
+                        log.googleSynced = true;
+                        googleCount++;
+                    }
+
+                } catch (e) {
+                    console.error("Google sync error:", e);
+                }
+            }
+        }
+
+        localStorage.setItem('lumen_logs', JSON.stringify(logs));
+
+        // ======================================================
+        // 3. PULL SUPABASE → UI (REFRESH CLEAN)
+        // ======================================================
+        if (typeof loadSupabaseScans === 'function') {
+            await loadSupabaseScans();
+        }
+
+        // ======================================================
+        // 4. UI UPDATE
+        // ======================================================
+        renderTable();
+
+        alert(
+            `Synchronisation terminée ✔\n` +
+            `Google Sheets: ${googleCount} ligne(s)`
+        );
+
+    } catch (e) {
+        console.error(e);
+        alert("Erreur synchronisation globale");
+    }
+}   async function updateEntry(id, field, val) {
 
 const i = logs.findIndex(l => l.id === id);
 
@@ -1192,18 +1285,47 @@ if (
 
 }
 
-    function renderTable() {
-        document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
-        document.getElementById('history-body').innerHTML = logs.map(log => `
+  function renderTable() {
+    if (!Array.isArray(logs)) logs = [];
+
+    document.getElementById('flux-title').innerText =
+        `Flux (${logs.length})`;
+
+    document.getElementById('history-body').innerHTML =
+        logs.map(log => `
             <tr class="border-b border-zinc-800 ${log.synced ? 'sync-row' : ''}">
-                <td class="p-3 text-white/30 text-[14px]">${log.op}</td>
-                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-primary text-[20px] font-black" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>
-                <td class="p-3 border-r border-zinc-800"><div class="editable-cell text-white font-bold" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div></td>
-               <td class="p-3 text-[16px] font-black leading-none">${log.time}<br><span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">${log.synced ? 'SUCCESS ✅' : log.date}</span></td>
-                <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">×</button></td>
+                <td class="p-3 text-white/30 text-[14px]">${log.op || ''}</td>
+
+                <td class="p-3 border-r border-zinc-800">
+                    <div contenteditable="true"
+                        onblur="updateEntry(${log.id}, 'code', this.innerText)"
+                        class="text-primary text-[20px] font-black">
+                        ${log.code || ''}
+                    </div>
+                </td>
+
+                <td class="p-3 border-r border-zinc-800">
+                    <div contenteditable="true"
+                        onblur="updateEntry(${log.id}, 'zone', this.innerText)"
+                        class="text-white font-bold">
+                        ${log.zone || ''}
+                    </div>
+                </td>
+
+                <td class="p-3 text-[16px] font-black leading-none">
+                    ${log.time || ''}<br>
+                    <span class="text-[12px]"
+                        style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
+                        ${log.synced ? 'SUCCESS ✅' : (log.date || '')}
+                    </span>
+                </td>
+
+                <td class="p-1">
+                    <button onclick="deleteEntry(${log.id})" class="btn-delete">×</button>
+                </td>
             </tr>
         `).join('');
-    }
+}
 
     function playScanSound() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();

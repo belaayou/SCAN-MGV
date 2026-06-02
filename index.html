@@ -488,79 +488,253 @@
     </div>
 </div>
 <script>
-// 1. CONFIGURATION INTEGRATION SUPABASE DIRECTE
-const SUPABASE_URL = "https://rdhmsbqhjlmtlgrjuyxa.supabase.co"; // حط الرابط ديالك هنا
-const SUPABASE_ANON_KEY = "sb_publishable_S_NgVByTSPeH1ZE7DTSTAg_3yAoRQSK"; // المفتاح الجديد ديالك
+// ======================================================
+// SUPABASE CONFIG
+// ======================================================
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log("▲ Supabase connecté avec succès (Mode: INSERT ONLY)");
+const SUPABASE_URL =
+'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
 
-// 2. دالة إرسال سكاّن جديد (INSERT)
-async function sendRecordToSupabase(record) {
-    if (!record.scan_id) {
-        record.scan_id = crypto.randomUUID();
+const SUPABASE_ANON_KEY =
+'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
+
+let supabaseClient = null;
+
+try {
+
+    if (typeof supabase !== 'undefined') {
+
+        supabaseClient = supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_ANON_KEY
+        );
+
+        console.log(
+            '▲ Supabase connecté'
+        );
+
+    } else {
+
+        console.error(
+            '▲ Bibliothèque Supabase non chargée'
+        );
+
     }
 
-    // تنسيق التاريخ والوقت بناءً على الـ timestamp الخاص بالسكّان
-    const scanDate = new Date(record.timestamp);
-    const formattedDate = record.date || scanDate.toLocaleDateString('fr-FR'); // DD/MM/YY
-    const formattedTime = record.time || scanDate.toLocaleTimeString('fr-FR'); // HH:MM:SS
+} catch (err) {
+
+    console.error(
+        '▲ Erreur initialisation Supabase',
+        err
+    );
+
+}
+
+// ======================================================
+// ENVOI D'UN SCAN
+// ======================================================
+
+async function sendRecordToSupabase(record) {
+
+    if (!supabaseClient) return false;
 
     try {
-        const { error } = await supabaseClient
-            .from('scans')
-            .insert([{
-                scan_id:    record.scan_id,
-                op:         record.op,          // ID Matricule opérateur
-                code:       record.codeVis,     // Code VIS scanné
-                zone:       record.zone || '',  // Zone de production
-                date:       formattedDate,      // DD/MM/YY
-                time:       formattedTime,      // HH:MM:SS
-                created_at: scanDate.toISOString()
-            }], { returning: 'minimal' });
+
+        const scanDate = new Date(
+            record.timestamp || Date.now()
+        );
+
+        const payload = {
+
+            scan_id:
+                record.scan_id ||
+                crypto.randomUUID(),
+
+            op:
+                record.op || '',
+
+            code:
+                record.codeVis ||
+                record.code ||
+                '',
+
+            zone:
+                record.zone || '',
+
+            date:
+                record.date ||
+                scanDate.toLocaleDateString('fr-FR'),
+
+            time:
+                record.time ||
+                scanDate.toLocaleTimeString('fr-FR'),
+
+            created_at:
+                scanDate.toISOString()
+
+        };
+
+        const { error } =
+            await supabaseClient
+                .from('scans')
+                .insert([payload]);
 
         if (error) {
-            // إذا كان السكّان ديجا تصيفط (Doublon)، كنرجعو true باش يتحيد من الـ LocalStorage وميبقاش يتعاود
-            if (error.code === '23505') { 
-                console.warn(`▲ Scan doublon ignoré de manière sécurisée (scan_id: ${record.scan_id})`);
-                return true; 
+
+            if (
+                error.code === '23505'
+            ) {
+
+                console.warn(
+                    '▲ Doublon ignoré'
+                );
+
+                return true;
+
             }
+
             throw error;
         }
-        
-        console.log(`▲ Scan envoyé avec succès à Supabase (CODE: ${record.codeVis})`);
+
+        console.log(
+            '▲ Scan envoyé :',
+            payload.code
+        );
+
         return true;
+
     } catch (err) {
-        console.error("▲ Erreur sync Supabase :", err);
+
+        console.error(
+            '▲ Erreur Supabase :',
+            err
+        );
+
         return false;
     }
+
 }
 
-// 3. نظام المزامنة التلقائية عند عودة الإنترنت (Offline Sync)
+// ======================================================
+// FILE D'ATTENTE LOCALE
+// ======================================================
+
+const PENDING_KEY =
+'pendingSupabaseSync';
+
+function getPendingScans() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(
+                PENDING_KEY
+            ) || '[]'
+        );
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+function savePendingScans(scans) {
+
+    localStorage.setItem(
+        PENDING_KEY,
+        JSON.stringify(scans)
+    );
+
+}
+
+function addPendingScan(record) {
+
+    const scans =
+        getPendingScans();
+
+    scans.push(record);
+
+    savePendingScans(scans);
+
+}
+
+// ======================================================
+// SYNCHRONISATION
+// ======================================================
+
 async function syncPendingSupabaseScans() {
-    if (!navigator.onLine) return;
-    
-    let pendingSupabaseSync = [];
-    const savedPending = localStorage.getItem('pendingSupabaseSync');
-    if (savedPending) {
-        pendingSupabaseSync = JSON.parse(savedPending);
+
+    if (!navigator.onLine) {
+
+        console.log(
+            '▲ Hors ligne'
+        );
+
+        return;
     }
-    if (pendingSupabaseSync.length === 0) return;
-    
-    console.log(`▲ Traitement batch Supabase : ${pendingSupabaseSync.length} scan(s) en attente.`);
-    const remainingToSync = [];
-    
-    for (const record of pendingSupabaseSync) {
-        const success = await sendRecordToSupabase(record);
-        if (!success) remainingToSync.push(record);
+
+    const pending =
+        getPendingScans();
+
+    if (
+        pending.length === 0
+    ) {
+
+        return;
     }
-    
-    localStorage.setItem('pendingSupabaseSync', JSON.stringify(remainingToSync));
-    console.log("▲ Sync Supabase terminé. Reste en attente :", remainingToSync.length);
+
+    console.log(
+        `▲ ${pending.length} scan(s) à synchroniser`
+    );
+
+    const remaining = [];
+
+    for (const record of pending) {
+
+        const success =
+            await sendRecordToSupabase(
+                record
+            );
+
+        if (!success) {
+
+            remaining.push(
+                record
+            );
+
+        }
+
+    }
+
+    savePendingScans(
+        remaining
+    );
+
+    console.log(
+        `▲ Synchronisation terminée. Reste : ${remaining.length}`
+    );
+
 }
 
-// تفعيل المزامنة التلقائية فور عودة اتصال الهاتف بالإنترنت
-window.addEventListener('online', syncPendingSupabaseScans);
+// ======================================================
+// ONLINE EVENT
+// ======================================================
+
+window.addEventListener(
+    'online',
+    syncPendingSupabaseScans
+);
+
+// ======================================================
+// LANCEMENT AU DÉMARRAGE
+// ======================================================
+
+window.addEventListener(
+    'load',
+    syncPendingSupabaseScans
+);
 </script>
 <script>
     const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";

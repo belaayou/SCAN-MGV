@@ -489,878 +489,775 @@
 </div>
 <script>
 // ======================================================
-// SUPABASE CONFIG
+// ▲ SUPABASE CONFIG
 // ======================================================
 
-const SUPABASE_URL =
-'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
+const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
 
 const SUPABASE_ANON_KEY =
-'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
 
 let supabaseClient = null;
 
 try {
-
-    if (typeof supabase !== 'undefined') {
-
-        supabaseClient = supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
-        );
-
-        console.log(
-            '▲ Supabase connecté'
-        );
-
-    } else {
-
-        console.error(
-            '▲ Bibliothèque Supabase non chargée'
-        );
-
-    }
-
+  if (typeof supabase !== 'undefined') {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('▲ Supabase connecté');
+  } else {
+    console.error('▲ Bibliothèque Supabase non chargée');
+  }
 } catch (err) {
-
-    console.error(
-        '▲ Erreur initialisation Supabase',
-        err
-    );
-
+  console.error('▲ Erreur initialisation Supabase', err);
 }
 
 // ======================================================
-// ENVOI D'UN SCAN
+// ▲ FILE D'ATTENTE LOCALE (offline queue)
 // ======================================================
 
-async function sendRecordToSupabase(record) {
-
-    if (!supabaseClient) return false;
-
-    try {
-
-        const scanDate = new Date(
-            record.timestamp || Date.now()
-        );
-
-        const payload = {
-
-            scan_id:
-                record.scan_id ||
-                crypto.randomUUID(),
-
-            op:
-                record.op || '',
-
-            code:
-                record.codeVis ||
-                record.code ||
-                '',
-
-            zone:
-                record.zone || '',
-
-            date:
-                record.date ||
-                scanDate.toLocaleDateString('fr-FR'),
-
-            time:
-                record.time ||
-                scanDate.toLocaleTimeString('fr-FR'),
-
-            created_at:
-                scanDate.toISOString()
-
-        };
-
-        const { error } =
-            await supabaseClient
-                .from('scans')
-                .insert([payload]);
-
-        if (error) {
-
-            if (
-                error.code === '23505'
-            ) {
-
-                console.warn(
-                    '▲ Doublon ignoré'
-                );
-
-                return true;
-
-            }
-
-            throw error;
-        }
-
-        console.log(
-            '▲ Scan envoyé :',
-            payload.code
-        );
-
-        return true;
-
-    } catch (err) {
-
-        console.error(
-            '▲ Erreur Supabase :',
-            err
-        );
-
-        return false;
-    }
-
-}
-
-// ======================================================
-// FILE D'ATTENTE LOCALE
-// ======================================================
-
-const PENDING_KEY =
-'pendingSupabaseSync';
+const PENDING_KEY = 'pendingSupabaseSync';
 
 function getPendingScans() {
-
-    try {
-
-        return JSON.parse(
-            localStorage.getItem(
-                PENDING_KEY
-            ) || '[]'
-        );
-
-    } catch {
-
-        return [];
-
-    }
-
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
+  } catch {
+    return [];
+  }
 }
 
 function savePendingScans(scans) {
-
-    localStorage.setItem(
-        PENDING_KEY,
-        JSON.stringify(scans)
-    );
-
+  localStorage.setItem(PENDING_KEY, JSON.stringify(scans));
 }
 
 function addPendingScan(record) {
-
-    const scans =
-        getPendingScans();
-
+  const scans = getPendingScans();
+  // Évite les doublons dans la queue par scan_id
+  if (!scans.find(s => s.scan_id === record.scan_id)) {
     scans.push(record);
-
     savePendingScans(scans);
-
+  }
 }
 
 // ======================================================
-// SYNCHRONISATION
+// ▲ PUSH : ENVOYER UN SCAN VERS SUPABASE
+// Retourne true uniquement si Supabase confirme l'insertion
 // ======================================================
+
+async function sendRecordToSupabase(record) {
+  if (!supabaseClient) return false;
+
+  try {
+    const scanDate = new Date(record.timestamp || record.id || Date.now());
+
+    const payload = {
+      scan_id: record.scan_id || crypto.randomUUID(),
+      op:      record.op   || '',
+      code:    record.code || record.codeVis || '',
+      zone:    record.zone || '',
+      date:    record.date || scanDate.toLocaleDateString('fr-FR'),
+      time:    record.time || scanDate.toLocaleTimeString('fr-FR'),
+      created_at: scanDate.toISOString()
+    };
+
+    const { data, error } = await supabaseClient
+      .from('scans')
+      .insert([payload])
+      .select();  // ← .select() force Supabase à retourner la ligne insérée
+                  //    => si data est vide, l'insertion a vraiment échoué
+
+    if (error) {
+      // Doublon sur scan_id → on considère déjà synchronisé
+      if (error.code === '23505') {
+        console.warn('▲ Doublon ignoré :', payload.code);
+        return true;
+      }
+      throw error;
+    }
+
+    // Vérification réelle : la ligne doit être dans la réponse
+    if (!data || data.length === 0) {
+      console.error('▲ Supabase : insert sans retour de données');
+      return false;
+    }
+
+    console.log('▲ Scan confirmé Supabase :', payload.code);
+    return true;
+
+  } catch (err) {
+    console.error('▲ Erreur Supabase push :', err);
+    return false;
+  }
+}
+
+// Alias utilisé dans updateEntry() (était appelé sendToSupabase)
+async function sendToSupabase(record) {
+  return await sendRecordToSupabase(record);
+}
+
+// ======================================================
+// ▲ PUSH : VIDER LA FILE D'ATTENTE OFFLINE
+// ======================================================
+
+async function syncPendingScans() {
+  return await syncPendingSupabaseScans();
+}
+
+// Alias utilisé dans syncAllLogs()
+async function syncPendingScansToSupabase() {
+  return await syncPendingSupabaseScans();
+}
 
 async function syncPendingSupabaseScans() {
+  if (!navigator.onLine) {
+    console.log('▲ Hors ligne — sync reportée');
+    return;
+  }
 
-    if (!navigator.onLine) {
+  const pending = getPendingScans();
+  if (pending.length === 0) return;
 
-        console.log(
-            '▲ Hors ligne'
-        );
+  console.log(`▲ ${pending.length} scan(s) en attente Supabase`);
 
-        return;
+  const remaining = [];
+
+  for (const record of pending) {
+    const success = await sendRecordToSupabase(record);
+    if (!success) {
+      remaining.push(record);
+    } else {
+      // Marque le log correspondant comme synchronisé dans localStorage
+      _markLogSynced(record.scan_id);
     }
+  }
 
-    const pending =
-        getPendingScans();
+  savePendingScans(remaining);
+  console.log(`▲ File Supabase : ${remaining.length} restant(s)`);
+}
 
-    if (
-        pending.length === 0
-    ) {
+// ======================================================
+// ▲ PULL : RÉCUPÉRER LES DONNÉES DEPUIS SUPABASE → UI
+// Fusionne les données distantes dans logs sans écraser
+// les entrées locales non synchronisées
+// ======================================================
 
-        return;
-    }
+async function pullFromSupabase() {
+  if (!supabaseClient || !navigator.onLine) return false;
 
-    console.log(
-        `▲ ${pending.length} scan(s) à synchroniser`
-    );
+  try {
+    const user = _getCurrentUser();
+    if (!user || user.id === 'TEMP') return false;
 
-    const remaining = [];
+    const { data, error } = await supabaseClient
+      .from('scans')
+      .select('*')
+      .eq('op', user.id)
+      .order('created_at', { ascending: false })
+      .limit(500);
 
-    for (const record of pending) {
+    if (error) throw error;
+    if (!data || data.length === 0) return true;
 
-        const success =
-            await sendRecordToSupabase(
-                record
-            );
+    // Fusionne : les entrées distantes sont ajoutées si absentes localement
+    const existingScanIds = new Set(logs.map(l => l.scan_id).filter(Boolean));
 
-        if (!success) {
-
-            remaining.push(
-                record
-            );
-
+    let added = 0;
+    for (const row of data) {
+      if (!existingScanIds.has(row.scan_id)) {
+        logs.push({
+          id:       new Date(row.created_at).getTime() || Date.now(),
+          scan_id:  row.scan_id,
+          op:       row.op,
+          code:     row.code,
+          zone:     row.zone || '',
+          date:     row.date,
+          time:     row.time,
+          synced:   true
+        });
+        added++;
+      } else {
+        // Met à jour la zone si elle a été renseignée côté serveur
+        const idx = logs.findIndex(l => l.scan_id === row.scan_id);
+        if (idx !== -1 && !logs[idx].zone && row.zone) {
+          logs[idx].zone   = row.zone;
+          logs[idx].synced = true;
         }
-
+      }
     }
 
-    savePendingScans(
-        remaining
-    );
+    // Trie par timestamp décroissant
+    logs.sort((a, b) => b.id - a.id);
 
-    console.log(
-        `▲ Synchronisation terminée. Reste : ${remaining.length}`
-    );
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
 
+    if (added > 0) console.log(`▲ Pull Supabase : ${added} entrée(s) ajoutée(s)`);
+    return true;
+
+  } catch (err) {
+    console.error('▲ Erreur Supabase pull :', err);
+    return false;
+  }
 }
 
 // ======================================================
-// ONLINE EVENT
+// ▲ HELPERS INTERNES
 // ======================================================
 
-window.addEventListener(
-    'online',
-    syncPendingSupabaseScans
-);
-
-// ======================================================
-// LANCEMENT AU DÉMARRAGE
-// ======================================================
-
-window.addEventListener(
-    'load',
-    syncPendingSupabaseScans
-);
-    async function loadSupabaseScans() {
-    if (!supabaseClient) {
-        console.warn("Supabase non initialisé");
-        return;
-    }
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('scans')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        if (!data) return;
-
-        // Conversion Supabase → format local logs
-        logs = data.map(row => ({
-            id: Date.now() + Math.random(), // id local UI
-            scan_id: row.scan_id,
-            op: row.op,
-            code: row.code,
-            zone: row.zone || '',
-            date: row.date,
-            time: row.time,
-            synced: true
-        }));
-
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-
-        renderTable();
-
-        console.log("▲ Données Supabase chargées :", logs.length);
-
-    } catch (err) {
-        console.error("Erreur loadSupabaseScans:", err);
-    }
+function _getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem('StellantisUser') || 'null');
+  } catch {
+    return null;
+  }
 }
 
-    async function refreshLogs() {
-    // 1. recharge Supabase
-    await loadSupabaseScans();
+function _markLogSynced(scanId) {
+  const idx = logs.findIndex(l => l.scan_id === scanId);
+  if (idx !== -1) {
+    logs[idx].synced = true;
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+  }
+}
 
-    // 2. recharge localStorage fallback
-    logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+// ======================================================
+// ▲ ONLINE EVENT → relance sync automatiquement
+// ======================================================
 
-    // 3. affiche tableau
+window.addEventListener('online', async () => {
+  console.log('▲ Réseau rétabli — synchronisation...');
+  await syncPendingSupabaseScans();
+  renderTable();
+});
+
+// ======================================================
+// ▲ LANCEMENT AU DÉMARRAGE
+// ======================================================
+
+window.addEventListener('load', syncPendingSupabaseScans);
+
+
+// ======================================================
+// ▲ APP LOGIC  (remplace le script existant — doc 4)
+// ======================================================
+
+const GOOGLE_URL =
+  'https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec';
+
+let isProcessing  = false;
+let lastScannedCode = '';
+let lastScanTime  = 0;
+let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
+let audioCtx      = null;
+let html5Instance = null;
+let torchEnabled  = false;
+
+// ──────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────
+
+function initApp() {
+  purgerAnciensLogs(15);
+
+  const user = JSON.parse(localStorage.getItem('StellantisUser'));
+
+  if (user) {
+    document.getElementById('identity-screen').classList.add('hidden');
+    document.getElementById('display-name').innerText = user.prenom + ' ' + user.nom;
+    document.getElementById('display-id').innerText   = `ID: ${user.id}`;
     renderTable();
 
-    console.log("▲ refreshLogs terminé");
-}
-    
-</script>
-<script>
-    const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec";
-    let isProcessing = false;
-    let lastScannedCode = "";
-    let lastScanTime = 0;
-    let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
-    let audioCtx = null;
-    let html5Instance = null;
-    let torchEnabled = false; // Correction structurelle du pointeur d'état global du flash
-
-    function initApp() {
-    purgerAnciensLogs(15);
-
-    const user = JSON.parse(localStorage.getItem('StellantisUser'));
-
-    if (user) {
-
-        document.getElementById('identity-screen').classList.add('hidden');
-
-        document.getElementById('display-name').innerText =
-            user.prenom + " " + user.nom;
-
-        document.getElementById('display-id').innerText =
-            `ID: ${user.id}`;
-
-        renderTable();
-
-        // ✅ Synchronisation automatique Supabase au démarrage
-        if (navigator.onLine) {
-            syncPendingScans();
-        }
-
-        startLibraryScanner();
-
-    } else if (!navigator.onLine) {
-
-        localStorage.setItem('StellantisUser', JSON.stringify({
-            id: 'TEMP',
-            nom: 'HORS-LIGNE',
-            prenom: 'MODE'
-        }));
-
-        document.getElementById('identity-screen').classList.add('hidden');
-
-        document.getElementById('display-name').innerText =
-            "MODE HORS-LIGNE";
-
-        document.getElementById('display-id').innerText =
-            "ID: TEMP";
-
-        renderTable();
-
-        // ✅ Tentative sync si réseau revient juste après ouverture
-        if (navigator.onLine) {
-            syncPendingScans();
-        }
-
-        startLibraryScanner();
+    if (navigator.onLine) {
+      // Push d'abord, puis pull pour afficher tout
+      syncPendingScans().then(() => pullFromSupabase()).then(() => renderTable());
     }
+
+    startLibraryScanner();
+
+  } else if (!navigator.onLine) {
+    localStorage.setItem('StellantisUser', JSON.stringify({
+      id: 'TEMP', nom: 'HORS-LIGNE', prenom: 'MODE'
+    }));
+    document.getElementById('identity-screen').classList.add('hidden');
+    document.getElementById('display-name').innerText = 'MODE HORS-LIGNE';
+    document.getElementById('display-id').innerText   = 'ID: TEMP';
+    renderTable();
+    startLibraryScanner();
+  }
 }
 
-    function purgerAnciensLogs(jours) {
-        const limiteTemps = jours * 24 * 60 * 60 * 1000; 
-        const maintenant = Date.now();
-        const logsFiltres = logs.filter(log => (maintenant - log.id) < limiteTemps);
-        if (logsFiltres.length !== logs.length) {
-            logs = logsFiltres;
-            localStorage.setItem('lumen_logs', JSON.stringify(logs));
+function purgerAnciensLogs(jours) {
+  const limite = jours * 24 * 60 * 60 * 1000;
+  const now    = Date.now();
+  const avant  = logs.length;
+  logs = logs.filter(log => (now - log.id) < limite);
+  if (logs.length !== avant) localStorage.setItem('lumen_logs', JSON.stringify(logs));
+}
+
+// ──────────────────────────────────────────────────────
+// SCANNER
+// ──────────────────────────────────────────────────────
+
+async function startLibraryScanner() {
+  if (html5Instance) return;
+
+  html5Instance = new Html5Qrcode('interactive-reader');
+  const config = {
+    fps: 20,
+    qrbox: function(w, h) {
+      return { width: Math.floor(w * 0.90), height: Math.floor(h * 0.6) };
+    }
+  };
+
+  try {
+    await html5Instance.start(
+      { facingMode: 'environment' },
+      config,
+      (decodedText) => {
+        const now       = Date.now();
+        const cleanCode = decodedText.trim().toUpperCase();
+        if (isProcessing) return;
+        if (cleanCode === lastScannedCode && (now - lastScanTime) < 2500) return;
+        if (/^[A-Z][0-9]{7}$/.test(cleanCode)) {
+          isProcessing    = true;
+          lastScannedCode = cleanCode;
+          lastScanTime    = now;
+          playScanSound();
+          addLogEntry(cleanCode);
         }
+      },
+      () => {}
+    );
+  } catch (err) {
+    console.error('Erreur caméra :', err);
+  }
+}
+
+async function stopLibraryScanner() {
+  if (html5Instance) {
+    try {
+      await html5Instance.stop();
+      html5Instance = null;
+    } catch (err) {
+      console.error('Erreur arrêt scanner :', err);
     }
+  }
+}
 
-    async function startLibraryScanner() {
-        if (html5Instance) return;
+async function toggleTorch() {
+  if (!html5Instance) return alert('Scanneur inactif.');
+  try {
+    const videoEl = document.querySelector('#interactive-reader video');
+    if (!videoEl || !videoEl.srcObject) return alert('Flux vidéo introuvable.');
+    const track = videoEl.srcObject.getVideoTracks()[0];
+    if (!track) return alert('Piste vidéo introuvable.');
+    const capabilities = track.getCapabilities();
+    if (!capabilities?.torch) return alert('Flash non disponible.');
+    const newState = !torchEnabled;
+    await track.applyConstraints({ advanced: [{ torch: newState }] });
+    torchEnabled = newState;
+    updateTorchBtn();
+  } catch (e) {
+    torchEnabled = false;
+    updateTorchBtn();
+    alert('Erreur flash : ' + e.message);
+  }
+}
 
-        html5Instance = new Html5Qrcode("interactive-reader");
-        const config = {
-            fps: 20, 
-            qrbox: function(viewfinderWidth, viewfinderHeight) {
-                return {
-                    width: Math.floor(viewfinderWidth * 0.90),
-            height: Math.floor(viewfinderHeight * 0.6)
-                };
-            }
-        };
+function updateTorchBtn() {
+  const btn = document.getElementById('torch-btn');
+  const svg = btn.querySelector('svg');
+  if (torchEnabled) {
+    btn.style.background  = '#eaea00';
+    btn.style.boxShadow   = '0 0 12px rgba(234,234,0,0.6)';
+    svg.style.color       = '#000';
+  } else {
+    btn.style.background  = '';
+    btn.style.boxShadow   = '';
+    svg.style.color       = '';
+  }
+}
 
-        try {
-            await html5Instance.start(
-                { facingMode: "environment" },
-                config,
-                (decodedText) => {
-                    const now = Date.now();
-                    const cleanCode = decodedText.trim().toUpperCase();
+// ──────────────────────────────────────────────────────
+// AUTH
+// ──────────────────────────────────────────────────────
 
-                    if (isProcessing) return;
-                    if (cleanCode === lastScannedCode && (now - lastScanTime) < 2500) return; 
+async function login() {
+  const id   = document.getElementById('login-id').value.trim().toUpperCase();
+  const pass = document.getElementById('login-pass').value;
+  if (!id || !pass) return alert('REMPLIR TOUS LES CHAMPS');
 
-                    if (/^[A-Z][0-9]{7}$/.test(cleanCode)) {
-                        isProcessing = true; 
-                        lastScannedCode = cleanCode;
-                        lastScanTime = now;
-
-                        playScanSound();
-                        addLogEntry(cleanCode);
-                    }
-                },
-                (errorMessage) => {}
-            );
-
-         } catch (err) {
-            console.error("Erreur d'accès caméra :", err);
-        }
+  if (!navigator.onLine) {
+    const cached = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
+    const found  = cached.find(u => u.id === id && u.pass === pass);
+    if (found) {
+      localStorage.setItem('StellantisUser', JSON.stringify({ id: found.id, nom: found.nom, prenom: found.prenom }));
+      initApp();
+    } else {
+      alert('❌ Identifiants incorrects (hors-ligne).');
     }
+    return;
+  }
 
-    async function stopLibraryScanner() {
-        if (html5Instance) {
-            try {
-                await html5Instance.stop();
-                html5Instance = null;
-            } catch (err) {
-                console.error("Erreur d'arrêt du scanneur :", err);
-            }
-        }
+  try {
+    const res  = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
+    const data = await res.json();
+    if (data.status === 'active') {
+      let cached = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
+      cached = cached.filter(u => u.id !== id);
+      cached.push({ id, pass, nom: data.nom, prenom: data.prenom });
+      localStorage.setItem('StellantisUsers_cache', JSON.stringify(cached));
+      localStorage.setItem('StellantisUser', JSON.stringify({ id, nom: data.nom, prenom: data.prenom }));
+      location.reload();
+    } else {
+      alert('❌ Accès refusé ou erroné.');
     }
+  } catch (e) {
+    alert('⚠️ Erreur serveur.');
+  }
+}
 
-    async function toggleTorch() {
-        if (!html5Instance) return alert("Scanneur inactif.");
-        try {
-            const videoEl = document.querySelector('#interactive-reader video');
-            if (!videoEl || !videoEl.srcObject) return alert("Flux vidéo introuvable.");
+async function register() {
+  const n    = document.getElementById('reg-nom').value.trim().toUpperCase();
+  const p    = document.getElementById('reg-prenom').value.trim().toUpperCase();
+  const i    = document.getElementById('reg-id').value.trim().toUpperCase();
+  const pass = document.getElementById('reg-pass').value;
+  if (!n || !p || !i || !pass) return alert('CHAMPS OBLIGATOIRES');
+  try {
+    const res  = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
+    const data = await res.json();
+    if (data.status === 'success') { alert('COMPTE CRÉÉ !'); toggleAuth(false); }
+    else if (data.status === 'exists') alert('ID EXISTE DÉJÀ');
+  } catch (e) {
+    alert('ERREUR SERVEUR');
+  }
+}
 
-            const track = videoEl.srcObject.getVideoTracks()[0];
-            if (!track) return alert("Piste vidéo introuvable.");
+function toggleAuth(showSignup) {
+  document.getElementById('login-form').classList.toggle('hidden', showSignup);
+  document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
+}
 
-            const capabilities = track.getCapabilities();
-            if (!capabilities?.torch) return alert("Flash non disponible sur cette caméra.");
+function logoutIdentity() {
+  if (confirm('Se déconnecter ?')) {
+    localStorage.removeItem('StellantisUser');
+    location.reload();
+  }
+}
 
-            const newState = !torchEnabled;
-            await track.applyConstraints({ advanced: [{ torch: newState }] });
+// ──────────────────────────────────────────────────────
+// AJOUT D'UN SCAN
+// ──────────────────────────────────────────────────────
 
-            torchEnabled = newState;
-            updateTorchBtn();
+function addLogEntry(codeValue) {
+  let user = { id: 'TEMP' };
+  try {
+    const userData = localStorage.getItem('StellantisUser');
+    if (userData) user = JSON.parse(userData);
+  } catch (e) {}
 
-        } catch(e) {
-            torchEnabled = false;
-            updateTorchBtn();
-            alert("Erreur flash : " + e.message);
-        }
-    }
-
-    function updateTorchBtn() {
-      const btn = document.getElementById('torch-btn');
-        const svg = btn.querySelector('svg');
-        if (torchEnabled) {
-            btn.style.background = '#eaea00';
-            btn.style.boxShadow = '0 0 12px rgba(234,234,0,0.6)';
-            svg.style.color = '#000';
-        } else {
-            btn.style.background = '';
-            btn.style.boxShadow = '';
-            svg.style.color = '';
-        }
-    }
-
-    async function login() {
-        const id = document.getElementById('login-id').value.trim().toUpperCase();
-        const pass = document.getElementById('login-pass').value;
-        if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
-
-        if (!navigator.onLine) {
-            const cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
-            const found = cachedUsers.find(u => u.id === id && u.pass === pass);
-            if (found) {
-                localStorage.setItem('StellantisUser', JSON.stringify({ id: found.id, nom: found.nom, prenom: found.prenom }));
-                initApp();
-            } else { alert("❌ Identifiants incorrects (hors-ligne)."); }
-            return;
-        }
-
-        try {
-            const res = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
-            const data = await res.json();
-            if (data.status === 'active') {
-                let cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
-                cachedUsers = cachedUsers.filter(u => u.id !== id);
-                cachedUsers.push({ id, pass, nom: data.nom, prenom: data.prenom });
-                localStorage.setItem('StellantisUsers_cache', JSON.stringify(cachedUsers));
-                localStorage.setItem('StellantisUser', JSON.stringify({ id: id, nom: data.nom, prenom: data.prenom }));
-                location.reload();
-            } else { alert("❌ Accès refusé ou erroné."); }
-        } catch(e) { alert("⚠️ Erreur serveur."); }
-    }
-
-    async function register() {
-        const n = document.getElementById('reg-nom').value.trim().toUpperCase();
-        const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
-        const i = document.getElementById('reg-id').value.trim().toUpperCase();
-        const pass = document.getElementById('reg-pass').value;
-        if (!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
-        try {
-            const res = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
-            const data = await res.json();
-            if (data.status === "success") { alert("COMPTE CRÉÉ !"); toggleAuth(false); }
-            else if (data.status === "exists") alert("ID EXISTE DÉJÀ");
-        } catch(e) { alert("ERREUR SERVEUR"); }
-    }
-
-    function toggleAuth(showSignup) {
-        document.getElementById('login-form').classList.toggle('hidden', showSignup);
-        document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
-    }
-
-    function logoutIdentity() {
-        if (confirm("Se déconnecter ?")) {
-            localStorage.removeItem('StellantisUser');
-            location.reload();
-        }
-    }
-        
-    function ajouterManuellement() {
-        const input = document.getElementById('input-vis');
-        input.value = "";
-        document.getElementById('modal-saisie').classList.remove('hidden');
-        input.focus();
-    }
-
-    function fermerSaisie() { document.getElementById('modal-saisie').classList.add('hidden'); }
-
-    function toggleSearch() {
-        const bar = document.getElementById('search-bar');
-        const input = document.getElementById('search-input');
-        const isHidden = bar.classList.contains('hidden');
-        
-        if (isHidden) {
-            bar.classList.remove('hidden');
-            setTimeout(() => input.focus(), 100);
-        } else {
-            bar.classList.add('hidden');
-            input.value = '';
-            renderTable();
-        }
-    }
-
-    function filtrerEnTempsReel(query) {
-        const q = query.trim().toUpperCase();
-        if (!q) { renderTable(); return; }
-
-        document.getElementById('history-body').innerHTML = logs.map(log => {
-            const isMatch = log.code.includes(q) || log.zone.includes(q) || log.op.includes(q);
-            return `
-            <tr class="border-b border-zinc-800" id="row-${log.id}" style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;' : 'opacity:0.3'}">
-                <td class="p-3 text-[16px]" style="color:${isMatch ? '#eaea00' : 'rgba(255,255,255,0.3)'}">${log.op}</td>
-                <td class="p-3 border-r border-zinc-800">
-                    <div class="editable-cell font-black" style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
-                </td>
-                <td class="p-3 border-r border-zinc-800">
-                    <div class="editable-cell text-white font-bold" style="text-transform:uppercase" contenteditable="true" onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
-                </td>
-                <td class="p-3 text-[16px] font-black leading-none">${log.time}<br><span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">${log.synced ? 'SUCCESS ✅' : log.date}</span></td>
-                <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">Action</button></td>
-            </tr>`;
-        }).join('');
-    }    
-
-    function validerSaisie() {
-        const input = document.getElementById('input-vis');
-        const codeClean = input.value.trim().toUpperCase();
-        if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
-            playScanSound();
-            addLogEntry(codeClean);
-            fermerSaisie();
-        } else { alert("Format invalide ! (Ex: T5071035)"); }
-    }
-
-    document.getElementById('input-vis').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') validerSaisie();
-    });
-
-    function addLogEntry(codeValue) {
-
-let user = { id: 'TEMP' };
-
-try {
-
-    const userData =
-        localStorage.getItem('StellantisUser');
-
-    if (userData) {
-        user = JSON.parse(userData);
-    }
-
-} catch(e) {}
-
-const now = new Date();
-
-const uniqueScanId =
-    (typeof crypto !== 'undefined'
-    && crypto.randomUUID)
+  const now    = new Date();
+  const scanId = (typeof crypto !== 'undefined' && crypto.randomUUID)
     ? crypto.randomUUID()
-    : 'scan-' + Date.now() + '-' +
-      Math.random().toString(36).slice(2,11);
+    : 'scan-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
 
-const entry = {
+  const entry = {
+    id:      Date.now(),
+    scan_id: scanId,
+    op:      user.id,
+    code:    codeValue,
+    zone:    '',
+    date:    now.toLocaleDateString('fr-FR',  { day: '2-digit', month: '2-digit', year: '2-digit' }),
+    time:    now.toLocaleTimeString('fr-FR',  { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    synced:  false
+  };
 
-    id: Date.now(),
+  logs.unshift(entry);
+  localStorage.setItem('lumen_logs', JSON.stringify(logs));
 
-    scan_id: uniqueScanId,
+  // Push Supabase : si hors-ligne → file d'attente
+  if (navigator.onLine) {
+    sendRecordToSupabase(entry).then(success => {
+      if (success) {
+        _markLogSynced(entry.scan_id);
+        renderTable();
+      } else {
+        // Échec réseau → file d'attente
+        addPendingScan(entry);
+      }
+    });
+  } else {
+    addPendingScan(entry);
+  }
 
-    op: user.id,
+  renderTable();
 
-    code: codeValue,
-
-    zone: '',
-
-    date: now.toLocaleDateString(
-        'fr-FR',
-        {
-            day:'2-digit',
-            month:'2-digit',
-            year:'2-digit'
-        }
-    ),
-
-    time: now.toLocaleTimeString(
-        'fr-FR',
-        {
-            hour:'2-digit',
-            minute:'2-digit',
-            second:'2-digit'
-        }
-    ),
-
-    synced: false
-};
-
-logs.unshift(entry);
-
-localStorage.setItem(
-    'lumen_logs',
-    JSON.stringify(logs)
-);
-
-// IMPORTANT
-renderTable();
-
-setTimeout(() => {
-
+  setTimeout(() => {
     isProcessing = false;
-
     fermerSaisie();
-
     toggleView('history');
-
-}, 300);
-
+  }, 300);
 }
 
-   function sendToGoogle(entry) {
-    return fetch(GOOGLE_URL + `?action=saveScan&op=${entry.op}&code=${entry.code}&zone=${entry.zone}&date=${entry.date}&time=${entry.time}`)
-        .then(r => r.ok)
-        .catch(() => false);
-}
+// ──────────────────────────────────────────────────────
+// GOOGLE SHEETS
+// ──────────────────────────────────────────────────────
 
-   async function syncAllLogs() {
-
-    if (!navigator.onLine) {
-        alert("Vous êtes hors-ligne.");
-        return;
-    }
-
-    try {
-
-        // ======================================================
-        // 1. PUSH LOCAL → SUPABASE
-        // ======================================================
-        for (const log of logs) {
-
-            if (!log.synced) {
-
-                try {
-                    const ok = await sendToSupabase(log);
-
-                    if (ok) {
-                        log.synced = true;
-                    }
-
-                } catch (e) {
-                    console.error("Supabase error:", e);
-                }
-            }
-        }
-
+async function sendToGoogle(entry) {
+  if (!navigator.onLine) return false;
+  const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
+  try {
+    const response = await fetch(url);
+    if (response.ok) {
+      const idx = logs.findIndex(l => l.id === entry.id);
+      if (idx !== -1) {
+        logs[idx].synced = true;
         localStorage.setItem('lumen_logs', JSON.stringify(logs));
-
-        // ======================================================
-        // 2. PUSH LOCAL → GOOGLE SHEETS (OPTIONNEL)
-        // ======================================================
-        let googleCount = 0;
-
-        for (const log of logs) {
-
-            if (typeof sendToGoogle === 'function' && !log.googleSynced) {
-
-                try {
-                    const ok = await sendToGoogle(log);
-
-                    if (ok) {
-                        log.googleSynced = true;
-                        googleCount++;
-                    }
-
-                } catch (e) {
-                    console.error("Google sync error:", e);
-                }
-            }
-        }
-
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-
-        // ======================================================
-        // 3. PULL SUPABASE → UI (REFRESH CLEAN)
-        // ======================================================
-        if (typeof loadSupabaseScans === 'function') {
-            await loadSupabaseScans();
-        }
-
-        // ======================================================
-        // 4. UI UPDATE
-        // ======================================================
-        renderTable();
-
-        alert(
-            `Synchronisation terminée ✔\n` +
-            `Google Sheets: ${googleCount} ligne(s)`
-        );
-
-    } catch (e) {
-        console.error(e);
-        alert("Erreur synchronisation globale");
+      }
+      renderTable();
+      return true;
     }
-}   async function updateEntry(id, field, val) {
+  } catch (e) {
+    console.error(e);
+  }
+  return false;
+}
 
-const i = logs.findIndex(l => l.id === id);
+// ──────────────────────────────────────────────────────
+// SYNC GLOBALE (bouton "Actualiser")
+// ──────────────────────────────────────────────────────
 
-if (i === -1) return;
+async function syncAllLogs() {
+  if (!navigator.onLine) return alert('Vous êtes hors-ligne.');
 
-logs[i][field] = val.trim().toUpperCase();
+  // 1. Push file d'attente Supabase
+  await syncPendingScans();
 
-localStorage.setItem(
-    'lumen_logs',
-    JSON.stringify(logs)
-);
+  // 2. Pull données Supabase → logs locaux → UI
+  await pullFromSupabase();
+  renderTable();
 
-// IMPORTANT :
-// PAS de renderTable() ici
+  // 3. Google Sheets : envoie les lignes non synchronisées
+  const nonSynced = logs.filter(l => !l.synced);
+  let count = 0;
 
-// Sync uniquement après quitter zone
+  if (nonSynced.length > 0) {
+    for (const log of nonSynced) {
+      const success = await sendToGoogle(log);
+      if (success) count++;
+    }
+    alert(`Synchronisé : ${count} ligne(s) → Google Sheets. Supabase actualisé.`);
+  } else {
+    alert('Tout est à jour. (Google Sheets + Supabase)');
+  }
+}
 
-if (
-    field === 'zone'
-    &&
-    logs[i].zone.trim().length >= 1
-) {
+// ──────────────────────────────────────────────────────
+// MISE À JOUR D'UNE ENTRÉE (zone, code)
+// ──────────────────────────────────────────────────────
 
+async function updateEntry(id, field, val) {
+  const i = logs.findIndex(l => l.id === id);
+  if (i === -1) return;
+
+  logs[i][field] = val.trim().toUpperCase();
+  localStorage.setItem('lumen_logs', JSON.stringify(logs));
+
+  // Sync uniquement quand zone est renseignée
+  if (field === 'zone' && logs[i].zone.trim().length >= 1) {
     try {
+      // Google Sheets
+      await sendToGoogle(logs[i]);
 
-        // Google Sheets
-        await sendToGoogle(logs[i]);
+      // Supabase : tente d'abord un UPDATE si déjà présent, sinon INSERT
+      if (supabaseClient) {
+        const { data: existing } = await supabaseClient
+          .from('scans')
+          .select('scan_id')
+          .eq('scan_id', logs[i].scan_id)
+          .maybeSingle();
 
-        // Supabase
-        if (
-            typeof sendToSupabase === 'function'
-        ) {
+        if (existing) {
+          // Mise à jour de la zone
+          const { error } = await supabaseClient
+            .from('scans')
+            .update({ zone: logs[i].zone })
+            .eq('scan_id', logs[i].scan_id);
 
-            await sendToSupabase(logs[i]);
-        }
-
-        logs[i].synced = true;
-
-        localStorage.setItem(
-            'lumen_logs',
-            JSON.stringify(logs)
-        );
-
-        // Render uniquement après sync
-        renderTable();
-
-    } catch(err) {
-
-        console.error(
-            "Erreur sync:",
-            err
-        );
-    }
-}
-
-}
-
-  function renderTable() {
-    if (!Array.isArray(logs)) logs = [];
-
-    document.getElementById('flux-title').innerText =
-        `Flux (${logs.length})`;
-
-    document.getElementById('history-body').innerHTML =
-        logs.map(log => `
-            <tr class="border-b border-zinc-800 ${log.synced ? 'sync-row' : ''}">
-                <td class="p-3 text-white/30 text-[14px]">${log.op || ''}</td>
-
-                <td class="p-3 border-r border-zinc-800">
-                    <div contenteditable="true"
-                        onblur="updateEntry(${log.id}, 'code', this.innerText)"
-                        class="text-primary text-[20px] font-black">
-                        ${log.code || ''}
-                    </div>
-                </td>
-
-                <td class="p-3 border-r border-zinc-800">
-                    <div contenteditable="true"
-                        onblur="updateEntry(${log.id}, 'zone', this.innerText)"
-                        class="text-white font-bold">
-                        ${log.zone || ''}
-                    </div>
-                </td>
-
-                <td class="p-3 text-[16px] font-black leading-none">
-                    ${log.time || ''}<br>
-                    <span class="text-[12px]"
-                        style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
-                        ${log.synced ? 'SUCCESS ✅' : (log.date || '')}
-                    </span>
-                </td>
-
-                <td class="p-1">
-                    <button onclick="deleteEntry(${log.id})" class="btn-delete">×</button>
-                </td>
-            </tr>
-        `).join('');
-}
-
-    function playScanSound() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'square'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-        osc.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-    }
-
-    function toggleView(v) {
-        document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-        document.querySelectorAll('nav button').forEach(b => { b.classList.add('text-muted'); b.classList.remove('active-nav'); });
-        document.getElementById(`view-${v}`).classList.remove('hidden');
-        document.getElementById(`nav-${v}`).classList.add('active-nav');
-        
-        if (v === 'scanner') {
-            startLibraryScanner();
+          if (!error) {
+            logs[i].synced = true;
+            localStorage.setItem('lumen_logs', JSON.stringify(logs));
+          }
         } else {
-            stopLibraryScanner();
+          // Pas encore dans Supabase → INSERT
+          const success = await sendRecordToSupabase(logs[i]);
+          if (success) {
+            logs[i].synced = true;
+            localStorage.setItem('lumen_logs', JSON.stringify(logs));
+          } else {
+            addPendingScan(logs[i]);
+          }
         }
-    }
+      }
 
-    function deleteEntry(id) {
-        if (confirm("Supprimer ?")) { logs = logs.filter(l => l.id !== id); localStorage.setItem('lumen_logs', JSON.stringify(logs)); renderTable(); }
-    }
+      renderTable();
 
-    function exportCSV() {
-        if (logs.length === 0) return alert("Aucune donnée.");
-        let csv = "OP;CODE VIS;ZONE;DATE;HEURE;STATUT\n";
-        logs.forEach(l => csv += `${l.op};${l.code};${l.zone};${l.date};${l.time};${l.synced?'ENVOYÉ':'ATTENTE'}\n`);
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob);
-        link.download = `STELLANTIS_MGV.csv`; link.click();
+    } catch (err) {
+      console.error('Erreur sync updateEntry:', err);
     }
+  }
+}
+
+// ──────────────────────────────────────────────────────
+// UI HELPERS
+// ──────────────────────────────────────────────────────
+
+function renderTable() {
+  document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
+  document.getElementById('history-body').innerHTML = logs.map(log => `
+    <tr class="border-b border-zinc-800 ${log.synced ? 'sync-row' : ''}">
+      <td class="p-3 text-white/30 text-[14px]">${log.op}</td>
+      <td class="p-3 border-r border-zinc-800">
+        <div class="editable-cell text-primary text-[20px] font-black"
+             contenteditable="true"
+             onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
+      </td>
+      <td class="p-3 border-r border-zinc-800">
+        <div class="editable-cell text-white font-bold"
+             contenteditable="true"
+             onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
+      </td>
+      <td class="p-3 text-[16px] font-black leading-none">
+        ${log.time}<br>
+        <span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
+          ${log.synced ? 'SUCCESS ✅' : log.date}
+        </span>
+      </td>
+      <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">×</button></td>
+    </tr>
+  `).join('');
+}
+
+function playScanSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function toggleView(v) {
+  document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('nav button').forEach(b => {
+    b.classList.add('text-muted');
+    b.classList.remove('active-nav');
+  });
+  document.getElementById(`view-${v}`).classList.remove('hidden');
+  document.getElementById(`nav-${v}`).classList.add('active-nav');
+  if (v === 'scanner') {
+    startLibraryScanner();
+  } else {
+    stopLibraryScanner();
+  }
+}
+
+function deleteEntry(id) {
+  if (confirm('Supprimer ?')) {
+    logs = logs.filter(l => l.id !== id);
+    localStorage.setItem('lumen_logs', JSON.stringify(logs));
+    renderTable();
+  }
+}
+
+function exportCSV() {
+  if (logs.length === 0) return alert('Aucune donnée.');
+  let csv = 'OP;CODE VIS;ZONE;DATE;HEURE;STATUT\n';
+  logs.forEach(l =>
+    csv += `${l.op};${l.code};${l.zone};${l.date};${l.time};${l.synced ? 'ENVOYÉ' : 'ATTENTE'}\n`
+  );
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'STELLANTIS_MGV.csv';
+  link.click();
+}
+
+function ajouterManuellement() {
+  const input = document.getElementById('input-vis');
+  input.value = '';
+  document.getElementById('modal-saisie').classList.remove('hidden');
+  input.focus();
+}
+
+function fermerSaisie() {
+  document.getElementById('modal-saisie').classList.add('hidden');
+}
+
+function toggleSearch() {
+  const bar   = document.getElementById('search-bar');
+  const input = document.getElementById('search-input');
+  const isHidden = bar.classList.contains('hidden');
+  if (isHidden) {
+    bar.classList.remove('hidden');
+    setTimeout(() => input.focus(), 100);
+  } else {
+    bar.classList.add('hidden');
+    input.value = '';
+    renderTable();
+  }
+}
+
+function filtrerEnTempsReel(query) {
+  const q = query.trim().toUpperCase();
+  if (!q) { renderTable(); return; }
+  document.getElementById('history-body').innerHTML = logs.map(log => {
+    const isMatch = log.code.includes(q) || log.zone.includes(q) || log.op.includes(q);
+    return `
+    <tr class="border-b border-zinc-800" id="row-${log.id}"
+        style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;' : 'opacity:0.3'}">
+      <td class="p-3 text-[16px]" style="color:${isMatch ? '#eaea00' : 'rgba(255,255,255,0.3)'}">
+        ${log.op}
+      </td>
+      <td class="p-3 border-r border-zinc-800">
+        <div class="editable-cell font-black"
+             style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}"
+             contenteditable="true"
+             onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
+      </td>
+      <td class="p-3 border-r border-zinc-800">
+        <div class="editable-cell text-white font-bold"
+             style="text-transform:uppercase"
+             contenteditable="true"
+             onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
+      </td>
+      <td class="p-3 text-[16px] font-black leading-none">
+        ${log.time}<br>
+        <span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
+          ${log.synced ? 'SUCCESS ✅' : log.date}
+        </span>
+      </td>
+      <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">×</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function validerSaisie() {
+  const input     = document.getElementById('input-vis');
+  const codeClean = input.value.trim().toUpperCase();
+  if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
+    playScanSound();
+    addLogEntry(codeClean);
+    fermerSaisie();
+  } else {
+    alert('Format invalide ! (Ex: T5071035)');
+  }
+}
+
+document.getElementById('input-vis').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') validerSaisie();
+});
 </script>
 </body>
 </html>

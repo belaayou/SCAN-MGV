@@ -530,7 +530,6 @@ function savePendingScans(scans) {
 
 function addPendingScan(record) {
   const scans = getPendingScans();
-  // Évite les doublons dans la queue par scan_id
   if (!scans.find(s => s.scan_id === record.scan_id)) {
     scans.push(record);
     savePendingScans(scans);
@@ -539,56 +538,57 @@ function addPendingScan(record) {
 
 // ======================================================
 // ▲ PUSH : ENVOYER UN SCAN VERS SUPABASE
-// Retourne true uniquement si Supabase confirme l'insertion
+//
+// ⚠️ CORRECTION CRITIQUE :
+// On N'utilise PAS .select() après .insert()
+// car avec RLS + rôle anon + politique INSERT-only,
+// le SDK Supabase déclenche une vérification SELECT
+// qui bloque l'insertion si aucune politique SELECT n'existe.
+// Prefer: 'return=minimal' = pas de retour = pas de SELECT check
 // ======================================================
 
 async function sendRecordToSupabase(record) {
   if (!supabaseClient) return false;
 
   try {
-    const scanDate = new Date(record.timestamp || record.id || Date.now());
+    const scanDate = new Date(record.id || Date.now());
 
     const payload = {
-      scan_id: record.scan_id || crypto.randomUUID(),
-      op:      record.op   || '',
-      code:    record.code || record.codeVis || '',
-      zone:    record.zone || '',
-      date:    record.date || scanDate.toLocaleDateString('fr-FR'),
-      time:    record.time || scanDate.toLocaleTimeString('fr-FR'),
+      scan_id:    record.scan_id || crypto.randomUUID(),
+      op:         record.op      || '',
+      code:       record.code    || record.codeVis || '',
+      zone:       record.zone    || '',
+      date:       record.date    || scanDate.toLocaleDateString('fr-FR'),
+      time:       record.time    || scanDate.toLocaleTimeString('fr-FR'),
       created_at: scanDate.toISOString()
     };
 
-    const { data, error } = await supabaseClient
+    // ✅ PAS de .select() → évite le blocage RLS SELECT sur rôle anon
+    const { error } = await supabaseClient
       .from('scans')
-      .insert([payload])
-      .select();  // ← .select() force Supabase à retourner la ligne insérée
-                  //    => si data est vide, l'insertion a vraiment échoué
+      .insert([payload]);
 
     if (error) {
-      // Doublon sur scan_id → on considère déjà synchronisé
+      // 23505 = contrainte d'unicité (doublon scan_id) → déjà inséré = OK
       if (error.code === '23505') {
         console.warn('▲ Doublon ignoré :', payload.code);
         return true;
       }
-      throw error;
-    }
-
-    // Vérification réelle : la ligne doit être dans la réponse
-    if (!data || data.length === 0) {
-      console.error('▲ Supabase : insert sans retour de données');
+      // Log l'erreur réelle pour debug
+      console.error('▲ Supabase INSERT error :', error.code, error.message);
       return false;
     }
 
-    console.log('▲ Scan confirmé Supabase :', payload.code);
+    console.log('▲ Scan envoyé Supabase :', payload.code);
     return true;
 
   } catch (err) {
-    console.error('▲ Erreur Supabase push :', err);
+    console.error('▲ Erreur réseau Supabase :', err);
     return false;
   }
 }
 
-// Alias utilisé dans updateEntry() (était appelé sendToSupabase)
+// Alias pour compatibilité avec updateEntry()
 async function sendToSupabase(record) {
   return await sendRecordToSupabase(record);
 }
@@ -601,7 +601,6 @@ async function syncPendingScans() {
   return await syncPendingSupabaseScans();
 }
 
-// Alias utilisé dans syncAllLogs()
 async function syncPendingScansToSupabase() {
   return await syncPendingSupabaseScans();
 }
@@ -624,19 +623,24 @@ async function syncPendingSupabaseScans() {
     if (!success) {
       remaining.push(record);
     } else {
-      // Marque le log correspondant comme synchronisé dans localStorage
       _markLogSynced(record.scan_id);
     }
   }
 
   savePendingScans(remaining);
-  console.log(`▲ File Supabase : ${remaining.length} restant(s)`);
+
+  if (remaining.length < pending.length) {
+    renderTable();
+    console.log(`▲ Sync OK : ${pending.length - remaining.length} envoyé(s), ${remaining.length} restant(s)`);
+  }
 }
 
 // ======================================================
 // ▲ PULL : RÉCUPÉRER LES DONNÉES DEPUIS SUPABASE → UI
-// Fusionne les données distantes dans logs sans écraser
-// les entrées locales non synchronisées
+//
+// ⚠️ Nécessite une politique SELECT active sur la table scans
+// Si SELECT est bloqué pour anon, cette fonction retourne false
+// sans planter l'app
 // ======================================================
 
 async function pullFromSupabase() {
@@ -646,6 +650,8 @@ async function pullFromSupabase() {
     const user = _getCurrentUser();
     if (!user || user.id === 'TEMP') return false;
 
+    // ✅ .select() ici est voulu : c'est un pull de lecture
+    // Nécessite la politique SELECT sur anon dans Supabase
     const { data, error } = await supabaseClient
       .from('scans')
       .select('*')
@@ -653,46 +659,51 @@ async function pullFromSupabase() {
       .order('created_at', { ascending: false })
       .limit(500);
 
-    if (error) throw error;
+    if (error) {
+      // 42501 = RLS bloque SELECT → pas de politique SELECT configurée
+      if (error.code === '42501') {
+        console.warn('▲ Pull bloqué par RLS SELECT — ajoute une politique SELECT dans Supabase');
+        return false;
+      }
+      throw error;
+    }
+
     if (!data || data.length === 0) return true;
 
-    // Fusionne : les entrées distantes sont ajoutées si absentes localement
     const existingScanIds = new Set(logs.map(l => l.scan_id).filter(Boolean));
-
     let added = 0;
+
     for (const row of data) {
       if (!existingScanIds.has(row.scan_id)) {
         logs.push({
-          id:       new Date(row.created_at).getTime() || Date.now(),
-          scan_id:  row.scan_id,
-          op:       row.op,
-          code:     row.code,
-          zone:     row.zone || '',
-          date:     row.date,
-          time:     row.time,
-          synced:   true
+          id:      new Date(row.created_at).getTime() || Date.now(),
+          scan_id: row.scan_id,
+          op:      row.op,
+          code:    row.code,
+          zone:    row.zone || '',
+          date:    row.date,
+          time:    row.time,
+          synced:  true
         });
         added++;
       } else {
-        // Met à jour la zone si elle a été renseignée côté serveur
+        // Met à jour la zone si renseignée côté serveur
         const idx = logs.findIndex(l => l.scan_id === row.scan_id);
-        if (idx !== -1 && !logs[idx].zone && row.zone) {
-          logs[idx].zone   = row.zone;
+        if (idx !== -1) {
+          if (!logs[idx].zone && row.zone) logs[idx].zone = row.zone;
           logs[idx].synced = true;
         }
       }
     }
 
-    // Trie par timestamp décroissant
     logs.sort((a, b) => b.id - a.id);
-
     localStorage.setItem('lumen_logs', JSON.stringify(logs));
 
     if (added > 0) console.log(`▲ Pull Supabase : ${added} entrée(s) ajoutée(s)`);
     return true;
 
   } catch (err) {
-    console.error('▲ Erreur Supabase pull :', err);
+    console.error('▲ Erreur pull Supabase :', err);
     return false;
   }
 }
@@ -718,7 +729,7 @@ function _markLogSynced(scanId) {
 }
 
 // ======================================================
-// ▲ ONLINE EVENT → relance sync automatiquement
+// ▲ EVENTS RÉSEAU
 // ======================================================
 
 window.addEventListener('online', async () => {
@@ -727,27 +738,23 @@ window.addEventListener('online', async () => {
   renderTable();
 });
 
-// ======================================================
-// ▲ LANCEMENT AU DÉMARRAGE
-// ======================================================
-
 window.addEventListener('load', syncPendingSupabaseScans);
 
 
 // ======================================================
-// ▲ APP LOGIC  (remplace le script existant — doc 4)
+// ▲ APP LOGIC
 // ======================================================
 
 const GOOGLE_URL =
   'https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec';
 
-let isProcessing  = false;
+let isProcessing    = false;
 let lastScannedCode = '';
-let lastScanTime  = 0;
+let lastScanTime    = 0;
 let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
-let audioCtx      = null;
-let html5Instance = null;
-let torchEnabled  = false;
+let audioCtx        = null;
+let html5Instance   = null;
+let torchEnabled    = false;
 
 // ──────────────────────────────────────────────────────
 // INIT
@@ -765,8 +772,9 @@ function initApp() {
     renderTable();
 
     if (navigator.onLine) {
-      // Push d'abord, puis pull pour afficher tout
-      syncPendingScans().then(() => pullFromSupabase()).then(() => renderTable());
+      syncPendingScans()
+        .then(() => pullFromSupabase())
+        .then(() => renderTable());
     }
 
     startLibraryScanner();
@@ -865,13 +873,13 @@ function updateTorchBtn() {
   const btn = document.getElementById('torch-btn');
   const svg = btn.querySelector('svg');
   if (torchEnabled) {
-    btn.style.background  = '#eaea00';
-    btn.style.boxShadow   = '0 0 12px rgba(234,234,0,0.6)';
-    svg.style.color       = '#000';
+    btn.style.background = '#eaea00';
+    btn.style.boxShadow  = '0 0 12px rgba(234,234,0,0.6)';
+    svg.style.color      = '#000';
   } else {
-    btn.style.background  = '';
-    btn.style.boxShadow   = '';
-    svg.style.color       = '';
+    btn.style.background = '';
+    btn.style.boxShadow  = '';
+    svg.style.color      = '';
   }
 }
 
@@ -888,7 +896,9 @@ async function login() {
     const cached = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
     const found  = cached.find(u => u.id === id && u.pass === pass);
     if (found) {
-      localStorage.setItem('StellantisUser', JSON.stringify({ id: found.id, nom: found.nom, prenom: found.prenom }));
+      localStorage.setItem('StellantisUser', JSON.stringify({
+        id: found.id, nom: found.nom, prenom: found.prenom
+      }));
       initApp();
     } else {
       alert('❌ Identifiants incorrects (hors-ligne).');
@@ -904,7 +914,9 @@ async function login() {
       cached = cached.filter(u => u.id !== id);
       cached.push({ id, pass, nom: data.nom, prenom: data.prenom });
       localStorage.setItem('StellantisUsers_cache', JSON.stringify(cached));
-      localStorage.setItem('StellantisUser', JSON.stringify({ id, nom: data.nom, prenom: data.prenom }));
+      localStorage.setItem('StellantisUser', JSON.stringify({
+        id, nom: data.nom, prenom: data.prenom
+      }));
       location.reload();
     } else {
       alert('❌ Accès refusé ou erroné.');
@@ -964,22 +976,20 @@ function addLogEntry(codeValue) {
     op:      user.id,
     code:    codeValue,
     zone:    '',
-    date:    now.toLocaleDateString('fr-FR',  { day: '2-digit', month: '2-digit', year: '2-digit' }),
-    time:    now.toLocaleTimeString('fr-FR',  { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    date:    now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+    time:    now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
     synced:  false
   };
 
   logs.unshift(entry);
   localStorage.setItem('lumen_logs', JSON.stringify(logs));
 
-  // Push Supabase : si hors-ligne → file d'attente
   if (navigator.onLine) {
     sendRecordToSupabase(entry).then(success => {
       if (success) {
         _markLogSynced(entry.scan_id);
         renderTable();
       } else {
-        // Échec réseau → file d'attente
         addPendingScan(entry);
       }
     });
@@ -1027,14 +1037,14 @@ async function sendToGoogle(entry) {
 async function syncAllLogs() {
   if (!navigator.onLine) return alert('Vous êtes hors-ligne.');
 
-  // 1. Push file d'attente Supabase
+  // 1. Push queue offline → Supabase
   await syncPendingScans();
 
-  // 2. Pull données Supabase → logs locaux → UI
+  // 2. Pull Supabase → UI
   await pullFromSupabase();
   renderTable();
 
-  // 3. Google Sheets : envoie les lignes non synchronisées
+  // 3. Google Sheets pour les non synchronisés
   const nonSynced = logs.filter(l => !l.synced);
   let count = 0;
 
@@ -1060,33 +1070,31 @@ async function updateEntry(id, field, val) {
   logs[i][field] = val.trim().toUpperCase();
   localStorage.setItem('lumen_logs', JSON.stringify(logs));
 
-  // Sync uniquement quand zone est renseignée
   if (field === 'zone' && logs[i].zone.trim().length >= 1) {
     try {
-      // Google Sheets
       await sendToGoogle(logs[i]);
 
-      // Supabase : tente d'abord un UPDATE si déjà présent, sinon INSERT
       if (supabaseClient) {
-        const { data: existing } = await supabaseClient
+        // Vérifie si déjà présent dans Supabase
+        const { data: existing, error: selectError } = await supabaseClient
           .from('scans')
           .select('scan_id')
           .eq('scan_id', logs[i].scan_id)
           .maybeSingle();
 
-        if (existing) {
-          // Mise à jour de la zone
-          const { error } = await supabaseClient
+        if (!selectError && existing) {
+          // UPDATE la zone
+          const { error: updateError } = await supabaseClient
             .from('scans')
             .update({ zone: logs[i].zone })
             .eq('scan_id', logs[i].scan_id);
 
-          if (!error) {
+          if (!updateError) {
             logs[i].synced = true;
             localStorage.setItem('lumen_logs', JSON.stringify(logs));
           }
         } else {
-          // Pas encore dans Supabase → INSERT
+          // Pas encore dans Supabase → INSERT (sans .select())
           const success = await sendRecordToSupabase(logs[i]);
           if (success) {
             logs[i].synced = true;
@@ -1106,7 +1114,7 @@ async function updateEntry(id, field, val) {
 }
 
 // ──────────────────────────────────────────────────────
-// UI HELPERS
+// UI
 // ──────────────────────────────────────────────────────
 
 function renderTable() {
@@ -1126,7 +1134,9 @@ function renderTable() {
       </td>
       <td class="p-3 text-[16px] font-black leading-none">
         ${log.time}<br>
-        <span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
+        <span class="text-[12px]" style="${log.synced
+          ? 'color:#ff0000;font-weight:900'
+          : 'color:rgba(255,255,255,0.2)'}">
           ${log.synced ? 'SUCCESS ✅' : log.date}
         </span>
       </td>
@@ -1137,7 +1147,7 @@ function renderTable() {
 
 function playScanSound() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioCtx.createOscillator();
+  const osc  = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'square';
   osc.frequency.setValueAtTime(880, audioCtx.currentTime);
@@ -1216,7 +1226,9 @@ function filtrerEnTempsReel(query) {
     const isMatch = log.code.includes(q) || log.zone.includes(q) || log.op.includes(q);
     return `
     <tr class="border-b border-zinc-800" id="row-${log.id}"
-        style="${isMatch ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;' : 'opacity:0.3'}">
+        style="${isMatch
+          ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;'
+          : 'opacity:0.3'}">
       <td class="p-3 text-[16px]" style="color:${isMatch ? '#eaea00' : 'rgba(255,255,255,0.3)'}">
         ${log.op}
       </td>
@@ -1234,7 +1246,9 @@ function filtrerEnTempsReel(query) {
       </td>
       <td class="p-3 text-[16px] font-black leading-none">
         ${log.time}<br>
-        <span class="text-[12px]" style="${log.synced ? 'color:#ff0000;font-weight:900' : 'color:rgba(255,255,255,0.2)'}">
+        <span class="text-[12px]" style="${log.synced
+          ? 'color:#ff0000;font-weight:900'
+          : 'color:rgba(255,255,255,0.2)'}">
           ${log.synced ? 'SUCCESS ✅' : log.date}
         </span>
       </td>
@@ -1259,5 +1273,6 @@ document.getElementById('input-vis').addEventListener('keypress', function(e) {
   if (e.key === 'Enter') validerSaisie();
 });
 </script>
+    <script src="stellantis-app-v3.js"></script>
 </body>
 </html>

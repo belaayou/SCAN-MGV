@@ -1,1278 +1,1744 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8"/>
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>
-    <title>Stellantis MGV</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght=500;800&family=Inter:wght=400;900&display=swap" rel="stylesheet"/>  
-    
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!DOCTYPE html>  <html lang="fr">  
+<head>  
+    <meta charset="utf-8"/>  
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">  
+    <meta http-equiv="Pragma" content="no-cache">  
+    <meta http-equiv="Expires" content="0">  
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover" name="viewport"/>  
+    <title>STELLANTIS MGV</title>  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&family=Inter:wght@400;900&display=swap" rel="stylesheet"/>    
+<link rel="manifest" href="manifest.json">  
+<link rel="apple-touch-icon" href="IMG_20260413_130653.png">  
+<meta name="theme-color" content="#EAB308">  
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">  
+<meta name="apple-mobile-web-app-capable" content="yes">  
 
-    <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="IMG_20260413_130653.png">
-    <meta name="theme-color" content="#EAB308">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    
-    <style>
-        /* ============================= */
-        /* 🔧 RESET GLOBAL & UTILS */
-        /* ============================= */
-        * {
-            box-sizing: border-box;
-            -webkit-text-size-adjust: none;
-            text-size-adjust: none;
-        }
+<script src="https://unpkg.com/html5-qrcode"></script>  
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  
 
-        html {
-            font-size: clamp(12px, 2.5vw, 16px);
-        }
+<style>
 
-        body {
-            margin: 0;
-            padding: 0;
-            background: #000;
-            color: #fff;
-            font-family: 'Inter', sans-serif;
-            height: 100dvh;
-            overflow: hidden;
-        }
+/* ============================= /
+/ RESET GLOBAL & UTILS /
+/ ============================= */
 
-        .hidden { display: none !important; }
-        .text-white { color: #ffffff; }
-        .text-primary { color: #eaea00; }
-        .text-red { color: #dc2626; }
-        .text-muted { color: rgba(255, 255, 255, 0.2) !important; }
-        .mb-1 { margin-bottom: 4px; }
-
-        /* ============================= */
-        /* 📱 APP CONTAINER & STRUCTURE */
-        /* ============================= */
-        #app-container {
-            width: 100%;
-            height: 100dvh;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* ============================= */
-        /* 🧭 HEADER & FIXED COMPONENTS */
-        /* ============================= */
-        header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 70px;
-            padding: 0 24px;
-            padding-top: env(safe-area-inset-top, 0px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #000;
-            border-bottom: 2px solid #18181b;
-            z-index: 1000;
-        }
-
-        .header-left { width: 33.333%; display: flex; flex-direction: column; }
-        .header-center { width: 33.333%; display: flex; justify-content: center; align-items: center; gap: 16px; }
-        .header-right { width: 33.333%; display: flex; justify-content: end; }
-
-        .user-name { font-size: clamp(9px, 2.5vw, 12px); font-weight: 900; letter-spacing: 0.1em; color: #eaea00; text-transform: uppercase; line-height: 1.2; }
-        .user-id { font-size: clamp(12px, 3.5vw, 16px); font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.8); font-weight: bold; }
-
-        #stellantis-btn {
-            position: fixed;
-            bottom: 100px;
-            left: 0;
-            width: 100%;
-            padding: 16px 32px;
-            background: #000;
-            border-top: 1px solid rgba(24, 24, 27, 0.5);
-            z-index: 999;
-        }
-
-        .footer-brand-btn {
-            width: 100%;
-            background: #eaea00;
-            color: #000;
-            padding: 24px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            border-radius: 16px;
-            border: none;
-            cursor: default;
-            box-shadow: 0 10px 20px rgba(234, 234, 0, 0.15);
-        }
-
-        .brand-text { font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; font-size: 1.25rem; color: #000; }
-
-        /* 🧭 NAVIGATION */
-        nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 70px;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            background: #000;
-            border-top: 2px solid #18181b;
-            z-index: 1000;
-        }
-
-        .nav-item {
-            background: none;
-            border: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 8px;
-            width: 50%;
-            cursor: pointer;
-        }
-        .nav-text { font-size: clamp(10px, 2.5vw, 13px); font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
-        .active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; }
-
-        /* ============================= */
-        /* 📱 VIEWS DYNAMIQUES */
-        /* ============================= */
-        .view-section {
-            position: fixed;
-            top: 70px;
-            bottom: 140px;
-            left: 0;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        /* ✅ Caméra / Scanner */
-        .camera-container {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            background: #09090b;
-            overflow: hidden;
-        }
-
-        #interactive-reader {
-            width: 100%;
-            height: 100%;
-        }
-
-        #interactive-reader video {
-            width: 100% !important;
-            height: 100% !important;
-            object-fit: cover !important;
-        }
-
-        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
-        .corner { position: absolute; width: 50px; height: 50px; border: 5px solid #eaea00; }
-        .top-l { top: 2px; left: 2px; border-right: 0; border-bottom: 0; }
-        .top-r { top: 2px; right: 2px; border-left: 0; border-bottom: 0; }
-        .bot-l { bottom: 80px; left: 2px; border-right: 0; border-top: 0; }
-        .bot-r { bottom: 80px; right: 2px; border-left: 0; border-top: 0; }
-        .scan-line { position: absolute; width: 100%; height: 2px; background: #eaea00; box-shadow: 0 0 15px #eaea00; animation: scan 4s linear infinite; opacity: 0.8; }
-        @keyframes scan { from { top: 0; } to { top: 100%; } }
-        
-        /* ==========================================================================
-   CENTRAGE PARFAIT ET SYMÉTRIQUE DU CADRE BLANC
-   ========================================================================== */
-
-/* 1. On force le conteneur de scan à utiliser Flexbox pour tout aligner au centre */
-#reader__scan_region {
-    display: flex !important;
-    align-items: center !important;     /* Centre verticalement (Haut / Bas) */
-    justify-content: center !important;    /* Centre horizontalement (Gauche / Droite) */
-    position: relative !important;
-    height: 100% !important;               /* Prend toute la hauteur du cadre jaune */
-    min-height: 380px !important;          /* Ajuste cette valeur si ton cadre jaune est plus grand/petit */
+* {
+box-sizing: border-box;
+-webkit-text-size-adjust: none;
+text-size-adjust: none;
 }
 
-/* 2. Supprime les marges automatiques qui cassent le centrage sur certains téléphones */
-#reader__scan_region > div {
-    position: absolute !important;
-    top: 50% !important;
-    left: 50% !important;
-    transform: translate(-50%, -50%) !important; /* Calage mathématique au pixel près */
-    margin: 0 !important;
+
+html {
+font-size: clamp(12px, 2.5vw, 16px);
 }
 
-        /* ✅ Historique & Tableau */
-        #view-history {
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            -webkit-overflow-scrolling: touch !important;
-            padding: 8px;
-        }
+body {
+margin: 0;
+padding: 0;
+background: #000;
+color: #fff;
+font-family: 'Inter', sans-serif;
+height: 100dvh;
+overflow: hidden;
+}
 
-        .table-toolbar { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 12px; 
-            margin-bottom: 16px; 
-            padding: 0 8px; 
-        }
-        
-        @media (min-width: 360px) {
-            .table-toolbar {
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-        }
+.hidden { display: none !important; }
+.text-white { color: #ffffff; }
+.text-primary { color: #eaea00; }
+.text-red { color: #dc2626; }
+.text-muted { color: rgba(255, 255, 255, 0.2) !important; }
+.mb-1 { margin-bottom: 4px; }
 
-        .toolbar-left { display: flex; align-items: center; gap: 12px; }
-        .toolbar-right { display: flex; gap: 6px; flex-wrap: wrap; }
-        
-        .flux-indicator { color: #eaea00; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; font-style: italic; margin: 0; }
+@media screen and (orientation: landscape) {
+html {
+transform: rotate(-90deg);
+transform-origin: left top;
+width: 100vh;
+height: 100vw;
+overflow-x: hidden;
+position: absolute;
+top: 100%;
+left: 0;
+}
+}
 
-        .btn-action { 
-            border: none; 
-            padding: 6px 14px; 
-            font-weight: 900; 
-            font-size: 13px; 
-            text-transform: uppercase; 
-            font-style: italic; 
-            border-radius: 6px; 
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: #000000 !important;
-            transition: transform 0.1s, background-color 0.2s;
-        }
-        .btn-action:active { transform: scale(0.95); }
+#app-container {
+width: 100%;
+height: 100dvh;
+position: relative;
+overflow: hidden;
+display: flex;
+flex-direction: column;
+}
 
-        .btn-yellow { background: #eaea00; }
-        .btn-yellow:active { background: #c4c400; }
+main {
+flex: 1;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+position: relative;
+}
 
-        .btn-blue { background: #3b82f6; }
-        .btn-blue:active { background: #2563eb; }
+header {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 85px;
+padding: 0 24px;
+padding-top: env(safe-area-inset-top, 0px);
+display: flex;
+align-items: center;
+justify-content: space-between;
+background: #000;
+border-bottom: 2px solid #18181b;
+z-index: 1000;
+}
 
-        .btn-emerald { background: #10b981; }
-        .btn-emerald:active { background: #059669; }
+.header-left { width: 33.333%; display: flex; flex-direction: column; justify-content: center; }
+.header-center { width: 33.333%; display: flex; justify-content: center; align-items: center; gap: 16px; }
+.header-right { width: 33.333%; display: flex; justify-content: end; align-items: center; }
 
-        .btn-zinc { background: #a1a1aa; }
-        .btn-zinc:active { background: #71717a; }
+.user-name { font-size: clamp(9px, 2.5vw, 12px); font-weight: 900; letter-spacing: 0.1em; color: #eaea00; text-transform: uppercase; line-height: 1.2; }
+.user-id { font-size: clamp(12px, 3.5vw, 16px); font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.8); font-weight: bold; }
 
-        .search-container { padding: 0 12px; margin-bottom: 12px; }
-        .search-field { width: 100%; background: #27272a; border: 2px solid #3f3f46; border-radius: 12px; padding: 12px 16px; color: #fff; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; outline: none; font-size: 18px; text-align: center; transition: border-color 0.2s; }
-        .search-field:focus { border-color: #eaea00; }
+#stellantis-btn {
+position: fixed;
+bottom: 85px;
+left: 0;
+width: 100%;
+padding: 8px 32px;
+background: #000;
+border-top: 1px solid rgba(24, 24, 27, 0.5);
+z-index: 999;
+}
 
-        .table-responsive { background: #111113; border-radius: 12px; overflow-x: auto; border: 2px solid #18181b; max-height: calc(100% - 100px); }
-        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
-        .data-table th { font-size: clamp(11px, 3vw, 14px); padding: 10px 8px; text-transform: uppercase; font-weight: 900; color: rgba(255,255,255,0.4); background: #27272a; position: sticky; top: 0; z-index: 10; }
-        .data-table tbody { font-family: 'JetBrains Mono', monospace; }
-        .data-table td { font-size: clamp(10px, 3vw, 15px); padding: clamp(6px, 2vw, 12px); border-bottom: 2px solid #27272a; }
+.footer-brand-btn {
+width: 100%;
+background: #eaea00;
+color: #000;
+padding: 24px 0;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 16px;
+border-radius: 16px;
+border: none;
+cursor: default;
+box-shadow: 0 10px 20px rgba(234, 234, 0, 0.15);
+}
 
-        .data-table td:first-child, .data-table th:first-child { position: sticky; left: 0; background: #18181b; z-index: 5; border-right: 2px solid #27272a; }
-        .data-table th:first-child { z-index: 15; background: #27272a; }
+.brand-text { font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; font-size: 1.25rem; color: #000; }
 
-        .editable-cell { border-bottom: 1px dashed #444; min-width: 50px; padding: 6px; transition: 0.2s; }
-        .editable-cell:focus { outline: none; border-bottom: 3px solid #eaea00; background: rgba(234,234,0,0.15); }
+nav {
+position: fixed;
+bottom: 0;
+left: 0;
+width: 100%;
+height: 85px;
+padding-bottom: env(safe-area-inset-bottom, 0px);
+display: flex;
+justify-content: space-around;
+align-items: stretch;
+background: #000;
+border-top: 2px solid #18181b;
+z-index: 1000;
+}
 
-        .sync-row { background: rgba(16, 185, 129, 0.05); }
-        .btn-delete { background: none; border: none; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; color: #ef4444; font-size: 36px; font-weight: bold; border-radius: 50%; cursor: pointer; }
-        .btn-delete:active { background: rgba(239, 68, 68, 0.2); }
+.nav-item {
+background: none;
+border: none;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+padding: 0;
+width: 50%;
+height: 100%;
+cursor: pointer;
+}
+.nav-text { font-size: clamp(10px, 2.5vw, 13px); font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em; }
+.active-nav { color: #eaea00 !important; border-top: 3px solid #eaea00; }
 
-        /* ============================= */
-        /* 🔐 SECURITY / AUTH SCREEN */
-        /* ============================= */
-        .auth-screen { position: fixed; inset: 0; background: #000; z-index: 2000; flex-direction: column; padding: 32px; display: flex; align-items: center; justify-content: center; }
-        .auth-box { width: 100%; max-width: 320px; text-align: center; }
-        .brand-title { color: #eaea00; font-weight: 900; font-size: 2.25rem; letter-spacing: -0.05em; margin-bottom: 8px; text-transform: uppercase; font-style: italic; }
-        .sub-title { color: #71717a; font-weight: bold; font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 32px; text-transform: uppercase; }
-        .form-group { display: flex; flex-direction: column; gap: 16px; }
+.view-section {
+position: fixed;
+top: 85px;
+bottom: 185px;
+left: 0;
+width: 100%;
+overflow: hidden;
+}
 
-        .input-field { width: 100%; background: #18181b; border: 2px solid #27272a; padding: 16px; border-radius: 12px; outline: none; color: #fff; font-weight: bold; text-align: center; font-size: 1.25rem; transition: border-color 0.2s; }
-        .input-field:focus { border-color: #eaea00; }
-        .main-input { text-transform: uppercase; font-size: 1.5rem; padding: 20px; }
+#view-scanner {
+position: absolute !important;
+inset: 0 !important;
+width: 100% !important;
+height: 100% !important;
+overflow: hidden;
+background: #000 !important;
+}
+.camera-container {
+position: absolute;
+inset: 0;
+width: 100%;
+height: 100%;
+background: transparent !important;
+z-index: 1;
+}
 
-        .btn-primary { width: 100%; margin-top: 16px; background: #eaea00; color: #000; font-weight: 900; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; }
-        .main-btn { padding: 24px 0; letter-spacing: 0.1em; font-size: 1.125rem; }
-        .link-btn { background: none; border: none; color: #71717a; text-decoration: underline; font-size: 1.125rem; text-transform: uppercase; font-weight: bold; margin-top: 16px; cursor: pointer; }
+#webcam,
+#webcam video{
+position:absolute;
+inset:0;
+width:100%;
+height:90% !important;
+object-fit:cover;
+}
 
-        /* ============================= */
-        /* 📦 MODAL DIALOGS */
-        /* ============================= */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: start; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
-        .modal-content { background: #18181b; border: 2px solid #eaea00; border-radius: 32px; width: 100%; max-width: 280px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); margin-top: 10%; }
-        .modal-body { padding: 24px; }
-        .modal-title { color: #eaea00; font-size: 1.125rem; font-weight: 900; margin-bottom: 24px; letter-spacing: 0.05em; text-transform: uppercase; font-style: italic; text-align: center; }
-        .modal-input-container { position: relative; margin-bottom: 32px; }
-        .modal-input { width: 100%; background: #000; border: 2px solid #3f3f46; border-radius: 12px; padding: 20px 16px; font-size: 1.875rem; color: #fff; outline: none; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; }
-        .modal-input:focus { border-color: #eaea00; }
-        .modal-footer { display: flex; gap: 12px; height: 64px; }
-        .btn-modal-cancel { flex: 1; background: #27272a; color: #a1a1aa; border: none; font-size: 14px; font-weight: bold; border-radius: 12px; text-transform: uppercase; cursor: pointer; }
-        .btn-modal-confirm { flex: 1; background: #eaea00; color: #000; border: none; font-size: 14px; font-weight: bold; border-radius: 12px; text-transform: uppercase; cursor: pointer; }
+.scan-overlay {
+position: absolute;
+inset: 0;
+pointer-events: none;
+z-index: 20;
+display: flex;
+align-items: center;
+justify-content: center;
+background: transparent !important;
+}
 
-        /* ============================= */
-        /* 📦 SVG ICONS & RESPONSIVE */
-        /* ============================= */
-        .icon-btn { background: none; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
-        .icon-btn:active { background: #27272a; }
-        .icon-m { width: clamp(32px, 6vw, 36px); height: clamp(32px, 8vw, 38px); }
-        .icon-l { width: clamp(40px, 10vw, 48px); height: clamp(40px, 10vw, 48px); }
-        .text-scale { transition: transform 0.2s; }
-        .text-scale:hover { transform: scale(1.1); }
+.scan-frame {
+position: relative;
+width: 85%;
+height: 530px;
+border: 0px solid rgba(5, 150, 105, 0.3);
+background: transparent;
+}
 
-        @media (min-width: 768px) {
-            #app-container, header, nav, #stellantis-btn, .view-section { max-width: 500px; left: 50%; transform: translateX(-50%); }
-            header { left: 50%; transform: translateX(-50%); }
-        }
+.scan-area {
+position: absolute;
+inset: 0;
+overflow: hidden;
+}
 
-    </style>
-</head>
-    
-<body onload="initApp()">
-<div id="app-container"> 
-    <div id="identity-screen" class="auth-screen">
-        <div class="auth-box">
-            <h1 class="brand-title">STELLANTIS</h1>
-            <p id="auth-title" class="sub-title">Connexion Terminal</p>
+.corner {
+position: absolute;
+width: 24px;
+height: 24px;
+border: 3px solid #ffffff;
+z-index: 10;
+}
 
-            <div id="login-form" class="form-group">
-                <input type="text" id="login-id" 
-                    autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"
-                    class="input-field main-input"
-                    placeholder="ID MATRICULE">
-               <input type="password" id="login-pass" autocomplete="new-password"
-                    class="input-field main-input"
-                    placeholder="MOT DE PASSE">               
-                <button onclick="login()" class="btn-primary main-btn">Se Connecter</button>
-                <button onclick="toggleAuth(true)" class="link-btn">Créer un compte</button>
-            </div>
+.top-l {
+top: -3px;
+left: -3px;
+border-right: none;
+border-bottom: none;
+}
 
-            <div id="signup-form" class="form-group hidden">
-                <input type="text" id="reg-nom" class="input-field" placeholder="NOM">
-                <input type="text" id="reg-prenom" class="input-field" placeholder="PRÉNOM">
-                <input type="text" id="reg-id" class="input-field" placeholder="ID MATRICULE">
-                <input type="password" id="reg-pass" class="input-field" placeholder="MOT DE PASSE">           
-                <button onclick="register()" class="btn-primary main-btn">Valider</button>
-                <button onclick="toggleAuth(false)" class="link-btn">Retour</button>
-            </div>
-        </div>
-    </div>
+.top-r {
+top: -3px;
+right: -3px;
+border-left: none;
+border-bottom: none;
+}
 
-    <header>
-        <div class="header-left">
-            <span id="display-name" class="user-name">---</span>
-            <span id="display-id" class="user-id">ID: ---</span>
-        </div>
-        <div class="header-center">
-            <button onclick="toggleTorch()" id="torch-btn" class="icon-btn text-white">
-                <svg class="icon-m" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-            </button>
-            <button onclick="toggleView('scanner')" class="icon-btn text-primary text-scale">
-                <svg class="icon-l" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </button>
-        </div>
-        <div class="header-right">
-            <button onclick="logoutIdentity()" class="icon-btn text-red">
-                <svg class="icon-m" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-            </button>
-        </div>
-    </header>
+.bot-l {
+bottom: 93px;
+left: -3px;
+border-right: none;
+border-top: none;
+}
 
-    <main>
-        <section id="view-scanner" class="view-section">
-            <div class="camera-container">
-                <div id="interactive-reader"></div>
-                <div class="scan-overlay">
-                    <div class="scan-line"></div>
-                    <div class="corner top-l"></div><div class="corner top-r"></div>
-                    <div class="corner bot-l"></div><div class="corner bot-r"></div>
-                </div>
-            </div>
-        </section>
+.bot-r {
+bottom: 93px;
+right: -3px;
+border-left: none;
+border-top: none;
+}
 
-        <section id="view-history" class="view-section hidden">
-            <div class="table-toolbar">
-                <div class="toolbar-left">
-                    <h3 id="flux-title" class="flux-indicator">Flux (0)</h3>
-                </div>
-                <div class="toolbar-right">
-                    <button onclick="toggleSearch()" id="search-btn" class="btn-action btn-yellow">
-                        <svg style="width:14px; height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                        Chercher
-                    </button>
-                    <button onclick="ajouterManuellement()" class="btn-action btn-blue">+ Manuel</button>
-                    <button onclick="syncAllLogs()" class="btn-action btn-emerald">Actualiser</button>
-                    <button onclick="exportCSV()" class="btn-action btn-zinc">CSV</button>
-                </div>
-            </div>
-            
-            <div id="search-bar" class="hidden search-container">
-                <input type="text" id="search-input"
-                       placeholder="🔍 RECHERCHER UN VIS..."
-                       oninput="this.value = this.value.toUpperCase(); filtrerEnTempsReel(this.value)"
-                       autocomplete="off" autocorrect="off" spellcheck="false"
-                       class="search-field">
-            </div>
+.scan-line {
+position: absolute;
+left: 0;
+width: 100%;
+height: 3px;
+background: #ffee00;
+box-shadow:
+0 0 8px #ffee00,
+0 0 16px #ffee00,
+0 0 24px #ffee00;
+animation: laserMove 3s ease-in-out alternate infinite;
+}
 
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-<th style="color:#eab308;font-size:16px;text-align:center;">OP</th>
-<th style="color:#eab308;font-size:16px;text-align:center;">CODE</th>
-<th style="color:#eab308;font-size:16px;text-align:center;">ZONE</th>
-<th style="color:#eab308;font-size:16px;text-align:center;">DATE/HEURE</th>
-<th style="color:#eab308;font-size:16px;text-align:center;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-body"></tbody>
-                </table>
-            </div>
-        </section>
+.scan-line::before,
+.scan-line::after {
+content: "";
+position: absolute;
+top: 50%;
+transform: translateY(-50%);
+width: 6px;
+height: 6px;
+background: #ffffff;
+border-radius: 50%;
+box-shadow:
+0 0 12px #ffee00,
+0 0 24px #ffee00,
+0 0 36px #ffee00;
+}
+.scan-line::before { left: -2px; }
+.scan-line::after { right: -2px; }
 
-        <div id="stellantis-btn">
-            <button disabled class="footer-brand-btn">
-                <svg class="icon-m" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4h2v16H3V4zm4 0h1v16H7V4zm3 0h3v16h-3V4zm5 0h2v16h-2V4zm4 0h2v16h-2V4z"/></svg>
-                <span class="brand-text">STELLANTIS MGV</span>
-            </button>
-        </div>
-    </main>
+@keyframes laserMove {
+0% {
+top: 0px;
+}
+100% {
+top: calc(82% - 6px);
+}
+}
 
-    <nav>
-        <button onclick="toggleView('scanner')" id="nav-scanner" class="nav-item active-nav">
-            <svg class="icon-m mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span class="nav-text">Scanner</span>
-        </button>
-        <button onclick="toggleView('history')" id="nav-history" class="nav-item text-muted">
-            <svg class="icon-m mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"></path></svg>
-            <span class="nav-text">Mémoire</span>
-        </button>
-    </nav>
-</div>
+#view-history {
+overflow-y: auto !important;
+overflow-x: hidden !important;
+-webkit-overflow-scrolling: touch !important;
+padding: 8px;
+}
 
-<div id="modal-saisie" class="modal-backdrop hidden">
-    <div class="modal-content">
-        <div class="modal-body">
-            <h3 class="modal-title">SAISIE MANUELLE VIS</h3>
-            <div class="modal-input-container">
-                <input type="text" id="input-vis" 
-                    class="modal-input" 
-                    placeholder="EX: T5071035" oninput="this.value = this.value.toUpperCase()" autocapitalize="characters" autocomplete="off" spellcheck="false">
-            </div>
-            <div class="modal-footer">
-                <button onclick="fermerSaisie()" class="btn-modal-cancel">Annuler</button>
-                <button onclick="validerSaisie()" class="btn-modal-confirm">Valider</button>
-            </div>
-        </div>
-    </div>
-</div>
-<script>
-// ======================================================
-// ▲ SUPABASE CONFIG
-// ======================================================
+.table-toolbar {
+display: flex;
+flex-direction: column;
+gap: 12px;
+margin-bottom: 16px;
+padding: 0 8px;
+}
+
+@media (min-width: 360px) {
+.table-toolbar {
+flex-direction: row;
+justify-content: space-between;
+align-items: center;
+}
+}
+
+.toolbar-left { display: flex; align-items: center; gap: 12px; }
+.toolbar-right { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.flux-indicator { color: #eaea00; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em; font-style: italic; margin: 0; }
+
+.btn-action {
+border: none;
+padding: 6px 14px;
+font-weight: 900;
+font-size: 13px;
+text-transform: uppercase;
+font-style: italic;
+border-radius: 6px;
+cursor: pointer;
+display: inline-flex;
+align-items: center;
+gap: 6px;
+color: #000000 !important;
+transition: transform 0.1s, background-color 0.2s;
+}
+.btn-action:active { transform: scale(0.95); }
+
+.btn-yellow { background: #eaea00; }
+.btn-yellow:active { background: #c4c400; }
+.btn-blue { background: #3b82f6; }
+.btn-blue:active { background: #2563eb; }
+.btn-emerald { background: #10b981; }
+.btn-emerald:active { background: #059669; }
+.btn-zinc { background: #a1a1aa; }
+.btn-zinc:active { background: #71717a; }
+
+.search-container { padding: 0 12px; margin-bottom: 12px; }
+.search-field { width: 100%; background: #27272a; border: 2px solid #3f3f46; border-radius: 12px; padding: 12px 16px; color: #fff; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; outline: none; font-size: 18px; text-align: center; transition: border-color 0.2s; }
+.search-field:focus { border-color: #eaea00; }
+
+.table-responsive { background: #111113; border-radius: 12px; overflow-x: auto; border: 2px solid #18181b; max-height: calc(100% - 100px); }
+.data-table { width: 100%; border-collapse: collapse; text-align: left; }
+
+.data-table th {
+font-size: clamp(11px, 3vw, 14px);
+padding: 10px 8px;
+text-transform: uppercase;
+font-weight: 900;
+color: rgba(255,255,255,0.4);
+background: #27272a;
+position: sticky;
+top: 0;
+z-index: 10;
+text-align: center;
+}
+.data-table tbody { font-family: 'JetBrains Mono', monospace; }
+
+.data-table td {
+vertical-align: middle;
+padding: 12px 8px !important;
+border-bottom: 2px solid #18181b !important;
+text-align: center;
+}
+
+.data-table td:first-child, .data-table th:first-child { position: sticky; left: 0; background: #18181b; z-index: 5; border-right: 2px solid #27272a; }
+.data-table th:first-child { z-index: 15; background: #27272a; }
+
+.cell-op {
+color: rgba(255, 255, 255, 0.3) !important;
+font-size: 16px !important;
+font-weight: 700;
+text-align: center;
+text-transform: uppercase;
+}
+
+.code-text {
+font-size: 20px !important;
+font-weight: 900 !important;
+letter-spacing: 0.05em;
+text-align: center;
+text-transform: uppercase;
+}
+
+.zone-text {
+font-size: 16px !important;
+font-weight: 700 !important;
+text-align: center;
+text-transform: uppercase;
+}
+
+.cell-time {
+text-align: center;
+display: inline-flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+line-height: 1.3;
+}
+
+.time-display {
+font-size: 16px !important;
+font-weight: 900 !important;
+color: #ffffff;
+}
+
+.status-success {
+font-size: 11px !important;
+font-weight: 800 !important;
+color: #22c55e !important;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+}
+
+.status-date {
+font-size: 11px !important;
+color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.sync-row { background: rgba(16, 185, 129, 0.02); }
+
+.editable-cell {
+padding: 6px 12px;
+border-radius: 6px;
+transition: all 0.15s ease;
+display: inline-block;
+width: 100%;
+border: 2px solid transparent;
+text-align: center;
+}
+
+.editable-cell:focus {
+outline: none;
+background: rgba(255, 68, 68, 0.05);
+border: 2px solid #ef4444;
+}
+
+.cell-delete {
+width: 50px;
+text-align: center;
+}
+.btn-delete {
+background: none;
+border: none;
+width: 36px;
+height: 36px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+color: rgba(239, 68, 68, 0.3);
+font-size: 24px;
+font-weight: bold;
+border-radius: 50%;
+cursor: pointer;
+transition: color 0.2s;
+margin: 0 auto;
+}
+.btn-delete:active { background: rgba(239, 68, 68, 0.2); }
+.btn-delete:hover { color: #ef4444; }
+
+.torch-btn{
+width:52px;
+height:52px;
+border:none;
+border-radius:50%;
+background:#18181b;
+color:#ffffff;
+font-size:28px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+transition:.25s;
+}
+
+.torch-btn:active{
+transform:scale(.92);
+}
+
+.torch-btn.on{
+background:#ffee00;
+color:#000;
+box-shadow:
+0 0 12px #ffee00,
+0 0 24px #ffee00,
+0 0 45px #ffee00;
+}
+
+.auth-screen { position: fixed; inset: 0; background: #000; z-index: 2000; flex-direction: column; padding: 32px; display: flex; align-items: center; justify-content: center; }
+.auth-box { width: 100%; max-width: 320px; text-align: center; }
+.brand-title { color: #eaea00; font-weight: 900; font-size: 2.25rem; letter-spacing: -0.05em; margin-bottom: 8px; text-transform: uppercase; font-style: italic; }
+.sub-title { color: #71717a; font-weight: bold; font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 32px; text-transform: uppercase; }
+.form-group { display: flex; flex-direction: column; gap: 16px; }
+
+.input-field { width: 100%; background: #18181b; border: 2px solid #27272a; padding: 16px; border-radius: 12px; outline: none; color: #fff; font-weight: bold; text-align: center; font-size: 1.25rem; transition: border-color 0.2s; }
+.input-field:focus { border-color: #eaea00; }
+.main-input { text-transform: uppercase; font-size: 1.5rem; padding: 20px; }
+
+.btn-primary { width: 100%; margin-top: 16px; background: #eaea00; color: #000; font-weight: 900; text-transform: uppercase; border: none; border-radius: 12px; cursor: pointer; }
+.main-btn { padding: 24px 0; letter-spacing: 0.1em; font-size: 1.125rem; }
+.link-btn { background: none; border: none; color: #71717a; text-decoration: underline; font-size: 1.125rem; text-transform: uppercase; font-weight: bold; margin-top: 16px; cursor: pointer; }
+
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 3000; display: flex; align-items: start; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
+.modal-content { background: #18181b; border: 2px solid #eaea00; border-radius: 32px; width: 100%; max-width: 280px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); margin-top: 10%; }
+.modal-body { padding: 24px; }
+.modal-title { color: #eaea00; font-size: 1.125rem; font-weight: 900; margin-bottom: 24px; letter-spacing: 0.05em; text-transform: uppercase; font-style: italic; text-align: center; }
+.modal-input-container { position: relative; margin-bottom: 32px; }
+.modal-input { width: 100%; background: #000; border: 2px solid #3f3f46; border-radius: 12px; padding: 20px 16px; font-size: 1.875rem; color: #fff; outline: none; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; text-align: center; }
+.modal-input:focus { border-color: #eaea00; }
+.modal-footer { display: flex; gap: 12px; height: 64px; }
+.btn-modal-cancel { flex: 1; background: #27272a; color: #a1a1aa; border: none; font-size: 14px; font-weight: bold; border-radius: 12px; text-transform: uppercase; cursor: pointer; }
+.btn-modal-confirm { flex: 1; background: #eaea00; color: #000; border: none; font-size: 14px; font-weight: bold; border-radius: 12px; text-transform: uppercase; cursor: pointer; }
+
+.icon-btn { background: none; border: none; padding: 8px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+.icon-btn:active { background: #27272a; }
+.icon-m { width: clamp(32px, 6vw, 36px); height: clamp(32px, 8vw, 38px); }
+.icon-l { width: clamp(40px, 10vw, 48px); height: clamp(40px, 10vw, 48px); }
+.text-scale { transition: transform 0.2s; }
+.text-scale:hover { transform: scale(1.1); }
+
+#debug-panel {
+position: fixed;
+top: 85px;
+right: 0;
+width: 280px;
+max-height: 60vh;
+overflow-y: auto;
+background: rgba(0,0,0,0.92);
+border: 1px solid #333;
+border-radius: 0 0 0 12px;
+z-index: 9999;
+font-family: 'JetBrains Mono', monospace;
+font-size: 10px;
+color: #eaea00;
+padding: 12px;
+display: none;
+}
+#debug-panel.active { display: block; }
+.debug-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+.debug-label { color: #71717a; }
+.debug-val { color: #eaea00; font-weight: 800; }
+.debug-error { color: #ef4444; }
+.debug-section { border-top: 1px solid #333; margin-top: 8px; padding-top: 8px; font-weight: 900; color: #fff; text-transform: uppercase; font-size: 11px; }
+
+@media (min-width: 768px) {
+#app-container, header, nav, #stellantis-btn, .view-section { max-width: 500px; left: 50%; transform: translateX(-50%); }
+header { left: 50%; transform: translateX(-50%); }
+}
+</style>
+
+</head>  
+<body>  
+<div id="app-container">   
+    <div id="identity-screen" class="auth-screen">  
+        <div class="auth-box">  
+            <h1 class="brand-title">STELLANTIS</h1>  
+            <p id="auth-title" class="sub-title">Connexion Terminal</p>  <div id="login-form" class="form-group">  
+            <input type="text" id="login-id"   
+                autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"  
+                class="input-field main-input"  
+                placeholder="ID MATRICULE">  
+           <input type="password" id="login-pass" autocomplete="new-password"  
+                class="input-field main-input"  
+                placeholder="MOT DE PASSE">                 
+            <button onclick="login()" class="btn-primary main-btn">Se Connecter</button>  
+            <button onclick="toggleAuth(true)" class="link-btn">Creer un compte</button>  
+        </div>  
+
+        <div id="signup-form" class="form-group hidden">  
+            <input type="text" id="reg-nom" class="input-field" placeholder="NOM">  
+            <input type="text" id="reg-prenom" class="input-field" placeholder="PRENOM">  
+            <input type="text" id="reg-id" class="input-field" placeholder="ID MATRICULE">
+
+<select id="reg-equipe" class="input-field">  
+                    <option value="" disabled selected>EQUIPE</option>  
+                    <option value="A">Equipe A</option>  
+                    <option value="B">Equipe B</option>  
+                     <option value="C">Equipe C</option>  
+                     <option value="FER/A">Equipe FER/A</option>  
+                      <option value="FER/B">Equipe Fer/B</option> 
+                       <option value="FER/C">Equipe FER/C</option>  
+                </select>  
+                <input type="password" id="reg-pass" class="input-field" placeholder="MOT DE PASSE">             
+                <button onclick="register()" class="btn-primary main-btn">Valider</button>  
+                <button onclick="toggleAuth(false)" class="link-btn">Retour</button>  
+            </div>  
+        </div>  
+    </div>  <header>  
+    <div class="header-left">  
+        <span id="display-name" class="user-name">---</span>  
+        <span id="display-id" class="user-id">ID: ---</span>  
+    </div>  
+    <div class="header-center">  
+        <button onclick="toggleTorch()" id="torch-btn" class="icon-btn torch-btn">  
+            🔦  
+        </button>  
+        <button onclick="toggleView('scanner')" class="icon-btn text-primary text-scale">  
+            <svg class="icon-l" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>  
+        </button>  
+    </div>  
+    <div class="header-right">  
+        <button onclick="logoutIdentity()" class="icon-btn text-red">  
+             <svg class="icon-m" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>  
+        </button>  
+    </div>  
+</header>  
+
+<main>  
+     <section id="view-scanner" class="view-section">  
+        <div class="camera-container">  
+            <div id="webcam"></div>  
+        </div>  
+
+        <div class="scan-overlay">  
+            <div class="scan-frame">  
+                <div class="corner top-l"></div>  
+                <div class="corner top-r"></div>  
+                <div class="corner bot-l"></div>  
+                <div class="corner bot-r"></div>  
+
+                <div class="scan-line"></div>  
+            </div>  
+        </div>  
+    </section>  
+
+    <section id="view-history" class="view-section hidden">  
+        <div class="table-toolbar">  
+            <div class="toolbar-left">  
+                <h3 id="flux-title" class="flux-indicator">Flux (0)</h3>  
+            </div>  
+            <div class="toolbar-right">  
+                <button onclick="toggleSearch()" id="search-btn" class="btn-action btn-yellow">  
+                    <svg style="width:14px; height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">  
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>  
+                    </svg>  
+                    Chercher  
+                </button>  
+                <button onclick="ajouterManuellement()" class="btn-action btn-blue">+ Manuel</button>  
+                <button onclick="syncAllLogs()" class="btn-action btn-emerald">Actualiser</button>  
+                <button onclick="exportCSV()" class="btn-action btn-zinc">CSV</button>  
+            </div>  
+        </div>  
+
+        <div id="search-bar" class="hidden search-container">  
+            <input type="text" id="search-input"  
+                   placeholder="RECHERCHER UN VIS..."
+                oninput="this.value = this.value.toUpperCase(); filtrerEnTempsReel(this.value)"  
+                   autocomplete="off" autocorrect="off" spellcheck="false"  
+                   class="search-field">  
+        </div>  
+        <div class="table-responsive">  
+            <table class="data-table">  
+                <thead>  
+                    <tr>  
+                <th>OP</th><th>Code</th><th>Zone</th><th>H/D</th><th>X</th>  
+                    </tr>  
+                    </tr>  
+                </thead>  
+                <tbody id="history-body"></tbody>  
+            </table>  
+        </div>  
+    </section>  
+
+    <div id="stellantis-btn">  
+        <button class="footer-brand-btn" style="cursor: pointer;">  
+            <svg class="icon-m" fill="currentColor" viewBox="0 0 24 24"><path d="M3 4h2v16H3V4zm4 0h1v16H7V4zm3 0h3v16h-3V4zm5 0h2v16h-2V4zm4 0h2v16h-2V4zm4 0h2v16h-2V4z"/></svg>  
+            <span class="brand-text">STELLANTIS MGV</span>  
+        </button>  
+    </div>  
+</main>  
+
+<nav>  
+    <button onclick="toggleView('scanner')" id="nav-scanner" class="nav-item active-nav">  
+        <svg class="icon-m mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h3m-3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>  
+        <span class="nav-text">Scanner</span>  
+    </button>  
+    <button onclick="toggleView('history')" id="nav-history" class="nav-item text-muted">  
+        <svg class="icon-m mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7C5 4 4 5 4 7z"></path></svg>  
+        <span class="nav-text">Memoire</span>  
+    </button>  
+</nav>
+
+</div>  <div id="modal-saisie" class="modal-backdrop hidden">  
+    <div class="modal-content">  
+        <div class="modal-body">  
+            <h3 class="modal-title">SAISIE MANUELLE VIS</h3>  
+            <div class="modal-input-container">  
+                <input type="text" id="input-vis"   
+                    class="modal-input"   
+                    placeholder="EX: T5071035" oninput="this.value = this.value.toUpperCase()" autocapitalize="characters" autocomplete="off" spellcheck="false">  
+            </div>  
+            <div class="modal-footer">  
+                <button onclick="fermerSaisie()" class="btn-modal-cancel">Annuler</button>  
+                <button onclick="validerSaisie()" class="btn-modal-confirm">Valider</button>  
+            </div>  
+        </div>  
+    </div>  
+</div>  <div id="debug-panel">  
+    <div class="debug-section">Diagnostics Moteur</div>  
+    <div class="debug-row"><span class="debug-label">Scanner State</span><span class="debug-val" id="dbg-state">STOPPED</span></div>  
+    <div class="debug-row"><span class="debug-label">Camera Active</span><span class="debug-val" id="dbg-cam">NO</span></div>  
+    <div class="debug-row"><span class="debug-label">RAF Active</span><span class="debug-val" id="dbg-raf">0</span></div>  
+    <div class="debug-row"><span class="debug-label">Html5Qrcode Inst.</span><span class="debug-val" id="dbg-h5">0</span></div>  
+    <div class="debug-row"><span class="debug-label">Decodes/min</span><span class="debug-val" id="dbg-dps">0</span></div>  
+    <div class="debug-row"><span class="debug-label">Avg Decode</span><span class="debug-val" id="dbg-avg">0ms</span></div>  
+    <div class="debug-row"><span class="debug-label">Logs RAM</span><span class="debug-val" id="dbg-logs">0</span></div>  
+    <div class="debug-row"><span class="debug-label">Online</span><span class="debug-val" id="dbg-net">--</span></div>  
+    <div class="debug-section">Erreurs</div>  
+    <div id="debug-errors" style="max-height:80px; overflow-y:auto;"></div>  
+    <div class="debug-section" style="margin-top:8px;">Actions</div>  
+    <button onclick="forceScannerRestart()" style="width:100%;background:#333;color:#fff;border:none;padding:6px;margin-bottom:4px;border-radius:4px;font-family:inherit;font-size:10px;cursor:pointer;">FORCE RESTART</button>  
+    <button onclick="clearAllResources()" style="width:100%;background:#333;color:#ef4444;border:none;padding:6px;margin-bottom:4px;border-radius:4px;font-family:inherit;font-size:10px;cursor:pointer;">PURGE RESOURCES</button>  
+    <button onclick="toggleDebug()" style="width:100%;background:#eaea00;color:#000;border:none;padding:6px;border-radius:4px;font-family:inherit;font-size:10px;cursor:pointer;font-weight:900;">FERMER</button>  
+</div>  
+<script>  
+// #############################################################  
+// STELLANTIS MGV - MOTEUR DE SCAN REFACTORISE v2.2 (VIS = ZONE)  
+// #############################################################  
 
 const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
+let _autoSyncInProgress = false;
 
-let supabaseClient = null;
+const AppState = {
+decoderInstance: null,
+mediaStream: null,
+scanLocked: false,
+isTransitioning: false,
+isCameraOperating: false,
 
+torchTrack: null,  
+torchActive: false,  
+torchPreferredOn: false,  
+
+logs: [],  
+audioCtx: null,  
+
+diag: {  
+    decodeCount: 0,  
+    decodeTimes: [],  
+    errorCount: 0,  
+    errors: [],  
+    h5qInstances: 0,  
+    rafActive: 0,  
+    lastDecodeTime: 0,  
+    dps: 0,  
+    dpsCounter: 0,  
+    dpsLastReset: Date.now()  
+},  
+
+isVisible: true,  
+isOnline: navigator.onLine,  
+currentView: 'scanner',  
+user: null
+
+};
+
+window.onerror = function(msg, url, line, col, err) {
+logError(`JS Error: ${msg} (L${line})`);
+return true;
+};
+
+window.onunhandledrejection = function(event) {
+logError(`Unhandled Promise: ${event.reason}`);
+event.preventDefault();
+};
+function logError(msg) {
+console.error(`[Stellantis MGV] ${msg}`);
+AppState.diag.errorCount++;
+AppState.diag.errors.push({ time: new Date().toLocaleTimeString(), msg });
+if (AppState.diag.errors.length > 20) AppState.diag.errors.shift();
+updateDebugPanel();
+}
+
+function lockOrientation() {
 try {
-  if (typeof supabase !== 'undefined') {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('▲ Supabase connecté');
-  } else {
-    console.error('▲ Bibliothèque Supabase non chargée');
-  }
-} catch (err) {
-  console.error('▲ Erreur initialisation Supabase', err);
+if (screen.orientation && typeof screen.orientation.lock === 'function') {
+screen.orientation.lock('portrait').catch(() => {});
+}
+} catch (e) {}
+}
+window.addEventListener('load', lockOrientation);
+window.addEventListener('orientationchange', lockOrientation);
+
+function toggleDebug() {
+const panel = document.getElementById('debug-panel');
+panel.classList.toggle('active');
 }
 
-// ======================================================
-// ▲ FILE D'ATTENTE LOCALE (offline queue)
-// ======================================================
+function updateDebugPanel() {
+const d = AppState.diag;
+const safeSet = (id, val) => {
+const el = document.getElementById(id);
+if (el) el.textContent = val;
+};
 
-const PENDING_KEY = 'pendingSupabaseSync';
+const stateStr = (AppState.decoderInstance && AppState.decoderInstance.isScanning) ? 'RUNNING' : 'STOPPED';  
+safeSet('dbg-state', stateStr);  
+safeSet('dbg-cam', AppState.mediaStream ? 'YES' : 'NO');  
+safeSet('dbg-raf', d.rafActive);  
+safeSet('dbg-h5', d.h5qInstances);  
+safeSet('dbg-dps', d.dps);  
 
-function getPendingScans() {
-  try {
-    return JSON.parse(localStorage.getItem(PENDING_KEY) || '[]');
-  } catch {
-    return [];
-  }
+const avg = d.decodeTimes.length > 0   
+    ? Math.round(d.decodeTimes.reduce((a,b)=>a+b,0) / d.decodeTimes.length)   
+    : 0;  
+safeSet('dbg-avg', avg + 'ms');  
+safeSet('dbg-logs', AppState.logs.length);  
+safeSet('dbg-net', AppState.isOnline ? 'YES' : 'NO');  
+
+const errContainer = document.getElementById('debug-errors');  
+if (errContainer) {  
+    errContainer.innerHTML = d.errors.slice(-5).map(e =>   
+        `<div class="debug-error" style="margin-bottom:2px;">${e.time}: ${e.msg}</div>`  
+    ).join('');  
 }
 
-function savePendingScans(scans) {
-  localStorage.setItem(PENDING_KEY, JSON.stringify(scans));
 }
 
-function addPendingScan(record) {
-  const scans = getPendingScans();
-  if (!scans.find(s => s.scan_id === record.scan_id)) {
-    scans.push(record);
-    savePendingScans(scans);
-  }
+setInterval(updateDebugPanel, 2000);
+
+async function clearAllResources() {
+console.log('[SCANNER] Purge totale des ressources...');
+
+if (AppState.decoderInstance) {  
+    try {  
+        if (AppState.decoderInstance.isScanning) {  
+            await AppState.decoderInstance.stop();  
+        }  
+    } catch(e) {  
+        logError('clear decoder: ' + e.message);  
+    }  
+    AppState.decoderInstance = null;  
+    AppState.diag.h5qInstances = 0;  
+}  
+
+if (AppState.mediaStream) {  
+    AppState.mediaStream.getTracks().forEach(track => {  
+        track.stop();  
+    });  
+    AppState.mediaStream = null;  
+}  
+AppState.torchTrack = null;  
+AppState.torchActive = false;  
+
+const torchBtnEl = document.getElementById('torch-btn');  
+if (torchBtnEl) torchBtnEl.classList.remove('on');  
+
+const container = document.getElementById('webcam');  
+if (container) container.innerHTML = "";  
+
+AppState.scanLocked = false;  
+AppState.isTransitioning = false;  
+AppState.isCameraOperating = false;  
+
+updateDebugPanel();
+
 }
 
-// ======================================================
-// ▲ PUSH : ENVOYER UN SCAN VERS SUPABASE
-//
-// ⚠️ CORRECTION CRITIQUE :
-// On N'utilise PAS .select() après .insert()
-// car avec RLS + rôle anon + politique INSERT-only,
-// le SDK Supabase déclenche une vérification SELECT
-// qui bloque l'insertion si aucune politique SELECT n'existe.
-// Prefer: 'return=minimal' = pas de retour = pas de SELECT check
-// ======================================================
+async function startNativeCamera() {
+if (AppState.isCameraOperating || AppState.isTransitioning) return;
 
-async function sendRecordToSupabase(record) {
-  if (!supabaseClient) return false;
+AppState.isTransitioning = true;  
+AppState.isCameraOperating = true;  
 
-  try {
-    const scanDate = new Date(record.id || Date.now());
+try {  
+    await clearAllResources();  
 
-    const payload = {
-      scan_id:    record.scan_id || crypto.randomUUID(),
-      op:         record.op      || '',
-      code:       record.code    || record.codeVis || '',
-      zone:       record.zone    || '',
-      date:       record.date    || scanDate.toLocaleDateString('fr-FR'),
-      time:       record.time    || scanDate.toLocaleTimeString('fr-FR'),
-      created_at: scanDate.toISOString()
-    };
+    AppState.decoderInstance = new Html5Qrcode("webcam");  
+    AppState.diag.h5qInstances = 1;  
 
-    // ✅ PAS de .select() → évite le blocage RLS SELECT sur rôle anon
-    const { error } = await supabaseClient
-      .from('scans')
-      .insert([payload]);
+    const config = {  
+        fps: 15,  
+        qrbox: (width, height) => {  
+            return { width: width * 0.85, height: 340 };   
+        },  
+        aspectRatio: 1.777778  
+    };  
 
-    if (error) {
-      // 23505 = contrainte d'unicité (doublon scan_id) → déjà inséré = OK
-      if (error.code === '23505') {
-        console.warn('▲ Doublon ignoré :', payload.code);
-        return true;
-      }
-      // Log l'erreur réelle pour debug
-      console.error('▲ Supabase INSERT error :', error.code, error.message);
-      return false;
+    await AppState.decoderInstance.start(  
+        { facingMode: 'environment' },  
+        config,  
+        (decodedText) => {  
+            onBarcodeDetected(decodedText);  
+        },  
+        (errorMessage) => {  
+            AppState.scanLocked = false;  
+        }  
+    );  
+
+    setTimeout(() => {  
+        try {  
+            const videoEl = document.querySelector('#webcam video');  
+            if (videoEl && videoEl.srcObject) {  
+                AppState.mediaStream = videoEl.srcObject;  
+                const tracks = AppState.mediaStream.getVideoTracks();  
+                if (tracks.length > 0) {  
+                    AppState.torchTrack = tracks[0];  
+
+                    if (AppState.torchPreferredOn) {  
+                        AppState.torchTrack.applyConstraints({ advanced: [{ torch: true }] })  
+                            .then(() => {  
+                                AppState.torchActive = true;  
+                                const torchBtnEl = document.getElementById('torch-btn');  
+                                if (torchBtnEl) torchBtnEl.classList.add('on');  
+                            })  
+                            .catch((e) => {  
+                                AppState.torchActive = false;  
+                                AppState.torchPreferredOn = false;  
+                                logError('Torch restore: ' + e.message);  
+                            });  
+                    }  
+                }  
+            }  
+        } catch (e) {  
+            console.log("[SCANNER] Torche indisponible.");  
+        }  
+    }, 1000);  
+
+} catch(err) {  
+    logError('Camera native boot: ' + err.message);  
+    await clearAllResources();  
+} finally {  
+    AppState.isTransitioning = false;  
+    updateDebugPanel();  
+}
+
+}
+
+function stopNativeCamera() {
+clearAllResources();
+}
+
+function onBarcodeDetected(code) {
+if (AppState.scanLocked) return;
+
+const cleanCode = code.trim().toUpperCase();  
+if (!/^[A-Z][0-9]{7}$/.test(cleanCode)) return;  
+
+AppState.scanLocked = true;  
+playScanSound();  
+
+addLogEntry(cleanCode);  
+
+setTimeout(() => {  
+    AppState.scanLocked = false;  
+}, 1500);
+
+}
+
+const VALID_PREFIXES = [
+    'T51',
+    'V50',
+    'S50',
+    'S51',
+    'S512',
+    'S504',
+    'R50',
+    'M5',
+    'N5',
+    'P'
+];
+
+function cleanAndValidateCode(rawCode) {
+    if (rawCode === null || rawCode === undefined) {
+        return null;
     }
 
-    console.log('▲ Scan envoyé Supabase :', payload.code);
-    return true;
+    let code = String(rawCode)
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, '');
 
-  } catch (err) {
-    console.error('▲ Erreur réseau Supabase :', err);
-    return false;
-  }
-}
-
-// Alias pour compatibilité avec updateEntry()
-async function sendToSupabase(record) {
-  return await sendRecordToSupabase(record);
-}
-
-// ======================================================
-// ▲ PUSH : VIDER LA FILE D'ATTENTE OFFLINE
-// ======================================================
-
-async function syncPendingScans() {
-  return await syncPendingSupabaseScans();
-}
-
-async function syncPendingScansToSupabase() {
-  return await syncPendingSupabaseScans();
-}
-
-async function syncPendingSupabaseScans() {
-  if (!navigator.onLine) {
-    console.log('▲ Hors ligne — sync reportée');
-    return;
-  }
-
-  const pending = getPendingScans();
-  if (pending.length === 0) return;
-
-  console.log(`▲ ${pending.length} scan(s) en attente Supabase`);
-
-  const remaining = [];
-
-  for (const record of pending) {
-    const success = await sendRecordToSupabase(record);
-    if (!success) {
-      remaining.push(record);
-    } else {
-      _markLogSynced(record.scan_id);
-    }
-  }
-
-  savePendingScans(remaining);
-
-  if (remaining.length < pending.length) {
-    renderTable();
-    console.log(`▲ Sync OK : ${pending.length - remaining.length} envoyé(s), ${remaining.length} restant(s)`);
-  }
-}
-
-// ======================================================
-// ▲ PULL : RÉCUPÉRER LES DONNÉES DEPUIS SUPABASE → UI
-//
-// ⚠️ Nécessite une politique SELECT active sur la table scans
-// Si SELECT est bloqué pour anon, cette fonction retourne false
-// sans planter l'app
-// ======================================================
-
-async function pullFromSupabase() {
-  if (!supabaseClient || !navigator.onLine) return false;
-
-  try {
-    const user = _getCurrentUser();
-    if (!user || user.id === 'TEMP') return false;
-
-    // ✅ .select() ici est voulu : c'est un pull de lecture
-    // Nécessite la politique SELECT sur anon dans Supabase
-    const { data, error } = await supabaseClient
-      .from('scans')
-      .select('*')
-      .eq('op', user.id)
-      .order('created_at', { ascending: false })
-      .limit(500);
-
-    if (error) {
-      // 42501 = RLS bloque SELECT → pas de politique SELECT configurée
-      if (error.code === '42501') {
-        console.warn('▲ Pull bloqué par RLS SELECT — ajoute une politique SELECT dans Supabase');
-        return false;
-      }
-      throw error;
+    if (!code) {
+        return null;
     }
 
-    if (!data || data.length === 0) return true;
+    // ======================================================
+    // CORRECTIONS OCR
+    // ======================================================
 
-    const existingScanIds = new Set(logs.map(l => l.scan_id).filter(Boolean));
-    let added = 0;
-
-    for (const row of data) {
-      if (!existingScanIds.has(row.scan_id)) {
-        logs.push({
-          id:      new Date(row.created_at).getTime() || Date.now(),
-          scan_id: row.scan_id,
-          op:      row.op,
-          code:    row.code,
-          zone:    row.zone || '',
-          date:    row.date,
-          time:    row.time,
-          synced:  true
-        });
-        added++;
-      } else {
-        // Met à jour la zone si renseignée côté serveur
-        const idx = logs.findIndex(l => l.scan_id === row.scan_id);
-        if (idx !== -1) {
-          if (!logs[idx].zone && row.zone) logs[idx].zone = row.zone;
-          logs[idx].synced = true;
-        }
-      }
+    // Q51xxxx -> T51xxxx
+    // F51xxxx -> T51xxxx
+    // Z51xxxx -> T51xxxx
+    if (/^[QFZ]51\d+$/.test(code)) {
+        code = 'T' + code.substring(1);
     }
 
-    logs.sort((a, b) => b.id - a.id);
-    localStorage.setItem('lumen_logs', JSON.stringify(logs));
-
-    if (added > 0) console.log(`▲ Pull Supabase : ${added} entrée(s) ajoutée(s)`);
-    return true;
-
-  } catch (err) {
-    console.error('▲ Erreur pull Supabase :', err);
-    return false;
-  }
-}
-
-// ======================================================
-// ▲ HELPERS INTERNES
-// ======================================================
-
-function _getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem('StellantisUser') || 'null');
-  } catch {
-    return null;
-  }
-}
-
-function _markLogSynced(scanId) {
-  const idx = logs.findIndex(l => l.scan_id === scanId);
-  if (idx !== -1) {
-    logs[idx].synced = true;
-    localStorage.setItem('lumen_logs', JSON.stringify(logs));
-  }
-}
-
-// ======================================================
-// ▲ EVENTS RÉSEAU
-// ======================================================
-
-window.addEventListener('online', async () => {
-  console.log('▲ Réseau rétabli — synchronisation...');
-  await syncPendingSupabaseScans();
-  renderTable();
-});
-
-window.addEventListener('load', syncPendingSupabaseScans);
-
-
-// ======================================================
-// ▲ APP LOGIC
-// ======================================================
-
-const GOOGLE_URL =
-  'https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec';
-
-let isProcessing    = false;
-let lastScannedCode = '';
-let lastScanTime    = 0;
-let logs = JSON.parse(localStorage.getItem('lumen_logs')) || [];
-let audioCtx        = null;
-let html5Instance   = null;
-let torchEnabled    = false;
-
-// ──────────────────────────────────────────────────────
-// INIT
-// ──────────────────────────────────────────────────────
-
-function initApp() {
-  purgerAnciensLogs(15);
-
-  const user = JSON.parse(localStorage.getItem('StellantisUser'));
-
-  if (user) {
-    document.getElementById('identity-screen').classList.add('hidden');
-    document.getElementById('display-name').innerText = user.prenom + ' ' + user.nom;
-    document.getElementById('display-id').innerText   = `ID: ${user.id}`;
-    renderTable();
-
-    if (navigator.onLine) {
-      syncPendingScans()
-        .then(() => pullFromSupabase())
-        .then(() => renderTable());
+    // T58xxxx -> T51xxxx
+    // Erreur OCR : 1 capturé comme 8
+    if (/^T58\d+$/.test(code)) {
+        code = 'T51' + code.substring(3);
     }
 
-    startLibraryScanner();
+    // ======================================================
+    // VALIDATION
+    // ======================================================
 
-  } else if (!navigator.onLine) {
-    localStorage.setItem('StellantisUser', JSON.stringify({
-      id: 'TEMP', nom: 'HORS-LIGNE', prenom: 'MODE'
-    }));
-    document.getElementById('identity-screen').classList.add('hidden');
-    document.getElementById('display-name').innerText = 'MODE HORS-LIGNE';
-    document.getElementById('display-id').innerText   = 'ID: TEMP';
-    renderTable();
-    startLibraryScanner();
-  }
-}
-
-function purgerAnciensLogs(jours) {
-  const limite = jours * 24 * 60 * 60 * 1000;
-  const now    = Date.now();
-  const avant  = logs.length;
-  logs = logs.filter(log => (now - log.id) < limite);
-  if (logs.length !== avant) localStorage.setItem('lumen_logs', JSON.stringify(logs));
-}
-
-// ──────────────────────────────────────────────────────
-// SCANNER
-// ──────────────────────────────────────────────────────
-
-async function startLibraryScanner() {
-  if (html5Instance) return;
-
-  html5Instance = new Html5Qrcode('interactive-reader');
-  const config = {
-    fps: 20,
-    qrbox: function(w, h) {
-      return { width: Math.floor(w * 0.90), height: Math.floor(h * 0.6) };
+    // Longueur
+    if (code.length < 7 || code.length > 12) {
+        return null;
     }
-  };
 
-  try {
-    await html5Instance.start(
-      { facingMode: 'environment' },
-      config,
-      (decodedText) => {
-        const now       = Date.now();
-        const cleanCode = decodedText.trim().toUpperCase();
-        if (isProcessing) return;
-        if (cleanCode === lastScannedCode && (now - lastScanTime) < 2500) return;
-        if (/^[A-Z][0-9]{7}$/.test(cleanCode)) {
-          isProcessing    = true;
-          lastScannedCode = cleanCode;
-          lastScanTime    = now;
-          playScanSound();
-          addLogEntry(cleanCode);
-        }
-      },
-      () => {}
+    // Structure : une lettre + chiffres
+    if (!/^[A-Z]\d+$/.test(code)) {
+        return null;
+    }
+
+    // Préfixe autorisé
+    const hasValidPrefix = VALID_PREFIXES.some(prefix =>
+        code.startsWith(prefix)
     );
-  } catch (err) {
-    console.error('Erreur caméra :', err);
-  }
+
+    if (!hasValidPrefix) {
+        return null;
+    }
+
+    return code;
 }
 
-async function stopLibraryScanner() {
-  if (html5Instance) {
-    try {
-      await html5Instance.stop();
-      html5Instance = null;
-    } catch (err) {
-      console.error('Erreur arrêt scanner :', err);
-    }
-  }
+function playScanSound() {
+try {
+if (!AppState.audioCtx) {
+AppState.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+const osc = AppState.audioCtx.createOscillator();
+const gain = AppState.audioCtx.createGain();
+osc.type = 'square';
+osc.frequency.setValueAtTime(880, AppState.audioCtx.currentTime);
+gain.gain.setValueAtTime(0.05, AppState.audioCtx.currentTime);
+osc.connect(gain);
+gain.connect(AppState.audioCtx.destination);
+osc.start();
+osc.stop(AppState.audioCtx.currentTime + 0.1);
+} catch(e) {
+logError('Audio: ' + e.message);
+}
+}
+
+async function forceScannerRestart() {
+await clearAllResources();
+setTimeout(() => startNativeCamera(), 500);
 }
 
 async function toggleTorch() {
-  if (!html5Instance) return alert('Scanneur inactif.');
-  try {
-    const videoEl = document.querySelector('#interactive-reader video');
-    if (!videoEl || !videoEl.srcObject) return alert('Flux vidéo introuvable.');
-    const track = videoEl.srcObject.getVideoTracks()[0];
-    if (!track) return alert('Piste vidéo introuvable.');
-    const capabilities = track.getCapabilities();
-    if (!capabilities?.torch) return alert('Flash non disponible.');
-    const newState = !torchEnabled;
-    await track.applyConstraints({ advanced: [{ torch: newState }] });
-    torchEnabled = newState;
-    updateTorchBtn();
-  } catch (e) {
-    torchEnabled = false;
-    updateTorchBtn();
-    alert('Erreur flash : ' + e.message);
-  }
+
+if (!AppState.torchTrack) {  
+    alert("Flash non disponible");  
+    return;  
+}  
+
+const btn = document.getElementById("torch-btn");  
+
+try {  
+
+    AppState.torchActive = !AppState.torchActive;  
+
+    await AppState.torchTrack.applyConstraints({  
+        advanced: [{  
+            torch: AppState.torchActive  
+        }]  
+    });  
+
+    AppState.torchPreferredOn = AppState.torchActive;  
+
+    btn.classList.toggle("on", AppState.torchActive);  
+
+} catch(e){  
+
+    AppState.torchActive = false;  
+    AppState.torchPreferredOn = false;  
+    btn.classList.remove("on");  
+
+    logError("Torch : " + e.message);  
 }
 
-function updateTorchBtn() {
-  const btn = document.getElementById('torch-btn');
-  const svg = btn.querySelector('svg');
-  if (torchEnabled) {
-    btn.style.background = '#eaea00';
-    btn.style.boxShadow  = '0 0 12px rgba(234,234,0,0.6)';
-    svg.style.color      = '#000';
-  } else {
-    btn.style.background = '';
-    btn.style.boxShadow  = '';
-    svg.style.color      = '';
-  }
+}
+function toggleAuth(showSignup) {
+const loginForm = document.getElementById('login-form');
+const signupForm = document.getElementById('signup-form');
+const authTitle = document.getElementById('auth-title');
+
+if (showSignup) {  
+    loginForm.classList.add('hidden');  
+    signupForm.classList.remove('hidden');  
+    authTitle.textContent = "Création de compte";  
+} else {  
+    loginForm.classList.remove('hidden');  
+    signupForm.classList.add('hidden');  
+    authTitle.textContent = "Connexion Terminal";  
 }
 
-// ──────────────────────────────────────────────────────
-// AUTH
-// ──────────────────────────────────────────────────────
+}
 
 async function login() {
-  const id   = document.getElementById('login-id').value.trim().toUpperCase();
-  const pass = document.getElementById('login-pass').value;
-  if (!id || !pass) return alert('REMPLIR TOUS LES CHAMPS');
+const id = document.getElementById('login-id').value.trim().toUpperCase();
+const pass = document.getElementById('login-pass').value;
+if (!id || !pass) return alert("REMPLIR TOUS LES CHAMPS");
 
-  if (!navigator.onLine) {
-    const cached = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
-    const found  = cached.find(u => u.id === id && u.pass === pass);
-    if (found) {
-      localStorage.setItem('StellantisUser', JSON.stringify({
-        id: found.id, nom: found.nom, prenom: found.prenom
-      }));
-      initApp();
-    } else {
-      alert('❌ Identifiants incorrects (hors-ligne).');
-    }
-    return;
-  }
+if (!navigator.onLine) {  
+    const cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');  
+    const found = cachedUsers.find(u => u.id === id && u.pass === pass);  
+    if (found) {  
+        localStorage.setItem('StellantisUser', JSON.stringify({   
+            id: found.id, nom: found.nom, prenom: found.prenom, equipe_id: found.equipe_id || ''   
+        }));  
+        initApp();  
+    } else {   
+        alert("Identifiants incorrects (hors-ligne).");   
+    }  
+    return;  
+}  
 
-  try {
-    const res  = await fetch(`${GOOGLE_URL}?action=login&id=${id}&pass=${pass}`);
-    const data = await res.json();
-    if (data.status === 'active') {
-      let cached = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');
-      cached = cached.filter(u => u.id !== id);
-      cached.push({ id, pass, nom: data.nom, prenom: data.prenom });
-      localStorage.setItem('StellantisUsers_cache', JSON.stringify(cached));
-      localStorage.setItem('StellantisUser', JSON.stringify({
-        id, nom: data.nom, prenom: data.prenom
-      }));
-      location.reload();
-    } else {
-      alert('❌ Accès refusé ou erroné.');
-    }
-  } catch (e) {
-    alert('⚠️ Erreur serveur.');
-  }
+try {  
+    const { data, error } = await supabaseClient  
+        .from('SCAN_MGV_USERS')  
+        .select('*')  
+        .eq('id', id)  
+        .eq('pass', pass)  
+        .eq('statut', 'ACTIVE')  
+        .maybeSingle();  
+
+    if (error || !data) {  
+        alert("Identifiants invalides ou compte en attente d'activation");  
+        return;  
+    }  
+
+    let cachedUsers = JSON.parse(localStorage.getItem('StellantisUsers_cache') || '[]');  
+    cachedUsers = cachedUsers.filter(u => u.id !== id);  
+    cachedUsers.push({   
+        id, pass, nom: data.nom, prenom: data.prenom, equipe_id: data.equipe_id || ''   
+    });  
+
+    localStorage.setItem('StellantisUsers_cache', JSON.stringify(cachedUsers));  
+    localStorage.setItem('StellantisUser', JSON.stringify({   
+        id: id, nom: data.nom, prenom: data.prenom, equipe_id: data.equipe_id || ''   
+    }));  
+    location.reload();  
+} catch(e) {   
+    logError('Login: ' + e.message);  
+    alert("Erreur réseau ou serveur Supabase.");   
+}
+
 }
 
 async function register() {
-  const n    = document.getElementById('reg-nom').value.trim().toUpperCase();
-  const p    = document.getElementById('reg-prenom').value.trim().toUpperCase();
-  const i    = document.getElementById('reg-id').value.trim().toUpperCase();
-  const pass = document.getElementById('reg-pass').value;
-  if (!n || !p || !i || !pass) return alert('CHAMPS OBLIGATOIRES');
+const n = document.getElementById('reg-nom').value.trim().toUpperCase();
+const p = document.getElementById('reg-prenom').value.trim().toUpperCase();
+const i = document.getElementById('reg-id').value.trim().toUpperCase();
+const eq = document.getElementById('reg-equipe').value;
+const pass = document.getElementById('reg-pass').value;
+if (!n || !p || !i || !pass) return alert("CHAMPS OBLIGATOIRES");
+if (!eq) return alert("SELECTIONNER UNE EQUIPE");
+
+try {  
+    const { data: existingUser } = await supabaseClient  
+        .from('SCAN_MGV_USERS')  
+        .select('id')  
+        .eq('id', i)  
+        .maybeSingle();  
+          
+    if (existingUser) return alert("ID MATRICULE EXISTE DEJA");  
+
+    const { error } = await supabaseClient  
+        .from('SCAN_MGV_USERS')  
+        .insert([{ id: i, nom: n, prenom: p, pass: pass, equipe_id: eq, statut: 'ACTIVE' }]);  
+
+    if (error) throw error;  
+    alert("COMPTE CRÉÉ AVEC SUCCÈS !");   
+    toggleAuth(false);  
+} catch(e) {   
+    logError('Register: ' + e.message);  
+    alert("ERREUR SERVEUR : Impossible de créer le compte");   
+}
+
+}
+
+// ==========================================
+// LOGS & ENREGISTREMENT
+// ==========================================
+// ==========================================
+// NETTOYAGE LOCAL — 7 JOURS
+// ==========================================
+function nettoyerAnciennesDonnees7Jours() {
+const NB_JOURS_MAX = 7;
+const maintenant = Date.now();
+const septJoursEnMs = NB_JOURS_MAX * 24 * 60 * 60 * 1000;
+
+AppState.logs = AppState.logs.filter(log => {  
+    if (!log.synced) return true;  
+    const logTime = Number(log.id) || maintenant;  
+    return (maintenant - logTime) < septJoursEnMs;  
+});
+
+}
+
+async function addLogEntry(codeValue) {
+  let user = { id: 'TEMP', equipe_id: '' };
   try {
-    const res  = await fetch(`${GOOGLE_URL}?action=register&nom=${n}&prenom=${p}&id=${i}&pass=${pass}`);
-    const data = await res.json();
-    if (data.status === 'success') { alert('COMPTE CRÉÉ !'); toggleAuth(false); }
-    else if (data.status === 'exists') alert('ID EXISTE DÉJÀ');
+    const userData = localStorage.getItem('StellantisUser');
+    if (userData) user = JSON.parse(userData);
+  } catch(e) {}
+
+  const now = new Date();
+  const uniqueId = Date.now();
+
+  const entry = {
+    id: uniqueId,
+    op: user.id,
+    equipe_id: user.equipe_id || '',
+    code: codeValue,
+    zone: '',
+    date: now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+    time: now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+    synced: false
+  };
+
+  console.log(`[SCAN] VIS = ${codeValue} | id = ${uniqueId} | statut = pending_insert`);
+
+  AppState.logs.unshift(entry);
+  localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));
+
+  toggleView('history');
+  renderTable();
+
+  setTimeout(() => {
+    const row = document.getElementById(`row-${uniqueId}`);
+    if (row) {
+      const zoneCell = row.querySelector('.zone-input, .zone-text');
+      if (zoneCell) {
+        zoneCell.focus();
+      }
+    }
+  }, 400);
+}
+
+async function validateAndSendZone(id, val) {
+const zoneValue = val.trim().toUpperCase();
+const i = AppState.logs.findIndex(l => l.id === id);
+
+if (i === -1 || !zoneValue) return;  
+
+AppState.logs[i].zone = zoneValue;  
+AppState.logs[i].synced = false;  
+localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));  
+
+const success = await sendToSupabase(AppState.logs[i]);  
+if (success) renderTable();
+
+}
+    async function sendToSupabase(entry) {
+  if (!navigator.onLine) return false;
+
+  console.log(`[SYNC-SEND] VIS = ${entry.code} | id = ${entry.id} | zone = ${entry.zone || '(vide)'} | synced = ${entry.synced}`);
+
+  try {
+    const { error } = await supabaseClient
+      .from('SCAN_MGV_APP')
+      .upsert([{
+        id: entry.id,
+        operator_id: entry.op,
+        op: entry.op,
+        equipe_id: entry.equipe_id,
+        code: entry.code,
+        zone: entry.zone,
+        date: entry.date,
+        time: entry.time
+      }]);
+
+    if (!error) {
+      const idx = AppState.logs.findIndex(l => l.id === entry.id);
+      if (idx !== -1) {
+        AppState.logs[idx].synced = true;
+        localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));
+      }
+      console.log(`[SYNC] VIS = ${entry.code} | id = ${entry.id} | ACTION = INSERT | STATUS = SUCCESS`);
+      return true;
+    }
+    console.warn(`[SYNC] VIS = ${entry.code} | id = ${entry.id} | ACTION = INSERT | STATUS = ERREUR`, error.message);
+    return false;
+  } catch(e) {
+    logError('Supabase sync: ' + e.message);
+    return false;
+  }
+}
+// -------------------------------------------------------------
+// AUTO-SYNCHRONISATION AUTOMATIQUE
+// -------------------------------------------------------------
+async function autoSyncPendingScans() {
+  if (!navigator.onLine || _autoSyncInProgress) return;
+
+  _autoSyncInProgress = true;
+  console.log('[AUTO-SYNC] Tentative d\'auto-synchronisation...');
+
+  try {
+    const nonSynced = AppState.logs.filter(l => !l.synced);
+    if (nonSynced.length === 0) {
+      console.log('[AUTO-SYNC] Aucun scan en attente.');
+      return;
+    }
+
+    console.log(`[AUTO-SYNC] Synchronisation automatique de ${nonSynced.length} élément(s)...`);
+    
+    for (const log of nonSynced) {
+      await sendToSupabase(log);
+    }
+    
+    renderTable();
   } catch (e) {
-    alert('ERREUR SERVEUR');
+    logError('Auto-sync error: ' + e.message);
+  } finally {
+    _autoSyncInProgress = false;
   }
 }
 
-function toggleAuth(showSignup) {
-  document.getElementById('login-form').classList.toggle('hidden', showSignup);
-  document.getElementById('signup-form').classList.toggle('hidden', !showSignup);
-}
+async function syncAllLogs() {
+  if (!navigator.onLine) return alert("Vous êtes hors-ligne.");
 
-function logoutIdentity() {
-  if (confirm('Se déconnecter ?')) {
-    localStorage.removeItem('StellantisUser');
-    location.reload();
+  _autoSyncInProgress = true;
+
+  try {
+    await fetchLogsFromSupabase();
+    const nonSynced = AppState.logs.filter(l => !l.synced);
+
+    console.log(`[SYNC] Entrées en attente : ${nonSynced.length}`);
+    nonSynced.forEach(l => console.log(`  → VIS = ${l.code} | id = ${l.id} | zone = ${l.zone || '(vide)'} | EXISTING_ACTIVE_RECORD = false | STATUS = pending_insert`));
+
+    if (nonSynced.length === 0) {
+      renderTable();
+      return alert("Aucune donnée à synchroniser.");
+    }
+
+    const results = await Promise.all(nonSynced.map(log => sendToSupabase(log)));
+    const count = results.filter(Boolean).length;
+    alert(`Synchronisé : ${count} ligne(s).`);
+  } finally {
+    _autoSyncInProgress = false;
   }
 }
 
-// ──────────────────────────────────────────────────────
-// AJOUT D'UN SCAN
-// ──────────────────────────────────────────────────────
+async function updateEntry(id, field, val) {
+const i = AppState.logs.findIndex(l => l.id === id);
+if (i === -1) return;
 
-function addLogEntry(codeValue) {
+const newVal = val.trim().toUpperCase();  
+const oldVal = AppState.logs[i][field] || '';  
+
+if (newVal === oldVal) return; 
+
+AppState.logs[i][field] = newVal;  
+localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));  
+
+AppState.logs[i].synced = false;  
+await sendToSupabase(AppState.logs[i]);  
+renderTable();
+
+}
+
+const PENDING_DELETES_KEY = 'SCAN_MGV_APP_PENDING_DELETES';
+
+function getPendingDeletes() {
+try { return JSON.parse(localStorage.getItem(PENDING_DELETES_KEY) || '[]'); }
+catch(e) { return []; }
+}
+function savePendingDeletes(list) {
+localStorage.setItem(PENDING_DELETES_KEY, JSON.stringify(list));
+}
+
+function queuePendingDelete(id, deletedBy) {
+const list = getPendingDeletes().filter(p => p.id !== id);
+list.push({ id, deleted_by: deletedBy, deleted_at: new Date().toISOString() });
+savePendingDeletes(list);
+}
+
+async function sendSoftDeleteToSupabase(id, deletedBy, deletedAt) {
+try {
+const { error } = await supabaseClient
+.from('SCAN_MGV_APP')
+.update({
+is_deleted: true,
+deleted_at: deletedAt,
+deleted_by: deletedBy
+})
+.eq('id', id);
+return !error;
+} catch(e) {
+logError('Soft delete: ' + e.message);
+return false;
+}
+}
+
+async function deleteEntry(id) {
+  if (!confirm("Supprimer l'entrée ?")) return;
+
   let user = { id: 'TEMP' };
   try {
     const userData = localStorage.getItem('StellantisUser');
     if (userData) user = JSON.parse(userData);
-  } catch (e) {}
+  } catch(e) {}
 
-  const now    = new Date();
-  const scanId = (typeof crypto !== 'undefined' && crypto.randomUUID)
-    ? crypto.randomUUID()
-    : 'scan-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+  const deletedAt = new Date().toISOString();
+  const deletedEntry = AppState.logs.find(l => l.id === id);
 
-  const entry = {
-    id:      Date.now(),
-    scan_id: scanId,
-    op:      user.id,
-    code:    codeValue,
-    zone:    '',
-    date:    now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: '2-digit' }),
-    time:    now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-    synced:  false
-  };
+  console.log(`[DELETE] id = ${id} | VIS = ${deletedEntry?.code || '?'} | zone = ${deletedEntry?.zone || '?'} | LOCAL = en cours de suppression`);
 
-  logs.unshift(entry);
-  localStorage.setItem('lumen_logs', JSON.stringify(logs));
+  AppState.logs = AppState.logs.filter(l => l.id !== id);
+  localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));
+  renderTable();
 
   if (navigator.onLine) {
-    sendRecordToSupabase(entry).then(success => {
-      if (success) {
-        _markLogSynced(entry.scan_id);
-        renderTable();
-      } else {
-        addPendingScan(entry);
-      }
-    });
+    const success = await sendSoftDeleteToSupabase(id, user.id, deletedAt);
+    if (success) {
+      console.log(`[DELETE] id = ${id} | VIS = ${deletedEntry?.code || '?'} | REMOTE = supprimé (is_deleted=true)`);
+    } else {
+      queuePendingDelete(id, user.id);
+      console.log(`[DELETE] id = ${id} | VIS = ${deletedEntry?.code || '?'} | REMOTE = en attente (queue)`);
+    }
   } else {
-    addPendingScan(entry);
-  }
-
-  renderTable();
-
-  setTimeout(() => {
-    isProcessing = false;
-    fermerSaisie();
-    toggleView('history');
-  }, 300);
-}
-
-// ──────────────────────────────────────────────────────
-// GOOGLE SHEETS
-// ──────────────────────────────────────────────────────
-
-async function sendToGoogle(entry) {
-  if (!navigator.onLine) return false;
-  const url = `${GOOGLE_URL}?action=saveScan&op=${encodeURIComponent(entry.op)}&code=${encodeURIComponent(entry.code)}&zone=${encodeURIComponent(entry.zone)}&date=${encodeURIComponent(entry.date)}&time=${encodeURIComponent(entry.time)}`;
-  try {
-    const response = await fetch(url);
-    if (response.ok) {
-      const idx = logs.findIndex(l => l.id === entry.id);
-      if (idx !== -1) {
-        logs[idx].synced = true;
-        localStorage.setItem('lumen_logs', JSON.stringify(logs));
-      }
-      renderTable();
-      return true;
-    }
-  } catch (e) {
-    console.error(e);
-  }
-  return false;
-}
-
-// ──────────────────────────────────────────────────────
-// SYNC GLOBALE (bouton "Actualiser")
-// ──────────────────────────────────────────────────────
-
-async function syncAllLogs() {
-  if (!navigator.onLine) return alert('Vous êtes hors-ligne.');
-
-  // 1. Push queue offline → Supabase
-  await syncPendingScans();
-
-  // 2. Pull Supabase → UI
-  await pullFromSupabase();
-  renderTable();
-
-  // 3. Google Sheets pour les non synchronisés
-  const nonSynced = logs.filter(l => !l.synced);
-  let count = 0;
-
-  if (nonSynced.length > 0) {
-    for (const log of nonSynced) {
-      const success = await sendToGoogle(log);
-      if (success) count++;
-    }
-    alert(`Synchronisé : ${count} ligne(s) → Google Sheets. Supabase actualisé.`);
-  } else {
-    alert('Tout est à jour. (Google Sheets + Supabase)');
+    queuePendingDelete(id, user.id);
+    console.log(`[DELETE] id = ${id} | VIS = ${deletedEntry?.code || '?'} | REMOTE = en attente (hors-ligne)`);
   }
 }
 
-// ──────────────────────────────────────────────────────
-// MISE À JOUR D'UNE ENTRÉE (zone, code)
-// ──────────────────────────────────────────────────────
+async function flushPendingDeletes() {
+const pending = getPendingDeletes();
+if (pending.length === 0) return;
 
-async function updateEntry(id, field, val) {
-  const i = logs.findIndex(l => l.id === id);
-  if (i === -1) return;
+const stillPending = [];  
+for (const p of pending) {  
+    const success = await sendSoftDeleteToSupabase(p.id, p.deleted_by, p.deleted_at);  
+    if (!success) stillPending.push(p);  
+}  
+savePendingDeletes(stillPending);
 
-  logs[i][field] = val.trim().toUpperCase();
-  localStorage.setItem('lumen_logs', JSON.stringify(logs));
-
-  if (field === 'zone' && logs[i].zone.trim().length >= 1) {
-    try {
-      await sendToGoogle(logs[i]);
-
-      if (supabaseClient) {
-        // Vérifie si déjà présent dans Supabase
-        const { data: existing, error: selectError } = await supabaseClient
-          .from('scans')
-          .select('scan_id')
-          .eq('scan_id', logs[i].scan_id)
-          .maybeSingle();
-
-        if (!selectError && existing) {
-          // UPDATE la zone
-          const { error: updateError } = await supabaseClient
-            .from('scans')
-            .update({ zone: logs[i].zone })
-            .eq('scan_id', logs[i].scan_id);
-
-          if (!updateError) {
-            logs[i].synced = true;
-            localStorage.setItem('lumen_logs', JSON.stringify(logs));
-          }
-        } else {
-          // Pas encore dans Supabase → INSERT (sans .select())
-          const success = await sendRecordToSupabase(logs[i]);
-          if (success) {
-            logs[i].synced = true;
-            localStorage.setItem('lumen_logs', JSON.stringify(logs));
-          } else {
-            addPendingScan(logs[i]);
-          }
-        }
-      }
-
-      renderTable();
-
-    } catch (err) {
-      console.error('Erreur sync updateEntry:', err);
-    }
-  }
 }
 
-// ──────────────────────────────────────────────────────
-// UI
-// ──────────────────────────────────────────────────────
+// ÉVÉNEMENT AUTO-SYNCHRONISATION AU RETOUR DE CONNEXION
+window.addEventListener('online', async () => {
+  AppState.isOnline = true;
+  updateDebugPanel();
+  console.log('[NETWORK] Connexion rétablie : lancement de la synchro automatique...');
+  
+  await flushPendingDeletes();
+  await autoSyncPendingScans();
+  await fetchLogsFromSupabase();
+  
+  nettoyerAnciennesDonnees7Jours();
+  localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));
+});
+
+window.addEventListener('offline', () => {
+  AppState.isOnline = false;
+  updateDebugPanel();
+  console.log('[NETWORK] Mode hors-ligne activé.');
+});
+
+function isEditingZone() {
+const active = document.activeElement;
+return !!(active && active.classList && active.classList.contains('zone-input'));
+}
+
+async function fetchLogsFromSupabase() {
+
+if (!navigator.onLine) return;  
+
+const user = JSON.parse(localStorage.getItem('StellantisUser'));  
+if (!user) return;
+
+const { data, error } = await supabaseClient  
+    .from('SCAN_MGV_APP')  
+    .select('*')  
+    .eq('op', user.id)  
+    .eq('is_deleted', false)  
+    .order('id', { ascending:false });  
+
+if (error) return console.error(error);  
+
+const serverLogs = data.map(item => ({ ...item, synced: true }));  
+
+const serverIds = new Set(serverLogs.map(l => l.id));  
+const localPending = AppState.logs.filter(l => !l.synced && !serverIds.has(l.id));  
+
+AppState.logs = [...localPending, ...serverLogs].sort((a, b) => b.id - a.id);  
+
+nettoyerAnciennesDonnees7Jours();  
+
+localStorage.setItem(  
+    'SCAN_MGV_APP',  
+    JSON.stringify(AppState.logs)  
+);  
+
+renderTable();
+
+}
 
 function renderTable() {
-  document.getElementById('flux-title').innerText = `Flux (${logs.length})`;
-  document.getElementById('history-body').innerHTML = logs.map(log => `
-    <tr class="border-b border-zinc-800 ${log.synced ? 'sync-row' : ''}">
-      <td class="p-3 text-white/30 text-[14px]">${log.op}</td>
-      <td class="p-3 border-r border-zinc-800">
-        <div class="editable-cell text-primary text-[20px] font-black"
-             contenteditable="true"
-             onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
-      </td>
-      <td class="p-3 border-r border-zinc-800">
-        <div class="editable-cell text-white font-bold"
-             contenteditable="true"
-             onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
-      </td>
-      <td class="p-3 text-[16px] font-black leading-none">
-        ${log.time}<br>
-        <span class="text-[12px]" style="${log.synced
-          ? 'color:#ff0000;font-weight:900'
-          : 'color:rgba(255,255,255,0.2)'}">
-          ${log.synced ? 'SUCCESS ✅' : log.date}
-        </span>
-      </td>
-      <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">×</button></td>
-    </tr>
-  `).join('');
-}
+const titleEl = document.getElementById('flux-title');
+if (titleEl) titleEl.innerText = `Flux (${AppState.logs.length})`;
 
-function playScanSound() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const osc  = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'square';
-  osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-  gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.1);
-}
+const historyBody = document.getElementById('history-body');  
+if (!historyBody) return;  
 
-function toggleView(v) {
-  document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
-  document.querySelectorAll('nav button').forEach(b => {
-    b.classList.add('text-muted');
-    b.classList.remove('active-nav');
-  });
-  document.getElementById(`view-${v}`).classList.remove('hidden');
-  document.getElementById(`nav-${v}`).classList.add('active-nav');
-  if (v === 'scanner') {
-    startLibraryScanner();
-  } else {
-    stopLibraryScanner();
-  }
-}
+historyBody.innerHTML = AppState.logs.map(log => {  
+    const statusText = log.synced ? 'SUCCESS' : log.date;  
+    const statusClass = log.synced ? 'status-success' : 'status-date';  
+    const rowClass = log.synced ? 'sync-row' : '';  
 
-function deleteEntry(id) {
-  if (confirm('Supprimer ?')) {
-    logs = logs.filter(l => l.id !== id);
-    localStorage.setItem('lumen_logs', JSON.stringify(logs));
-    renderTable();
-  }
-}
+    return `  
+        <tr id="row-${log.id}" class="${rowClass}">  
+            <td class="cell-op">${log.op}${log.equipe_id ? '/' + log.equipe_id : ''}</td>  
+            <td class="cell-code">  
+                <div class="editable-cell text-primary code-text" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>  
+            </td>  
+            <td class="cell-zone">  
+                <div class="editable-cell text-white zone-text zone-input" contenteditable="true" onblur="validateAndSendZone(${log.id}, this.innerText)" onkeypress="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }">${log.zone}</div>  
+            </td>  
+            <td class="cell-time">  
+                <div class="time-display">${log.time}</div>  
+                <div class="${statusClass}">${statusText}${log.synced ? ' &#10003;' : ''}</div>  
+            </td>  
+            <td class="cell-delete">  
+                <button onclick="deleteEntry(${log.id})" class="btn-delete">&times;</button>  
+            </td>  
+        </tr>  
+    `;  
+}).join('');
 
-function exportCSV() {
-  if (logs.length === 0) return alert('Aucune donnée.');
-  let csv = 'OP;CODE VIS;ZONE;DATE;HEURE;STATUT\n';
-  logs.forEach(l =>
-    csv += `${l.op};${l.code};${l.zone};${l.date};${l.time};${l.synced ? 'ENVOYÉ' : 'ATTENTE'}\n`
-  );
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = 'STELLANTIS_MGV.csv';
-  link.click();
-}
-
-function ajouterManuellement() {
-  const input = document.getElementById('input-vis');
-  input.value = '';
-  document.getElementById('modal-saisie').classList.remove('hidden');
-  input.focus();
-}
-
-function fermerSaisie() {
-  document.getElementById('modal-saisie').classList.add('hidden');
-}
-
-function toggleSearch() {
-  const bar   = document.getElementById('search-bar');
-  const input = document.getElementById('search-input');
-  const isHidden = bar.classList.contains('hidden');
-  if (isHidden) {
-    bar.classList.remove('hidden');
-    setTimeout(() => input.focus(), 100);
-  } else {
-    bar.classList.add('hidden');
-    input.value = '';
-    renderTable();
-  }
 }
 
 function filtrerEnTempsReel(query) {
-  const q = query.trim().toUpperCase();
-  if (!q) { renderTable(); return; }
-  document.getElementById('history-body').innerHTML = logs.map(log => {
-    const isMatch = log.code.includes(q) || log.zone.includes(q) || log.op.includes(q);
-    return `
-    <tr class="border-b border-zinc-800" id="row-${log.id}"
-        style="${isMatch
-          ? 'background:rgba(234,234,0,0.25); box-shadow:inset 0 0 0 3px #eaea00;'
-          : 'opacity:0.3'}">
-      <td class="p-3 text-[16px]" style="color:${isMatch ? '#eaea00' : 'rgba(255,255,255,0.3)'}">
-        ${log.op}
-      </td>
-      <td class="p-3 border-r border-zinc-800">
-        <div class="editable-cell font-black"
-             style="text-transform:uppercase; color:${isMatch ? '#ffffff' : '#eaea00'}"
-             contenteditable="true"
-             onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div>
-      </td>
-      <td class="p-3 border-r border-zinc-800">
-        <div class="editable-cell text-white font-bold"
-             style="text-transform:uppercase"
-             contenteditable="true"
-             onblur="updateEntry(${log.id}, 'zone', this.innerText)">${log.zone}</div>
-      </td>
-      <td class="p-3 text-[16px] font-black leading-none">
-        ${log.time}<br>
-        <span class="text-[12px]" style="${log.synced
-          ? 'color:#ff0000;font-weight:900'
-          : 'color:rgba(255,255,255,0.2)'}">
-          ${log.synced ? 'SUCCESS ✅' : log.date}
-        </span>
-      </td>
-      <td class="p-1"><button onclick="deleteEntry(${log.id})" class="btn-delete">×</button></td>
-    </tr>`;
-  }).join('');
+const q = query.trim().toUpperCase();
+if (!q) { renderTable(); return; }
+
+const historyBody = document.getElementById('history-body');  
+historyBody.innerHTML = AppState.logs.map(log => {  
+    const isMatch = log.code.includes(q) || (log.zone || '').includes(q) || log.op.includes(q);  
+    const statusText = log.synced ? 'SUCCESS' : log.date;  
+    const statusClass = log.synced ? 'status-success' : 'status-date';  
+
+    return `  
+    <tr id="row-${log.id}" style="${isMatch ? 'background:rgba(234,234,0,0.25);' : 'opacity:0.3'}">  
+        <td class="cell-op">${log.op}${log.equipe_id ? '/' + log.equipe_id : ''}</td>  
+        <td><div class="editable-cell code-text text-primary" contenteditable="true" onblur="updateEntry(${log.id}, 'code', this.innerText)">${log.code}</div></td>  
+        <td><div class="zone-input editable-cell zone-text text-white" contenteditable="true" onblur="validateAndSendZone(${log.id}, this.innerText)" onkeypress="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }">${log.zone}</div></td>  
+        <td class="cell-time"><div class="time-display">${log.time}</div><div class="${statusClass}">${statusText}</div></td>  
+        <td class="cell-delete"><button onclick="deleteEntry(${log.id})" class="btn-delete">&times;</button></td>  
+    </tr>`;  
+}).join('');
+
+}
+
+function toggleView(v) {
+if (AppState.isTransitioning) return;
+AppState.currentView = v;
+
+document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));  
+document.querySelectorAll('nav button').forEach(b => {   
+    b.classList.add('text-muted');   
+    b.classList.remove('active-nav');   
+});  
+
+const targetView = document.getElementById(`view-${v}`);  
+if(targetView) targetView.classList.remove('hidden');  
+
+const targetNav = document.getElementById(`nav-${v}`);  
+if(targetNav) targetNav.classList.add('active-nav');  
+
+if (v === 'scanner') {  
+    startNativeCamera();  
+} else {  
+    stopNativeCamera();  
+}
+
+}
+
+function ajouterManuellement() {
+const input = document.getElementById('input-vis');
+input.value = "";
+document.getElementById('modal-saisie').classList.remove('hidden');
+setTimeout(() => input.focus(), 100);
+}
+
+function fermerSaisie() {
+document.getElementById('modal-saisie').classList.add('hidden');
 }
 
 function validerSaisie() {
-  const input     = document.getElementById('input-vis');
-  const codeClean = input.value.trim().toUpperCase();
-  if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
-    playScanSound();
-    addLogEntry(codeClean);
-    fermerSaisie();
-  } else {
-    alert('Format invalide ! (Ex: T5071035)');
-  }
+const input = document.getElementById('input-vis');
+const codeClean = input.value.trim().toUpperCase();
+if (/^[A-Z][0-9]{7}$/.test(codeClean)) {
+playScanSound();
+addLogEntry(codeClean);
+fermerSaisie();
+} else {
+alert("Format invalide !");
+}
 }
 
-document.getElementById('input-vis').addEventListener('keypress', function(e) {
-  if (e.key === 'Enter') validerSaisie();
+function toggleSearch() {
+const bar = document.getElementById('search-bar');
+const input = document.getElementById('search-input');
+if (bar.classList.contains('hidden')) {
+bar.classList.remove('hidden');
+setTimeout(() => input.focus(), 100);
+} else {
+bar.classList.add('hidden');
+input.value = '';
+renderTable();
+}
+}
+
+function exportCSV() {
+if (AppState.logs.length === 0) return alert("Aucune donnée.");
+let csv = "OP;EQUIPE;CODE VIS;ZONE;DATE;HEURE;STATUT\n";
+AppState.logs.forEach(l => {
+csv += `${l.op};${l.equipe_id || ''};${l.code};${l.zone};${l.date};${l.time};${l.synced ? 'ENVOYE' : 'ATTENTE'}\n`;
+});
+const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+const link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = `STELLANTIS_MGV.csv`;
+link.click();
+}
+
+document.addEventListener('visibilitychange', () => {
+if (document.hidden) {
+stopNativeCamera();
+} else if (AppState.currentView === 'scanner') {
+setTimeout(() => startNativeCamera(), 300);
+}
+});
+async function logoutIdentity() {
+if (confirm("Voulez-vous vous déconnecter du terminal ?")) {
+await clearAllResources();
+localStorage.removeItem('StellantisUser');
+location.reload();
+}
+}
+
+function buildFullOperatorId(id, equipeId) {
+if (!id) return '';
+return equipeId ? `${id}/${equipeId}` : `${id}`;
+}
+
+async function initApp() {
+lockOrientation();
+
+try {  
+    const cached = JSON.parse(localStorage.getItem('SCAN_MGV_APP') || '[]');  
+    if (Array.isArray(cached)) AppState.logs = cached;  
+} catch (e) {}  
+nettoyerAnciennesDonnees7Jours();  
+
+const user = JSON.parse(localStorage.getItem('StellantisUser'));  
+if (user) {  
+    document.getElementById('identity-screen').classList.add('hidden');  
+    document.getElementById('display-name').innerText = user.prenom + " " + user.nom;  
+    document.getElementById('display-id').innerText = `ID: ${buildFullOperatorId(user.id, user.equipe_id)}`;  
+
+    if (navigator.onLine) {
+        await autoSyncPendingScans();
+        await fetchLogsFromSupabase();  
+    }
+    renderTable();  
+    startNativeCamera();  
+} else if (!navigator.onLine) {  
+    localStorage.setItem('StellantisUser', JSON.stringify({  
+        id: 'TEMP', nom: 'HORS-LIGNE', prenom: 'MODE', equipe_id: ''  
+    }));  
+    document.getElementById('identity-screen').classList.add('hidden');  
+    document.getElementById('display-name').innerText = "MODE HORS-LIGNE";  
+    document.getElementById('display-id').innerText = "ID: TEMP";  
+    renderTable();  
+    startNativeCamera();  
+}  
+
+const realtimeFilter = (user && user.id) ? `op=eq.${user.id}` : undefined;  
+
+supabaseClient  
+    .channel('table-db-changes')  
+    .on('postgres_changes', {  
+        event: '*',  
+        schema: 'public',  
+        table: 'SCAN_MGV_APP',  
+        ...(realtimeFilter ? { filter: realtimeFilter } : {})  
+    }, (payload) => {  
+        const rowOp = (payload.new && payload.new.op) || (payload.old && payload.old.op);  
+        if (user && user.id && rowOp && rowOp !== user.id) return;  
+
+        if (payload.eventType === 'INSERT') {  
+            if (payload.new.is_deleted) return;  
+            const exists = AppState.logs.some(l => l.id === payload.new.id);  
+            if (!exists) AppState.logs.unshift({ ...payload.new, synced: true });  
+        } else if (payload.eventType === 'UPDATE') {  
+            if (payload.new.is_deleted) {  
+                AppState.logs = AppState.logs.filter(l => l.id !== payload.new.id);  
+            } else {  
+                const index = AppState.logs.findIndex(l => l.id === payload.new.id);  
+                if (index !== -1) AppState.logs[index] = { ...payload.new, synced: true };  
+                else AppState.logs.unshift({ ...payload.new, synced: true });  
+            }  
+        } else if (payload.eventType === 'DELETE') {  
+            AppState.logs = AppState.logs.filter(l => l.id !== payload.old.id);  
+        }  
+        localStorage.setItem('SCAN_MGV_APP', JSON.stringify(AppState.logs));  
+        renderTable();  
+    })  
+    .subscribe();  
+
+if (navigator.onLine) {  
+    flushPendingDeletes();  
+    autoSyncPendingScans();
+}
+
+}
+initApp();
+
+document.getElementById('stellantis-btn')?.addEventListener('click', () => {
+toggleDebug();
 });
 </script>
-    <script src="stellantis-app-v3.js"></script>
-</body>
+
+</body>  
 </html>
+    
+    
+                

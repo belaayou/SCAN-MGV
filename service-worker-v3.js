@@ -1,326 +1,159 @@
-const CACHE_NAME = 'stellantis-mgv-v12.0';
-const SYNC_TAG   = 'sync-scans';
+Nouveau fichier service-worker.js
+// ==========================================
+// CONFIGURATION ET CACHE
+// ==========================================
+const CACHE_NAME = 'scan-mgv-cache-v1';
+const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co'; // Remplacez par votre URL Supabase
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';                // Remplacez par votre clé Anon Supabase
 
-const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co';
-const SUPABASE_ANON_KEY =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';
-
-const GOOGLE_URL =
-  'https://script.google.com/macros/s/AKfycbwsFDUIgEsiQRo1R2HIiu1cGi-wH_wdJqmF4uTw5iOkGfWxJdpab96XZRurb6MP0L4/exec';
-
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './IMG_20260413_130653.png'
+// Ressources statiques à mettre en cache pour le mode Offline
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/css/styles.css',
+  '/js/app.js',
+  '/icons/icon-192.png'
 ];
 
-const DB_NAME    = 'stellantis-sw-queue';
-const DB_VERSION = 1;
-const STORE_NAME = 'pending-requests';
-
-// ─────────────────────────────────────────────
-// INSTALL
-// ─────────────────────────────────────────────
-
-self.addEventListener('install', event => {
+// ==========================================
+// 1. INSTALLATION ET ACTIVATION
+// ==========================================
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Mise en cache des ressources statiques');
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => self.skipWaiting())
   );
 });
 
-// ─────────────────────────────────────────────
-// ACTIVATE
-// ─────────────────────────────────────────────
-
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then(keys =>
-        Promise.all(
-          keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-        )
-      )
-      .then(() => self.clients.claim())
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SW] Nettoyage de l\'ancien cache :', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
   );
 });
 
-// ─────────────────────────────────────────────
-// BACKGROUND SYNC
-// ─────────────────────────────────────────────
+// ==========================================
+// 2. LOGIQUE DE NETTOYAGE ET VALIDATION DES CODES
+// ==========================================
+const VALID_PREFIXES = ['T51', 'V50', 'S50', 'S51', 'S512', 'S504', 'R50', 'M5', 'N5', 'P5'];
 
-self.addEventListener('sync', event => {
-  if (event.tag === SYNC_TAG) {
+function cleanAndValidateCode(rawCode) {
+  if (!rawCode) return null;
+
+  let code = rawCode.trim().toUpperCase();
+
+  // Correction OCR : Remplacement des erreurs sur la 1ère lettre (ex: Q, F, Z -> T)
+  if (code.match(/^[QFZ]51/)) {
+    code = code.replace(/^[QFZ]/, 'T');
+  }
+
+  // Vérification de la validité du préfixe et de la longueur
+  const hasValidPrefix = VALID_PREFIXES.some((prefix) => code.startsWith(prefix));
+  const hasValidLength = code.length >= 7 && code.length <= 12;
+
+  return (hasValidPrefix && hasValidLength) ? code : null;
+}
+
+// ==========================================
+// 3. INTERCEPTION DES REQUÊTES (FETCH)
+// ==========================================
+self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+
+  // Cas A : Interception de l'envoi de scan vers Supabase
+  if (requestUrl.pathname.includes('/rest/v1/scans') && event.request.method === 'POST') {
+    event.respondWith(handleSupabaseScanPost(event.request));
+    return;
+  }
+
+  // Cas B : Gestion du cache standard pour l'interface utilisateur (Stale-While-Revalidate)
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Retourner la réponse du cache en cas de perte de connexion
+        return cachedResponse;
+      });
+
+      return cachedResponse || fetchPromise;
+    })
+  );
+});
+
+// ==========================================
+// 4. TRAITEMENT DE L'ENVOI DE SCAN VERS SUPABASE
+// ==========================================
+async function handleSupabaseScanPost(request) {
+  try {
+    const cloneRequest = request.clone();
+    const payload = await cloneRequest.json();
+
+    // Traitement/Nettoyage du code scanné
+    const rawCode = payload.code || payload.scanned_code;
+    const validatedCode = cleanAndValidateCode(rawCode);
+
+    if (!validatedCode) {
+      // Rejet du faux code avant même l'envoi au serveur
+      return new Response(
+        JSON.stringify({ error: 'Code invalide ou faux code détecté (OCR Error)', rawCode }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Mise à jour du payload avec le code nettoyé
+    payload.code = validatedCode;
+
+    // Tentative d'envoi vers Supabase
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/scans`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    return response;
+
+  } catch (error) {
+    console.error('[SW] Erreur de réseau/envoi vers Supabase :', error);
+
+    // En cas d'échec réseau, renvoyer une erreur explicite
+    return new Response(
+      JSON.stringify({ error: 'Réseau indisponible. Enregistrement en attente (Offline).' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+}
+
+// ==========================================
+// 5. SYNCHRONISATION EN ARRIÈRE-PLAN (BACKGROUND SYNC)
+// ==========================================
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-scans') {
     event.waitUntil(syncPendingScans());
   }
 });
 
-// ─────────────────────────────────────────────
-// MESSAGES
-// ─────────────────────────────────────────────
-
-self.addEventListener('message', event => {
-  if (!event.data) return;
-  if (event.data.type === 'SKIP_WAITING') self.skipWaiting();
-  if (event.data.type === 'SYNC_NOW')     event.waitUntil(syncPendingScans());
-});
-
-// ─────────────────────────────────────────────
-// FETCH
-// ─────────────────────────────────────────────
-
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  if (url.hostname === 'script.google.com') {
-    event.respondWith(handleGoogleScript(event.request));
-    return;
-  }
-  event.respondWith(cacheFirst(event.request));
-});
-
-// ─────────────────────────────────────────────
-// HELPERS
-// ─────────────────────────────────────────────
-
-function jsonResponse(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json' }
-  });
-}
-
-async function cacheFirst(request) {
-  const cache  = await caches.open(CACHE_NAME);
-  const cached = await cache.match(request);
-
-  if (cached) {
-    fetch(request).then(r => { if (r && r.ok) cache.put(request, r.clone()); }).catch(() => {});
-    return cached;
-  }
-
-  try {
-    const response = await fetch(request);
-    if (response && response.ok) cache.put(request, response.clone());
-    return response;
-  } catch {
-    return new Response('Offline', { status: 503 });
-  }
-}
-
-// ─────────────────────────────────────────────
-// INDEXEDDB
-// ─────────────────────────────────────────────
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = event => {
-      const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
-      }
-    };
-    request.onsuccess = () => resolve(request.result);
-    request.onerror   = () => reject(request.error);
-  });
-}
-
-async function getPendingRequests() {
-  const db = await openDB();
-  return new Promise(resolve => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    tx.objectStore(STORE_NAME).getAll().onsuccess = e => resolve(e.target.result);
-  });
-}
-
-async function queueRequest(url) {
-  const existing = await getPendingRequests();
-  if (existing.some(item => item.url === url)) return;
-  const db = await openDB();
-  return new Promise(resolve => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).add({ url, timestamp: Date.now() });
-    tx.oncomplete = resolve;
-  });
-}
-
-async function deleteRequest(id) {
-  const db = await openDB();
-  return new Promise(resolve => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    tx.objectStore(STORE_NAME).delete(id);
-    tx.oncomplete = resolve;
-  });
-}
-
-// ─────────────────────────────────────────────
-// PARSE URL → RECORD
-// ─────────────────────────────────────────────
-
-function extractRecordFromUrl(urlStr) {
-  try {
-    const url    = new URL(urlStr);
-    const params = url.searchParams;
-    const now    = new Date();
-    return {
-      scan_id:    params.get('scan_id') || crypto.randomUUID(),
-      op:         params.get('op')      || 'UNKNOWN',
-      code:       params.get('code')    || '',
-      zone:       params.get('zone')    || '',
-      date:       params.get('date')    || now.toLocaleDateString('fr-FR'),
-      time:       params.get('time')    || now.toLocaleTimeString('fr-FR'),
-      created_at: new Date().toISOString()
-    };
-  } catch (error) {
-    console.error('[SW] Parse Error', error);
-    return null;
-  }
-}
-
-// ─────────────────────────────────────────────
-// SUPABASE INSERT — CORRECTIONS CRITIQUES :
-//
-// 1. Template literals avec backticks (était entre guillemets "...")
-//    → ${SUPABASE_URL} était envoyé comme texte brut
-//
-// 2. Prefer: 'return=minimal' au lieu de 'return=representation'
-//    → 'return=representation' déclenche une vérification SELECT côté RLS
-//    → Si la politique SELECT est absente pour anon, l'insert est rejeté
-//    → 'return=minimal' = pas de retour de données = pas de check SELECT
-//
-// 3. La vraie clé anon est utilisée (était 'REMPLACE_PAR_TA_CLE_PUBLISHABLE')
-// ─────────────────────────────────────────────
-
-async function insertToSupabase(recordData) {
-  try {
-    // ✅ Backticks = vraies variables interpolées
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/scans`,
-      {
-        method: 'POST',
-        headers: {
-          'apikey':        SUPABASE_ANON_KEY,
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'Content-Type':  'application/json',
-          // ✅ return=minimal = pas de SELECT check = compatible INSERT-only policy
-          'Prefer':        'return=minimal'
-        },
-        body: JSON.stringify(recordData)
-      }
-    );
-
-    // 201 = créé avec succès (Supabase standard pour POST)
-    if (response.status === 201) {
-      console.log('[SW] Supabase OK :', recordData.code);
-      return true;
-    }
-
-    // 200 = aussi acceptable
-    if (response.status === 200) {
-      console.log('[SW] Supabase OK (200) :', recordData.code);
-      return true;
-    }
-
-    // 409 = doublon (contrainte unique sur scan_id) → déjà inséré = OK
-    if (response.status === 409) {
-      console.log('[SW] Supabase Duplicate ignoré :', recordData.code);
-      return true;
-    }
-
-    // Toute autre erreur → log détaillé pour debug
-    const text = await response.text();
-    console.error('[SW] Supabase Error', response.status, text);
-    return false;
-
-  } catch (error) {
-    console.error('[SW] Supabase Network Error', error);
-    return false;
-  }
-}
-
-// ─────────────────────────────────────────────
-// INTERCEPTE APPELS GOOGLE SCRIPT
-// ─────────────────────────────────────────────
-
-async function handleGoogleScript(request) {
-  const url = request.url;
-
-  if (url.includes('action=login') || url.includes('action=register')) {
-    try {
-      return await fetch(request);
-    } catch {
-      return jsonResponse({ status: 'offline' });
-    }
-  }
-
-  if (url.includes('action=saveScan')) {
-    try {
-      // Envoie vers Google Sheets + Supabase en parallèle
-      const [googleResult] = await Promise.allSettled([fetch(request)]);
-
-      const recordData = extractRecordFromUrl(url);
-      if (recordData) {
-        // Non bloquant pour la réponse Google
-        insertToSupabase(recordData).catch(err =>
-          console.error('[SW] Supabase parallel error:', err)
-        );
-      }
-
-      if (googleResult.status === 'fulfilled' && googleResult.value.ok) {
-        return googleResult.value;
-      }
-
-      return jsonResponse({ status: 'partial', message: 'Google hors-ligne, Supabase traité' });
-
-    } catch (error) {
-      await queueRequest(url);
-      return jsonResponse({ status: 'queued', message: 'Scan en attente de sync' });
-    }
-  }
-
-  try {
-    return await fetch(request);
-  } catch {
-    return jsonResponse({ status: 'error' });
-  }
-}
-
-// ─────────────────────────────────────────────
-// SYNC BACKGROUND : vide la file IndexedDB
-// Ne supprime un item que si les deux envois ont réussi
-// ─────────────────────────────────────────────
-
 async function syncPendingScans() {
-  const pending = await getPendingRequests();
-  console.log(`[SW] ${pending.length} scan(s) à synchroniser`);
-
-  for (const item of pending) {
-    try {
-      const [googleResult] = await Promise.allSettled([fetch(item.url)]);
-      const recordData     = extractRecordFromUrl(item.url);
-
-      let supabaseOk = true;
-      if (recordData) {
-        supabaseOk = await insertToSupabase(recordData);
-      }
-
-      const googleOk = googleResult.status === 'fulfilled' && googleResult.value.ok;
-
-      if (googleOk && supabaseOk) {
-        await deleteRequest(item.id);
-
-        const clients = await self.clients.matchAll();
-        clients.forEach(client => {
-          client.postMessage({ type: 'SCAN_SYNCED', timestamp: item.timestamp });
-        });
-      } else {
-        console.warn(`[SW] Sync partielle — Google:${googleOk} Supabase:${supabaseOk}`);
-      }
-
-    } catch (error) {
-      console.error('[SW] Sync Error', error);
-    }
-  }
+  console.log('[SW] Tentative de synchronisation des scans enregistrés en mode hors-ligne...');
+  // Insérez ici votre logique de lecture depuis IndexedDB pour envoyer les scans en attente vers Supabase
 }

@@ -964,77 +964,7 @@ setTimeout(() => {
 }, 1500);
 
 }
-
-const VALID_PREFIXES = [
-    'T51',
-    'V50',
-    'S50',
-    'S51',
-    'S512',
-    'S504',
-    'R50',
-    'M5',
-    'N5',
-    'P'
-];
-
-function cleanAndValidateCode(rawCode) {
-    if (rawCode === null || rawCode === undefined) {
-        return null;
-    }
-
-    let code = String(rawCode)
-        .trim()
-        .toUpperCase()
-        .replace(/\s+/g, '');
-
-    if (!code) {
-        return null;
-    }
-
-    // ======================================================
-    // CORRECTIONS OCR
-    // ======================================================
-
-    // Q51xxxx -> T51xxxx
-    // F51xxxx -> T51xxxx
-    // Z51xxxx -> T51xxxx
-    if (/^[QFZ]51\d+$/.test(code)) {
-        code = 'T' + code.substring(1);
-    }
-
-    // T58xxxx -> T51xxxx
-    // Erreur OCR : 1 capturé comme 8
-    if (/^T58\d+$/.test(code)) {
-        code = 'T51' + code.substring(3);
-    }
-
-    // ======================================================
-    // VALIDATION
-    // ======================================================
-
-    // Longueur
-    if (code.length < 7 || code.length > 12) {
-        return null;
-    }
-
-    // Structure : une lettre + chiffres
-    if (!/^[A-Z]\d+$/.test(code)) {
-        return null;
-    }
-
-    // Préfixe autorisé
-    const hasValidPrefix = VALID_PREFIXES.some(prefix =>
-        code.startsWith(prefix)
-    );
-
-    if (!hasValidPrefix) {
-        return null;
-    }
-
-    return code;
-}
-
+    
 function playScanSound() {
 try {
 if (!AppState.audioCtx) {

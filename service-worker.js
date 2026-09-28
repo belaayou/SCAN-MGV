@@ -1,159 +1,471 @@
-Nouveau fichier service-worker.js
-// ==========================================
-// CONFIGURATION ET CACHE
-// ==========================================
-const CACHE_NAME = 'scan-mgv-cache-v1';
-const SUPABASE_URL = 'https://rdhmsbqhjlmtlgrjuyxa.supabase.co'; // Remplacez par votre URL Supabase
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJkaG1zYnFoamxtdGxncmp1eXhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMzUxMzgsImV4cCI6MjA5NTgxMTEzOH0.0jpyr9n1TfctS28515NESvYndy03osk2nEYugksAwIo';                // Remplacez par votre clé Anon Supabase
+// ============================================================
+// STELLANTIS MGV — SERVICE WORKER
+// SCAN_MGV_APP — index.html unique
+// Version OFFLINE SAFE
+// ============================================================
 
-// Ressources statiques à mettre en cache pour le mode Offline
-const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/css/styles.css',
-  '/js/app.js',
-  '/icons/icon-192.png'
+const CACHE_NAME = 'scan-mgv-cache-v3';
+
+// ============================================================
+// RESSOURCES LOCALES RÉELLEMENT UTILISÉES
+// ============================================================
+//
+// IMPORTANT :
+// L'application principale est entièrement dans index.html.
+// Ne pas ajouter /js/app.js : ce fichier n'existe pas.
+//
+// Les bibliothèques CDN sont volontairement gérées séparément.
+// ============================================================
+
+const APP_SHELL = [
+    './',
+    './index.html',
+    './manifest.json',
+    './IMG_20260413_130653.png'
 ];
 
-// ==========================================
-// 1. INSTALLATION ET ACTIVATION
-// ==========================================
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Mise en cache des ressources statiques');
-      return cache.addAll(ASSETS_TO_CACHE);
-    }).then(() => self.skipWaiting())
-  );
+// ============================================================
+// 1. INSTALLATION
+// ============================================================
+
+self.addEventListener('install', event => {
+
+    console.log('[SW] Installation SCAN MGV —', CACHE_NAME);
+
+    event.waitUntil(
+
+        caches.open(CACHE_NAME)
+
+            .then(cache => {
+
+                console.log('[SW] Mise en cache de l’application');
+
+                return cache.addAll(APP_SHELL);
+
+            })
+
+            .then(() => {
+
+                console.log('[SW] Installation terminée');
+
+                return self.skipWaiting();
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    '[SW] ERREUR installation cache :',
+                    error
+                );
+
+            })
+
+    );
+
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[SW] Nettoyage de l\'ancien cache :', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    }).then(() => self.clients.claim())
-  );
+// ============================================================
+// 2. ACTIVATION
+// ============================================================
+
+self.addEventListener('activate', event => {
+
+    console.log('[SW] Activation');
+
+    event.waitUntil(
+
+        caches.keys()
+
+            .then(cacheNames => {
+
+                return Promise.all(
+
+                    cacheNames.map(cacheName => {
+
+                        if (
+                            cacheName.startsWith('scan-mgv-cache-') &&
+                            cacheName !== CACHE_NAME
+                        ) {
+
+                            console.log(
+                                '[SW] Suppression ancien cache :',
+                                cacheName
+                            );
+
+                            return caches.delete(cacheName);
+
+                        }
+
+                        return Promise.resolve();
+
+                    })
+
+                );
+
+            })
+
+            .then(() => {
+
+                console.log('[SW] Claim clients');
+
+                return self.clients.claim();
+
+            })
+
+    );
+
 });
 
-// ==========================================
-// 2. LOGIQUE DE NETTOYAGE ET VALIDATION DES CODES
-// ==========================================
-const VALID_PREFIXES = ['T51', 'V50', 'S50', 'S51', 'S512', 'S504', 'R50', 'M5', 'N5', 'P5'];
+// ============================================================
+// 3. FETCH
+// ============================================================
 
-function cleanAndValidateCode(rawCode) {
-  if (!rawCode) return null;
+self.addEventListener('fetch', event => {
 
-  let code = rawCode.trim().toUpperCase();
+    const request = event.request;
 
-  // Correction OCR : Remplacement des erreurs sur la 1ère lettre (ex: Q, F, Z -> T)
-  if (code.match(/^[QFZ]51/)) {
-    code = code.replace(/^[QFZ]/, 'T');
-  }
+    // --------------------------------------------------------
+    // Seulement les requêtes GET peuvent être mises en cache.
+    // --------------------------------------------------------
 
-  // Vérification de la validité du préfixe et de la longueur
-  const hasValidPrefix = VALID_PREFIXES.some((prefix) => code.startsWith(prefix));
-  const hasValidLength = code.length >= 7 && code.length <= 12;
+    if (request.method !== 'GET') {
 
-  return (hasValidPrefix && hasValidLength) ? code : null;
-}
+        // IMPORTANT :
+        // POST / PATCH / DELETE vers Supabase passent directement
+        // à l'application.
+        //
+        // Le Service Worker NE modifie PAS :
+        //
+        // SCAN_MGV_APP
+        // Supabase
+        // INSERT
+        // UPDATE
+        // DELETE
+        //
+        // La synchronisation est gérée par index.html.
 
-// ==========================================
-// 3. INTERCEPTION DES REQUÊTES (FETCH)
-// ==========================================
-self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
+        return;
 
-  // Cas A : Interception de l'envoi de scan vers Supabase
-  if (requestUrl.pathname.includes('/rest/v1/scans') && event.request.method === 'POST') {
-    event.respondWith(handleSupabaseScanPost(event.request));
-    return;
-  }
-
-  // Cas B : Gestion du cache standard pour l'interface utilisateur (Stale-While-Revalidate)
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && event.request.method === 'GET') {
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
-        }
-        return networkResponse;
-      }).catch(() => {
-        // Retourner la réponse du cache en cas de perte de connexion
-        return cachedResponse;
-      });
-
-      return cachedResponse || fetchPromise;
-    })
-  );
-});
-
-// ==========================================
-// 4. TRAITEMENT DE L'ENVOI DE SCAN VERS SUPABASE
-// ==========================================
-async function handleSupabaseScanPost(request) {
-  try {
-    const cloneRequest = request.clone();
-    const payload = await cloneRequest.json();
-
-    // Traitement/Nettoyage du code scanné
-    const rawCode = payload.code || payload.scanned_code;
-    const validatedCode = cleanAndValidateCode(rawCode);
-
-    if (!validatedCode) {
-      // Rejet du faux code avant même l'envoi au serveur
-      return new Response(
-        JSON.stringify({ error: 'Code invalide ou faux code détecté (OCR Error)', rawCode }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
     }
 
-    // Mise à jour du payload avec le code nettoyé
-    payload.code = validatedCode;
+    const url = new URL(request.url);
 
-    // Tentative d'envoi vers Supabase
-    const response = await fetch(`${SUPABASE_URL}/rest/v1/scans`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        'Prefer': 'return=representation'
-      },
-      body: JSON.stringify(payload)
-    });
+    // ========================================================
+    // SUPABASE
+    // ========================================================
 
-    return response;
+    // Ne jamais mettre en cache les données Supabase.
+    //
+    // L'application utilise localStorage pour son fonctionnement
+    // offline.
+    //
+    // Les données serveur doivent toujours venir de Supabase
+    // lorsqu'une connexion est disponible.
 
-  } catch (error) {
-    console.error('[SW] Erreur de réseau/envoi vers Supabase :', error);
+    if (
+        url.hostname.endsWith('.supabase.co') ||
+        url.hostname === 'supabase.co'
+    ) {
 
-    // En cas d'échec réseau, renvoyer une erreur explicite
-    return new Response(
-      JSON.stringify({ error: 'Réseau indisponible. Enregistrement en attente (Offline).' }),
-      { status: 503, headers: { 'Content-Type': 'application/json' } }
+        return;
+
+    }
+
+    // ========================================================
+    // CDN
+    // ========================================================
+
+    // html5-qrcode et supabase-js sont chargés depuis CDN.
+    //
+    // Pour permettre le démarrage offline après une première
+    // ouverture ONLINE, on utilise :
+    //
+    // Cache First + téléchargement lors de la première connexion.
+    //
+    // Les CDN sont traités séparément afin de ne pas mettre en
+    // cache les API Supabase.
+
+    if (
+        url.hostname === 'unpkg.com' ||
+        url.hostname === 'cdn.jsdelivr.net' ||
+        url.hostname === 'fonts.googleapis.com' ||
+        url.hostname === 'fonts.gstatic.com'
+    ) {
+
+        event.respondWith(
+
+            caches.match(request)
+
+                .then(cachedResponse => {
+
+                    if (cachedResponse) {
+
+                        return cachedResponse;
+
+                    }
+
+                    return fetch(request)
+
+                        .then(networkResponse => {
+
+                            if (
+                                networkResponse &&
+                                networkResponse.ok
+                            ) {
+
+                                const responseClone =
+                                    networkResponse.clone();
+
+                                caches.open(CACHE_NAME)
+                                    .then(cache => {
+
+                                        cache.put(
+                                            request,
+                                            responseClone
+                                        );
+
+                                    });
+
+                            }
+
+                            return networkResponse;
+
+                        })
+
+                        .catch(() => {
+
+                            console.warn(
+                                '[SW] CDN indisponible offline :',
+                                request.url
+                            );
+
+                            return new Response(
+                                '',
+                                {
+                                    status: 503,
+                                    statusText:
+                                        'Ressource CDN indisponible hors ligne'
+                                }
+                            );
+
+                        });
+
+                })
+
+        );
+
+        return;
+
+    }
+
+    // ========================================================
+    // APPLICATION LOCALE
+    // ========================================================
+
+    event.respondWith(
+
+        caches.match(request)
+
+            .then(cachedResponse => {
+
+                if (cachedResponse) {
+
+                    // ------------------------------------------------
+                    // Retour immédiat du cache.
+                    //
+                    // Mise à jour silencieuse en arrière-plan.
+                    // ------------------------------------------------
+
+                    fetch(request)
+
+                        .then(networkResponse => {
+
+                            if (
+                                networkResponse &&
+                                networkResponse.ok
+                            ) {
+
+                                const clone =
+                                    networkResponse.clone();
+
+                                caches.open(CACHE_NAME)
+                                    .then(cache => {
+
+                                        cache.put(
+                                            request,
+                                            clone
+                                        );
+
+                                    });
+
+                            }
+
+                        })
+
+                        .catch(() => {
+                            // Offline : le cache reste utilisé.
+                        });
+
+                    return cachedResponse;
+
+                }
+
+                // ------------------------------------------------
+                // Pas dans le cache → réseau.
+                // ------------------------------------------------
+
+                return fetch(request)
+
+                    .catch(() => {
+
+                        // ------------------------------------------------
+                        // Navigation principale offline.
+                        // ------------------------------------------------
+
+                        if (
+                            request.mode === 'navigate' ||
+                            request.destination === 'document'
+                        ) {
+
+                            return caches.match('./index.html');
+
+                        }
+
+                        return new Response(
+                            '',
+                            {
+                                status: 503,
+                                statusText:
+                                    'Ressource indisponible hors ligne'
+                            }
+                        );
+
+                    });
+
+            })
+
     );
-  }
-}
 
-// ==========================================
-// 5. SYNCHRONISATION EN ARRIÈRE-PLAN (BACKGROUND SYNC)
-// ==========================================
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-scans') {
-    event.waitUntil(syncPendingScans());
-  }
 });
 
-async function syncPendingScans() {
-  console.log('[SW] Tentative de synchronisation des scans enregistrés en mode hors-ligne...');
-  // Insérez ici votre logique de lecture depuis IndexedDB pour envoyer les scans en attente vers Supabase
+// ============================================================
+// 4. BACKGROUND SYNC
+// ============================================================
+//
+// IMPORTANT :
+//
+// L'actuel index.html possède déjà :
+//
+// window.addEventListener('online', ...)
+//
+// avec :
+//
+// flushPendingDeletes()
+// autoSyncPendingScans()
+// fetchLogsFromSupabase()
+//
+// Nous ne créons donc PAS une deuxième synchronisation ici.
+//
+// Le Service Worker ne doit pas envoyer directement les scans
+// vers Supabase.
+//
+// ============================================================
+
+self.addEventListener('sync', event => {
+
+    if (event.tag !== 'scan-mgv-sync') {
+
+        return;
+
+    }
+
+    console.log(
+        '[SW] Background Sync demandé'
+    );
+
+    event.waitUntil(
+
+        notifyClientsToSync()
+
+    );
+
+});
+
+// ============================================================
+// 5. NOTIFICATION DE L'APPLICATION
+// ============================================================
+
+async function notifyClientsToSync() {
+
+    const clientsList =
+        await self.clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true
+        });
+
+    for (const client of clientsList) {
+
+        client.postMessage({
+
+            type: 'SCAN_MGV_SYNC_REQUEST'
+
+        });
+
+    }
+
+    console.log(
+        '[SW] Demande de synchronisation envoyée à index.html'
+    );
+
 }
+
+// ============================================================
+// 6. MESSAGES DEPUIS index.html
+// ============================================================
+
+self.addEventListener('message', event => {
+
+    if (!event.data) {
+
+        return;
+
+    }
+
+    // --------------------------------------------------------
+    // Permet à index.html de demander l'activation immédiate
+    // --------------------------------------------------------
+
+    if (event.data.type === 'SKIP_WAITING') {
+
+        self.skipWaiting();
+
+    }
+
+    // --------------------------------------------------------
+    // Diagnostic
+    // --------------------------------------------------------
+
+    if (event.data.type === 'GET_SW_STATUS') {
+
+        if (event.source) {
+
+            event.source.postMessage({
+
+                type: 'SW_STATUS',
+
+                cache: CACHE_NAME,
+
+                online: true
+
+            });
+
+        }
+
+    }
+
+});
+
+// ============================================================
+// FIN SERVICE WORKER
+// ============================================================

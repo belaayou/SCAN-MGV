@@ -477,7 +477,7 @@ function stopNativeCamera() { clearAllResources(); }
 // ==========================================
 // VALIDATION VIS (fonction UNIQUE : scanner, saisie manuelle, modification)
 // ==========================================
-const VALID_PREFIXES = ['T51', 'V50', 'S50', 'S51', 'S512', 'S504', 'R50', 'M5', 'N5', 'P'];
+const VALID_PREFIXES = ['T50' , 'T51', 'T52','V50' , 'V51', 'V52', 'S50', 'S51', 'S50', 'R50', 'M5', 'N5', 'P'];
 
 function cleanAndValidateCode(rawCode) {
     if (rawCode === null || rawCode === undefined) return null;

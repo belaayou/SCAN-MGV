@@ -1665,6 +1665,36 @@ initApp();
 document.getElementById('stellantis-btn')?.addEventListener('click', () => {
 toggleDebug();
 });
+    // ============================================================
+// ENREGISTREMENT SERVICE WORKER
+// ============================================================
+
+if ('serviceWorker' in navigator) {
+
+    window.addEventListener('load', async () => {
+
+        try {
+
+            const registration =
+                await navigator.serviceWorker.register('./sw.js');
+
+            console.log(
+                '[SW] Service Worker enregistré :',
+                registration.scope
+            );
+
+        } catch (error) {
+
+            console.error(
+                '[SW] Échec enregistrement :',
+                error
+            );
+
+        }
+
+    });
+
+}
 </script>
 
 </body>  

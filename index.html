@@ -303,8 +303,7 @@ nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 85px; padding-bo
   <button onclick="clearAllResources()" style="width:100%;background:#333;color:#ef4444;border:none;padding:6px;margin-bottom:4px;border-radius:4px;font-family:inherit;font-size:10px;cursor:pointer;">PURGE RESOURCES</button>
   <button onclick="toggleDebug()" style="width:100%;background:#eaea00;color:#000;border:none;padding:6px;border-radius:4px;font-family:inherit;font-size:10px;cursor:pointer;font-weight:900;">FERMER</button>
 </div>
-
-<script>
+  <script>
 // #############################################################
 // STELLANTIS MGV - MOTEUR DE SCAN v3.0 (OFFLINE-FIRST)
 //  _localId    = identifiant technique local (jamais envoyé à PostgreSQL)
@@ -442,6 +441,7 @@ async function startNativeCamera() {
             (decodedText) => { onBarcodeDetected(decodedText); },
             (errorMessage) => { AppState.scanLocked = false; }
         );
+        hideCamMsg();
         setTimeout(() => {
             try {
                 const videoEl = document.querySelector('#webcam video');
@@ -466,12 +466,18 @@ async function startNativeCamera() {
     } catch (err) {
         logError('Camera native boot: ' + err.message);
         await clearAllResources();
+        const em = String(err && err.message || err);
+        if (/Librairie/i.test(em)) showCamMsg('Scanner non chargé.<br>Ouvrez l\'app 1 fois avec Internet puis relancez.<br>(Touchez pour réessayer)');
+        else if (/Permission|NotAllowed|denied/i.test(em)) showCamMsg('Caméra refusée.<br>Autorisez la caméra dans les réglages.<br>(Touchez pour réessayer)');
+        else showCamMsg('Caméra indisponible.<br>Touchez pour réessayer.');
     } finally {
         AppState.isTransitioning = false;
         updateDebugPanel();
     }
 }
 
+function showCamMsg(txt) { const m = document.getElementById('cam-msg'); if (m) { m.innerHTML = txt; m.classList.remove('hidden'); } }
+function hideCamMsg() { const m = document.getElementById('cam-msg'); if (m) m.classList.add('hidden'); }
 function stopNativeCamera() { clearAllResources(); }
 
 // ==========================================
@@ -558,8 +564,11 @@ function toggleAuth(showSignup) {
 }
 
 function getUser() {
-    try { const u = JSON.parse(localStorage.getItem('StellantisUser')); return (u && u.id) ? u : null; }
-    catch (e) { return null; }
+    try {
+        const u = JSON.parse(localStorage.getItem('StellantisUser'));
+        if (u && u.id === 'TEMP' && u.nom === 'HORS-LIGNE') { localStorage.removeItem('StellantisUser'); return null; } // ancien faux compte
+        return (u && u.id) ? u : null;
+    } catch (e) { return null; }
 }
 
 // Connexion hors ligne : uniquement les comptes déjà validés en ligne sur ce terminal
@@ -647,7 +656,8 @@ function canTry() { return navigator.onLine && !!getClient(); }
 // STOCKAGE LOCAL (localStorage, clé inchangée : SCAN_MGV_APP)
 // ==========================================
 function newLocalId() { return 'local_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7); }
-    function parseTs(l) {
+
+function parseTs(l) {
     const m = /^(\d{2})\/(\d{2})\/(\d{2,4})$/.exec(l.date || '');
     const t = /^(\d{2}):(\d{2}):(\d{2})$/.exec(l.time || '');
     if (!m) return 0;
@@ -704,13 +714,19 @@ function queuePendingDelete(localId, supabaseId, deletedBy) {
     savePendingDeletes(list);
 }
 
-function nettoyerAnciennesDonnees7Jours() {
-    const limite = 7 * 24 * 60 * 60 * 1000, now = Date.now();
+const RETENTION_DAYS = 4; // durée de conservation locale des lignes déjà synchronisées
+function nettoyerAnciennesDonnees7Jours() { // nom conservé, durée = RETENTION_DAYS
+    const limite = RETENTION_DAYS * 24 * 60 * 60 * 1000, now = Date.now();
+    const avant = AppState.logs.length;
     AppState.logs = AppState.logs.filter(log => {
-        if (!log.synced) return true;
+        if (!log.synced) return true; // jamais de suppression d'une ligne non envoyée
         const ts = parseTs(log) || log._created;
         return !ts || (now - ts) < limite;
     });
+    return avant - AppState.logs.length;
+}
+  function purgeAuto() {
+    if (nettoyerAnciennesDonnees7Jours() > 0) { saveLogs(); refreshUI(); }
 }
 
 function sortLogs() { AppState.logs.sort((a, b) => (b._created || 0) - (a._created || 0)); }
@@ -823,7 +839,7 @@ function requestSync(wantFetch) {
                 await syncCycle(f);
             } while (_syncAgain);
         } catch (e) { logError('Sync: ' + e.message); }
-        finally { _syncRunning = false; refreshUI(); }
+        finally { _syncRunning = false; nettoyerAnciennesDonnees7Jours(); saveLogs(); refreshUI(); }
     })();
     return _syncPromise;
 }
@@ -1104,7 +1120,8 @@ function toggleView(v) {
     if (targetNav) targetNav.classList.add('active-nav');
     if (v === 'scanner') startNativeCamera(); else stopNativeCamera();
 }
-    function ajouterManuellement() {
+
+function ajouterManuellement() {
     const input = document.getElementById('input-vis');
     input.value = "";
     document.getElementById('modal-saisie').classList.remove('hidden');
@@ -1154,6 +1171,7 @@ document.addEventListener('visibilitychange', () => {
         stopNativeCamera();
     } else {
         if (AppState.currentView === 'scanner') setTimeout(() => startNativeCamera(), 300);
+        purgeAuto();
         if (navigator.onLine && getUser()) { ensureRealtime(); requestSync(false); }
     }
 });
@@ -1174,7 +1192,7 @@ function buildFullOperatorId(id, equipeId) {
 // ==========================================
 // DÉMARRAGE
 // ==========================================
-async function initApp() {
+    async function initApp() {
     lockOrientation();
     loadLogs();
     nettoyerAnciennesDonnees7Jours();
@@ -1222,5 +1240,4 @@ if ('serviceWorker' in navigator) {
 </script>
 </body>
 </html>
-    
-    
+

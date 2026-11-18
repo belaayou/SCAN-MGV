@@ -1592,8 +1592,8 @@
             savePendingDeletes(list);
         }
 
-        const RETENTION_DAYS = 2; // durée de conservation locale des lignes déjà synchronisées
-        function nettoyerAnciennesDonnees2Jours() { // nom conservé, durée = RETENTION_DAYS
+        const RETENTION_DAYS = 7; // durée de conservation locale des lignes déjà synchronisées
+        function nettoyerAnciennesDonnees7Jours() { // nom conservé, durée = RETENTION_DAYS
             const limite = RETENTION_DAYS * 24 * 60 * 60 * 1000, now = Date.now();
             const avant = AppState.logs.length;
             AppState.logs = AppState.logs.filter(log => {
@@ -1604,7 +1604,7 @@
             return avant - AppState.logs.length;
         }
         function purgeAuto() {
-            if (nettoyerAnciennesDonnees2Jours() > 0) { saveLogs(); refreshUI(); }
+            if (nettoyerAnciennesDonnees7Jours() > 0) { saveLogs(); refreshUI(); }
         }
 
         function sortLogs() { AppState.logs.sort((a, b) => (b._created || 0) - (a._created || 0)); }

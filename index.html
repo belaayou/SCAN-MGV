@@ -1112,8 +1112,9 @@
                 <h3 class="modal-title">SAISIE MANUELLE VIS</h3>
                 <div class="modal-input-container">
                     <input type="text" id="input-vis" class="modal-input" placeholder="EX: T5071035"
+                        maxlength="8" minlength="8" pattern="[A-Za-z][0-9]{7}" inputmode="text"
                         oninput="this.value = this.value.toUpperCase()" autocapitalize="characters" autocomplete="off"
-                        spellcheck="false">
+                        spellcheck="false" aria-label="Code VIS : une lettre suivie de sept chiffres">
                 </div>
                 <div class="modal-footer">
                     <button onclick="fermerSaisie()" class="btn-modal-cancel">Annuler</button>
@@ -1363,31 +1364,56 @@
         // ==========================================
         // VALIDATION VIS (fonction UNIQUE : scanner, saisie manuelle, modification)
         // ==========================================
+        // Validation VIS centralisée : exactement 1 lettre A-Z suivie de 7 chiffres.
+        // Aucun préfixe particulier n'est imposé.
         function cleanAndValidateCode(rawCode) {
-            if (rawCode === null || rawCode === undefined) return null; // protège .trim() ; seul garde-fou conservé
+            if (rawCode === null || rawCode === undefined) return null;
             const code = String(rawCode).trim().toUpperCase();
-            return code ? code : null; // chaîne vide -> pas d'entrée créée
+            return /^[A-Z][0-9]{7}$/.test(code) ? code : null;
         }
 
-        // Verrou anti-rebond : indépendant de AppState.scanLocked (que le callback d'erreur de la librairie remet à false à chaque image sans code)
+        function isValidVISCode(value) {
+            return cleanAndValidateCode(value) !== null;
+        }
+
+        // Anti-rebond + confirmation de stabilité : deux décodages identiques
+        // dans une fenêtre courte sont requis avant toute insertion.
         let isScanningLocked = false;
         const SCAN_UNLOCK_DELAY_MS = 1800;
+        const SCAN_CONFIRM_WINDOW_MS = 1500;
+        let scanCandidate = '';
+        let scanCandidateCount = 0;
+        let scanCandidateAt = 0;
 
-        function onBarcodeDetected(code) {
-            if (isScanningLocked) return;      // détection en rafale : ignorée
-            isScanningLocked = true;           // verrouillage immédiat (avant tout traitement)
-            let processed = false;
+        async function onBarcodeDetected(rawCode) {
+            if (isScanningLocked) return;
+            const cleanCode = cleanAndValidateCode(rawCode);
+            if (!cleanCode) {
+                scanCandidate = '';
+                scanCandidateCount = 0;
+                return;
+            }
+
+            const now = Date.now();
+            if (cleanCode === scanCandidate && (now - scanCandidateAt) <= SCAN_CONFIRM_WINDOW_MS) {
+                scanCandidateCount++;
+            } else {
+                scanCandidate = cleanCode;
+                scanCandidateCount = 1;
+            }
+            scanCandidateAt = now;
+            if (scanCandidateCount < 2) return;
+
+            isScanningLocked = true;
+            scanCandidate = '';
+            scanCandidateCount = 0;
             try {
-                const cleanCode = cleanAndValidateCode(code);
-                if (!cleanCode) return;        // rien à traiter : déverrouillage immédiat (finally)
-                processed = true;
                 playScanSound();
-                addLogEntry(cleanCode);
+                await addLogEntry(cleanCode);
             } catch (e) {
                 logError('Scan: ' + e.message);
             } finally {
-                if (processed) setTimeout(() => { isScanningLocked = false; }, SCAN_UNLOCK_DELAY_MS);
-                else isScanningLocked = false;
+                setTimeout(() => { isScanningLocked = false; }, SCAN_UNLOCK_DELAY_MS);
             }
         }
 
@@ -1592,7 +1618,7 @@
             savePendingDeletes(list);
         }
 
-        const RETENTION_DAYS = 7; // durée de conservation locale des lignes déjà synchronisées
+        const RETENTION_DAYS = 2; // durée de conservation locale des lignes déjà synchronisées
         function nettoyerAnciennesDonnees7Jours() { // nom conservé, durée = RETENTION_DAYS
             const limite = RETENTION_DAYS * 24 * 60 * 60 * 1000, now = Date.now();
             const avant = AppState.logs.length;
@@ -1624,6 +1650,12 @@
         // SCAN / SAISIE / MODIFICATION / SUPPRESSION (toujours en local d'abord)
         // ==========================================
         async function addLogEntry(codeValue) {
+            const validatedCode = cleanAndValidateCode(codeValue);
+            if (!validatedCode) {
+                logError('INSERT local refusé : format VIS invalide.');
+                return false;
+            }
+            codeValue = validatedCode;
             const user = getUser() || { id: 'TEMP', equipe_id: '' };
             const now = new Date();
             const entry = {
@@ -1763,9 +1795,9 @@
 
         async function pushInserts() {
             const client = getClient();
-            const targets = AppState.logs.filter(l => !l.synced && !l._supabaseId);
+            const targets = AppState.logs.filter(l => !l.synced && !l._supabaseId && isValidVISCode(l.code));
             for (const l of targets) {
-                if (!AppState.logs.includes(l)) continue;
+                if (!AppState.logs.includes(l) || !isValidVISCode(l.code)) continue;
                 const rev = l._rev;
                 _inFlight.add(l._localId);
                 const { data, error } = await netCall(client.from(TABLE).insert([{
@@ -1796,9 +1828,9 @@
 
         async function pushUpdates() {
             const client = getClient();
-            const targets = AppState.logs.filter(l => !l.synced && l._supabaseId);
+            const targets = AppState.logs.filter(l => !l.synced && l._supabaseId && isValidVISCode(l.code));
             for (const l of targets) {
-                if (!AppState.logs.includes(l)) continue;
+                if (!AppState.logs.includes(l) || !isValidVISCode(l.code)) continue;
                 const rev = l._rev;
                 const { error } = await netCall(client.from(TABLE).update({ code: l.code, zone: l.zone, equipe_id: l.equipe_id, date: l.date, time: l.time }).eq('id', l._supabaseId));
                 if (error) {

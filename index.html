@@ -1111,10 +1111,10 @@
             <div class="modal-body">
                 <h3 class="modal-title">SAISIE MANUELLE VIS</h3>
                 <div class="modal-input-container">
-                    <input type="text" id="input-vis" class="modal-input" placeholder="EX: T5071035"
-                        maxlength="8" minlength="8" pattern="[A-Za-z][0-9]{7}" inputmode="text"
-                        oninput="this.value = this.value.toUpperCase()" autocapitalize="characters" autocomplete="off"
-                        spellcheck="false" aria-label="Code VIS : une lettre suivie de sept chiffres">
+                    <input type="text" id="input-vis" class="modal-input" placeholder="EX: T5103421"
+                        maxlength="8" pattern="[A-Za-z][0-9]{7}" title="1 lettre + 7 chiffres (ex : T5103421)"
+                        oninput="sanitizeVISField(this)" onpaste="return guardVISPaste(event)" autocapitalize="characters" autocomplete="off"
+                        spellcheck="false">
                 </div>
                 <div class="modal-footer">
                     <button onclick="fermerSaisie()" class="btn-modal-cancel">Annuler</button>
@@ -1364,56 +1364,80 @@
         // ==========================================
         // VALIDATION VIS (fonction UNIQUE : scanner, saisie manuelle, modification)
         // ==========================================
-        // Validation VIS centralisée : exactement 1 lettre A-Z suivie de 7 chiffres.
-        // Aucun préfixe particulier n'est imposé.
+        // Format VIS unique : 1 lettre A-Z + 7 chiffres (8 caractères)
+        const VIS_REGEX = /^[A-Z][0-9]{7}$/;
+        const VIS_FORMAT_MSG = "Format invalide !\n1 lettre + 7 chiffres (ex : T5103421)";
+
+        function validateVISCode(value) {
+            if (value === null || value === undefined) return false;
+            const code = String(value).trim().toUpperCase();
+            return VIS_REGEX.test(code);
+        }
+
+        // Fonction centrale (scanner, QR, saisie manuelle, modification, enregistrement) : code nettoyé si valide, sinon null
         function cleanAndValidateCode(rawCode) {
             if (rawCode === null || rawCode === undefined) return null;
             const code = String(rawCode).trim().toUpperCase();
-            return /^[A-Z][0-9]{7}$/.test(code) ? code : null;
+            return validateVISCode(code) ? code : null;
         }
 
-        function isValidVISCode(value) {
-            return cleanAndValidateCode(value) !== null;
+        // Filtre de saisie : majuscules, 1re position = lettre, positions 2 à 8 = chiffres, 8 caractères max
+        function sanitizeVISInput(value) {
+            const src = String(value === null || value === undefined ? '' : value).toUpperCase();
+            let out = '';
+            for (const ch of src) {
+                if (out.length >= 8) break;
+                if (out.length === 0) { if (/[A-Z]/.test(ch)) out += ch; }
+                else if (/[0-9]/.test(ch)) out += ch;
+            }
+            return out;
+        }
+        function sanitizeVISField(el) { // <input>
+            const v = sanitizeVISInput(el.value);
+            if (el.value !== v) el.value = v;
+        }
+        function sanitizeVISEditable(el) { // cellule contenteditable
+            const v = sanitizeVISInput(el.innerText);
+            if (el.innerText === v) return;
+            el.innerText = v;
+            try {
+                const r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+                const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+            } catch (e) { }
         }
 
-        // Anti-rebond + confirmation de stabilité : deux décodages identiques
-        // dans une fenêtre courte sont requis avant toute insertion.
+        // Collage : refusé s'il serait tronqué ou altéré par le filtre (ex. 9 caractères -> jamais accepté silencieusement)
+        function guardVISPaste(e) {
+            try {
+                const cd = e.clipboardData || window.clipboardData;
+                if (!cd) return true;
+                const t = String(cd.getData('text') || '').trim().toUpperCase();
+                if (t.length <= 8 && /^[A-Z]?[0-9]*$/.test(t)) return true;
+                e.preventDefault();
+                alert(VIS_FORMAT_MSG);
+                return false;
+            } catch (err) { return true; }
+        }
+
+        // Verrou anti-rebond : indépendant de AppState.scanLocked (que le callback d'erreur de la librairie remet à false à chaque image sans code)
         let isScanningLocked = false;
         const SCAN_UNLOCK_DELAY_MS = 1800;
-        const SCAN_CONFIRM_WINDOW_MS = 1500;
-        let scanCandidate = '';
-        let scanCandidateCount = 0;
-        let scanCandidateAt = 0;
 
-        async function onBarcodeDetected(rawCode) {
-            if (isScanningLocked) return;
-            const cleanCode = cleanAndValidateCode(rawCode);
-            if (!cleanCode) {
-                scanCandidate = '';
-                scanCandidateCount = 0;
-                return;
-            }
-
-            const now = Date.now();
-            if (cleanCode === scanCandidate && (now - scanCandidateAt) <= SCAN_CONFIRM_WINDOW_MS) {
-                scanCandidateCount++;
-            } else {
-                scanCandidate = cleanCode;
-                scanCandidateCount = 1;
-            }
-            scanCandidateAt = now;
-            if (scanCandidateCount < 2) return;
-
-            isScanningLocked = true;
-            scanCandidate = '';
-            scanCandidateCount = 0;
+        function onBarcodeDetected(code) {
+            if (isScanningLocked) return;      // détection en rafale : ignorée
+            isScanningLocked = true;           // verrouillage immédiat (avant tout traitement)
+            let processed = false;
             try {
+                const cleanCode = cleanAndValidateCode(code);
+                if (!cleanCode) return;        // rien à traiter : déverrouillage immédiat (finally)
+                processed = true;
                 playScanSound();
-                await addLogEntry(cleanCode);
+                addLogEntry(cleanCode);
             } catch (e) {
                 logError('Scan: ' + e.message);
             } finally {
-                setTimeout(() => { isScanningLocked = false; }, SCAN_UNLOCK_DELAY_MS);
+                if (processed) setTimeout(() => { isScanningLocked = false; }, SCAN_UNLOCK_DELAY_MS);
+                else isScanningLocked = false;
             }
         }
 
@@ -1650,12 +1674,9 @@
         // SCAN / SAISIE / MODIFICATION / SUPPRESSION (toujours en local d'abord)
         // ==========================================
         async function addLogEntry(codeValue) {
-            const validatedCode = cleanAndValidateCode(codeValue);
-            if (!validatedCode) {
-                logError('INSERT local refusé : format VIS invalide.');
-                return false;
-            }
-            codeValue = validatedCode;
+            const validCode = cleanAndValidateCode(codeValue);
+            if (!validCode) { logError('Ajout refusé (format VIS invalide): ' + codeValue); return; }
+            codeValue = validCode;
             const user = getUser() || { id: 'TEMP', equipe_id: '' };
             const now = new Date();
             const entry = {
@@ -1698,8 +1719,10 @@
             if (!l) return;
             let newVal = String(val || '').trim().toUpperCase();
             if (field === 'code') {
+                // Code inchangé (y compris ancien enregistrement hors format) : rien à valider ni à enregistrer
+                if (newVal === (l.code || '')) { if (el) el.innerText = newVal; return; }
                 const valid = cleanAndValidateCode(newVal);
-                if (!valid) { alert("Format invalide !"); renderTable(); return; }
+                if (!valid) { alert(VIS_FORMAT_MSG); renderTable(); return; }
                 newVal = valid;
             }
             if (el) el.innerText = newVal;
@@ -1793,11 +1816,19 @@
             return true;
         }
 
+        const _invalidVisWarned = new Set();
+        function warnInvalidVIS(l, op) {
+            if (_invalidVisWarned.has(l._localId + op)) return;
+            _invalidVisWarned.add(l._localId + op);
+            logError(op + ' : code VIS hors format non envoyé (' + l.code + ')');
+        }
+
         async function pushInserts() {
             const client = getClient();
-            const targets = AppState.logs.filter(l => !l.synced && !l._supabaseId && isValidVISCode(l.code));
+            const targets = AppState.logs.filter(l => !l.synced && !l._supabaseId);
             for (const l of targets) {
-                if (!AppState.logs.includes(l) || !isValidVISCode(l.code)) continue;
+                if (!AppState.logs.includes(l)) continue;
+                if (!validateVISCode(l.code)) { warnInvalidVIS(l, 'INSERT'); continue; } // jamais d'envoi d'un code hors format ; la ligne reste en local
                 const rev = l._rev;
                 _inFlight.add(l._localId);
                 const { data, error } = await netCall(client.from(TABLE).insert([{
@@ -1828,11 +1859,14 @@
 
         async function pushUpdates() {
             const client = getClient();
-            const targets = AppState.logs.filter(l => !l.synced && l._supabaseId && isValidVISCode(l.code));
+            const targets = AppState.logs.filter(l => !l.synced && l._supabaseId);
             for (const l of targets) {
-                if (!AppState.logs.includes(l) || !isValidVISCode(l.code)) continue;
+                if (!AppState.logs.includes(l)) continue;
                 const rev = l._rev;
-                const { error } = await netCall(client.from(TABLE).update({ code: l.code, zone: l.zone, equipe_id: l.equipe_id, date: l.date, time: l.time }).eq('id', l._supabaseId));
+                const payload = { code: l.code, zone: l.zone, equipe_id: l.equipe_id, date: l.date, time: l.time };
+                // Ancien enregistrement hors format : on n'envoie pas le code (il n'a pu être modifié que via updateEntry, qui valide) ; zone/date restent synchronisables
+                if (!validateVISCode(l.code)) { delete payload.code; warnInvalidVIS(l, 'UPDATE'); }
+                const { error } = await netCall(client.from(TABLE).update(payload).eq('id', l._supabaseId));
                 if (error) {
                     if (isNetErr(error)) return false;
                     logError('UPDATE: ' + error.message); continue;
@@ -1986,7 +2020,7 @@
         <tr id="row-${id}" ${rowAttr}>
             <td class="cell-op">${escapeHtml(log.op)}${log.equipe_id ? '/' + escapeHtml(log.equipe_id) : ''}</td>
             <td class="cell-code">
-                <div class="editable-cell text-primary code-text" contenteditable="true" onblur="updateEntry('${id}', 'code', this.innerText, this)">${escapeHtml(log.code)}</div>
+                <div class="editable-cell text-primary code-text" contenteditable="true" oninput="sanitizeVISEditable(this)" onpaste="return guardVISPaste(event)" onblur="updateEntry('${id}', 'code', this.innerText, this)">${escapeHtml(log.code)}</div>
             </td>
             <td class="cell-zone">
                 <div class="editable-cell text-white zone-text zone-input" contenteditable="true" onblur="validateAndSendZone('${id}', this.innerText, this)" onkeypress="if(event.key === 'Enter'){ event.preventDefault(); this.blur(); }">${escapeHtml(log.zone)}</div>
@@ -2046,7 +2080,7 @@
                 addLogEntry(codeClean);
                 fermerSaisie();
             } else {
-                alert("Format invalide !");
+                alert(VIS_FORMAT_MSG);
             }
         }
 

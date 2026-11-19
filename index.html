@@ -1329,9 +1329,9 @@
             }
         }
 
-        // Zoom ~2x et mise au point continue : appliqués seulement si la caméra annonce les capacités.
+        // Zoom ~1.2x et mise au point continue : appliqués seulement si la caméra annonce les capacités.
         // Toute erreur est ignorée (log seulement) : la caméra reste utilisable avec ses réglages par défaut.
-        const CAMERA_TARGET_ZOOM = 2.0;
+        const CAMERA_TARGET_ZOOM = 1.2;
         async function optimizeCameraTrack(track) {
             try {
                 if (!track || typeof track.getCapabilities !== 'function') return; // ex. iOS Safari
